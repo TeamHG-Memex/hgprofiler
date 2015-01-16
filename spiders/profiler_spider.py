@@ -4,7 +4,6 @@ from scrapy import log
 from scrapy import Request
 import urllib
 import json
-from mercurial.posix import username
 
 class ProfilerItem(scrapy.Item):
     # define the fields for your item here like:
