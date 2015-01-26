@@ -48,7 +48,7 @@ class ProfilerSpider(scrapy.Spider):
 
         if response.status == int(needed_resp_code):
             print('Codes matched %s %s' % (response.status, needed_resp_code))
-            if site['gRT'] in response.body or site['gRT'] in response.headers:
+            if site['gRT'] in response.body_as_unicode() or site['gRT'] in response.headers:
                 print('Probable match: %s' % response.request.url)
                 item = ProfilerItem()
                 item["username"] = response.request.meta['user']
