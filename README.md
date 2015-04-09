@@ -6,13 +6,7 @@ The hgprofiler takes as its input a list of usernames (line-separated) and retur
 Usage
 ===
 
-1. Create a file usernames.txt of line-separated usernames
-
-Ex: 
-```
-  username1
-  username2
-```
+1. Create a file usernames.txt of line-separated usernames in the project root
 2. ./run.bash
 3. Your output will be in the out/ directory
 
