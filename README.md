@@ -41,7 +41,7 @@ memex-punk@memexpunk-VirtualBox:~/memex-dev/workspace/hgprofiler/out$ cat userna
 Greetz & Props
 ===
 
-This tool is a faster, scrapy-integrated version of the Profiler module in [recon-ng])(https://bitbucket.org/LaNMaSteR53/recon-ng). Many thanks go to Tim Tomes the author of recon-ng and WebBreacher, the author of the Profiler module.
+This tool is a faster, scrapy-integrated version of the Profiler module in [recon-ng](https://bitbucket.org/LaNMaSteR53/recon-ng). Many thanks go to Tim Tomes the author of recon-ng and [WebBreacher](http://webbreacher.blogspot.com/), the author of the Profiler module.
 
 Requirements
 ===
