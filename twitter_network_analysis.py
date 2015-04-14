@@ -34,11 +34,14 @@ class Trawler:
         ffs = self.ff_finder.get_ff_ids_for_screen_name(screen_name)
         return ffs
         
-    def get_atmentions(self, screen_name):
+    def get_atmentions(self, screen_name, return_tweets=False):
         """
         Query the API for people who `screen_name` @mentions.
         Will return a dictionary of {screen_name:count}
         NB: this will block if you run out of twitter calls
+        NB: you can actually get all of this' person's tweets here, currently dumped on the floor
+        If `return_tweets` is True, it will return a compound object: 
+        ({screen_name:count},[{tweet},{tweet},...])
         """
         tweets = self.timeline_crawler.get_all_timeline_tweets_for_screen_name(screen_name)
         atmentions = defaultdict(int) #Count up each person mentioned here
