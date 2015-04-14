@@ -24,14 +24,14 @@ class Trawler:
         will be used to generate all scores and filter all matches for the
         rest of the module.
         """
-        self.names_of_interest = set(names_of_interest)
+        self.names_of_interest = set([x.lower() for x in names_of_interest])
 
     def get_ffs(self, screen_name ):
         """
         Query the API for people who are both friends-and-followers of `screen_name`
         NB: this will block if you run out of twitter calls
         """
-        ffs = self.ff_finder.get_ff_ids_for_screen_name(screen_name)
+        ffs = self.ff_finder.get_ff_screen_names_for_screen_name(screen_name)
         return ffs
         
     def get_atmentions(self, screen_name, return_tweets=False):
@@ -51,6 +51,8 @@ class Trawler:
             screen_names = [m['screen_name'] for m in mentions]
             for s in screen_names:
                 atmentions[s] += 1
+        if return_tweets:
+            return (atmentions,tweets)
         return atmentions
 
     def find_neighbors(self, screen_name):
@@ -61,7 +63,7 @@ class Trawler:
         """
         atneighbors = self.get_atmentions(screen_name)
         ffs = self.get_ffs(screen_name)
-        neighbors = set(atneighbors.keys()).union(set(ffs))
+        neighbors = set([x.lower() for x in atneighbors.keys()]).union(set([x.lower() for x in ffs]))
         return neighbors
 
     def find_neighbors_of_interest(self, screen_name):
