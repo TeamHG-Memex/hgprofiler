@@ -1,0 +1,184 @@
+<breadcrumbs crumbs=crumbs></breadcrumbs>
+
+<div ng-show='message != null' class='alert alert-success' role='alert'>
+  <button ng-click="message = null" class="close" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+  <i class='fa fa-check-circle fa-3x pull-left'></i>
+  <p>{{message}}</p>
+  <div class='clear'></div>
+</div>
+
+<div ng-show='error != null' class='alert alert-danger' role='alert'>
+  <button ng-click="error = null" class="close" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+  <i class='fa fa-warning fa-3x pull-left'></i>
+  <p>{{error}}</p>
+  <div class='clear'></div>
+</div>
+
+<h1>
+  <span ng-show='user == null'>Loading user…</span>
+  <span ng-show='user != null'>{{displayName}}</span>
+  <img ng-show='loading > 0' src='/static/img/spinner-blue-on-white.gif'>
+</h1>
+
+<div ng-if='user != null'>
+  <p class='bio'>
+    {{displayName}} has been a user since {{user.created | date}}.
+    Profile last updated on {{user.modified | date}}.
+  </p>
+
+  <form class='form-horizontal' ng-submit='saveUser()'>
+    <div class='form-group'>
+      <label class='col-sm-2 control-label' for='name'>
+        Title &amp; Name
+      </label>
+      <div class='col-sm-10'>
+        <input ng-if='canEdit'
+               id='name'
+               type='text'
+               ng-model='user.name'
+               size='40'
+               class='form-control'
+               placeholder='Full name and optional title'>
+        <p ng-if='!canEdit' class='form-control-static'>{{user.name}}</p>
+      </div>
+    </div>
+
+    <div class='form-group'>
+      <label class='col-sm-2 control-label' for='name'>
+        Thumbnail
+      </label>
+      <div class='col-sm-10'>
+        <img class='user-thumb'
+             ng-class='{"editable": canEdit}'
+             ng-src='data:image/png;base64,{{user.thumb}}'>
+        <button type='button'
+                class='btn btn-success btn-xs'
+                ng-show='canEdit'
+                ng-click='selectFile()'>
+          <i class='fa fa-file-image-o'></i> Upload Image…
+        </button>
+        <input id='thumb-file'
+               type='file'
+               class='hide'
+               accept='image/*'
+               ng-change='resizeThumb($event)'
+               placeholder='Thumbnail image file'>
+      </div>
+    </div>
+
+    <div class='form-group'>
+      <label class='col-sm-2 control-label' for='agency'>
+        Agency/Org.
+      </label>
+      <div class='col-sm-10'>
+        <input ng-if='canEdit'
+               id='agency'
+               type='text'
+               ng-model='user.agency'
+               size='40'
+               class='form-control'
+               placeholder='Name of agency or organization'>
+        <p ng-if='!canEdit' class='form-control-static'>{{user.agency}}</p>
+      </div>
+    </div>
+
+    <div class='form-group'>
+      <label class='col-sm-2 control-label' for='location'>
+        Location
+      </label>
+      <div class='col-sm-10'>
+        <input ng-if='canEdit'
+               id='location'
+               type='text'
+               ng-model='user.location'
+               size='40'
+               class='form-control'
+               placeholder='Geographic location (city and/or state)'>
+        <p ng-if='!canEdit' class='form-control-static'>{{user.location}}</p>
+      </div>
+    </div>
+
+    <div class='form-group'>
+      <label class='col-sm-2 control-label' for='email'>
+        E-mail
+      </label>
+      <div class='col-sm-10'>
+        <input ng-if='canEdit'
+               id='email'
+               type='text'
+               ng-model='user.email'
+               size='40'
+               class='form-control'
+               placeholder='E-mail address'>
+        <p ng-if='!canEdit' class='form-control-static'>{{user.email}}</p>
+      </div>
+    </div>
+
+    <div class='form-group'>
+      <label class='col-sm-2 control-label' for='phone'>
+        Phone
+      </label>
+      <div class='col-sm-10'>
+        <input ng-if='canEdit'
+               id='phone'
+               type='text'
+               ng-model='user.phone'
+               size='40'
+               class='form-control'
+               placeholder='Business phone number.'>
+        <p ng-if='!canEdit' class='form-control-static'>{{user.phone}}</p>
+      </div>
+    </div>
+
+    <div class='form-group'>
+      <label class='col-sm-2 control-label' for='role'>
+        Role
+      </label>
+      <div class='col-sm-10'>
+        <select ng-if='auth.isAdmin() && user.id != auth.currentUser.id'
+                id='role'
+                class='form-control'>
+          <option value='admin' ng-selected='user.isAdmin'>Administrator</option>
+          <option value='user' ng-selected='!user.isAdmin'>User</option>
+        </select>
+        <p ng-if='!auth.isAdmin() || user.id == auth.currentUser.id'
+           class='form-control-static'>
+          {{user.isAdmin ? 'Administrator' : 'User'}}
+        </p>
+      </div>
+    </div>
+
+    <div class='form-group' ng-if='canEdit'>
+      <label class='col-sm-2 control-label' for='password'>
+        Password
+      </label>
+      <div class='col-sm-10'>
+        <input id='password'
+               type='password'
+               size='40'
+               class='form-control'
+               placeholder='New password, if you want to change it.'>
+        <div class='alert alert-info' role='alert'>
+          <i class='fa fa-info-circle fa-3x pull-left'></i>
+          <p>
+            Passwords must be at least 8 characters, use upper and lower case
+            characters, and contain at least 1 numeric digit.
+          </p>
+          <div class='clear'></div>
+        </div>
+      </div>
+    </div>
+
+    <div class='form-group' ng-if='canEdit'>
+      <div class='col-sm-offset-2 col-sm-10'>
+        <button type='submit' class='btn btn-primary' ng-disabled='loading > 0'>
+          Save
+        </button>
+      </div>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,111 @@
+<breadcrumbs crumbs=crumbs></breadcrumbs>
+
+<button ng-if='auth.isAdmin()'
+        class='btn btn-primary pull-right'
+        data-toggle='modal'
+        href='#add-user-modal'>
+  <i class='fa fa-user-plus'></i>
+  Add New User
+</button>
+
+<h1>
+  User Directory
+  <img ng-show='loading' src='/static/img/spinner-blue-on-white.gif'>
+</h1>
+
+<p>
+  Showing {{pager.startingAt | number}}-{{pager.endingAt | number}}
+  of {{pager.totalResults | number}} users.
+</p>
+
+<pager pager='pager'
+       disabled='loading'></pager>
+
+<table class='table table-striped'>
+  <thead>
+    <tr>
+      <th>&nbsp;</th>
+      <th>Name</th>
+      <th>Agency</th>
+      <th>E-mail <b class='caret'></b></th>
+      <th>Phone</th>
+      <th>Role</th>
+      <th>&nbsp;</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr ng-show='users.length == 0'>
+      <td colspan='100' class='no-rows'>No users found.</td>
+    </tr>
+
+    <tr ng-repeat='user in users'>
+      <td><img ng-src='data:image/png;base64,{{user.thumb}}'></td>
+      <td>{{user.name}}</td>
+      <td>{{user.agency}}</td>
+      <td><a href='mailto:{{user.email}}?subject=HGProfiler' target="_top">{{user.email}}</a></td>
+      <td>{{user.phone}}</td>
+      <td>{{user.isAdmin ? 'Administrator' : 'User'}}</td>
+      <td><a class='btn btn-success btn-sm' href='/user/{{user.id}}'>View</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class='modal fade' id='add-user-modal' role='dialog'>
+  <div class='modal-dialog'>
+    <div class='modal-content'>
+      <form class='form-horizontal' ng-submit='submitAddUser()'>
+        <div class='modal-header'>
+          <h4 class='modal-title'>Add New User…</h4>
+        </div>
+        <div class='modal-body'>
+          <div ng-show='error != null' class='alert alert-danger' role='alert'>
+            <button ng-click="error = null" class="close" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            <p>{{error}}</p>
+            <div class='clear'></div>
+          </div>
+
+          <div class='form-group'>
+            <label class='col-sm-2 control-label' for='email'>
+              E-mail
+            </label>
+            <div class='col-sm-10'>
+              <input id='email'
+                     type='text'
+                     size='40'
+                     class='form-control'
+                     placeholder='E-mail address'>
+            </div>
+          </div>
+
+          <div class='form-group'>
+            <label class='col-sm-2 control-label' for='password'>
+              Password
+            </label>
+            <div class='col-sm-10'>
+              <input id='password'
+                     type='password'
+                     size='40'
+                     class='form-control'
+                     placeholder='Password'>
+              <div class='alert alert-info' role='alert'>
+                <p>
+                  Passwords must be at least 8 characters, use upper and lower case
+                  characters, and contain at least 1 numeric digit.
+                </p>
+                <div class='clear'></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class='modal-footer'>
+          <button class='btn btn-link pull-left' data-dismiss='modal'>Cancel</button>
+          <busy-button id='add-button' type='primary' click='addUser'>
+            <i class='fa fa-user-plus'></i> Add
+          </busy-button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,6 @@
+<button class='btn btn-{{type}}'
+        ng-class='{"btn-{{size}}": size != null}'
+        ng-disabled='busy'>
+  <content></content>
+  <i class='fa fa-spinner fa-pulse' ng-class='{"hidden":!busy}'></i>
+</button>

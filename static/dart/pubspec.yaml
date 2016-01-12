@@ -1,0 +1,15 @@
+name: hgprofiler 
+version: 0.1.0
+dependencies:
+    angular: any
+    bootjack: any
+    browser: any
+    collection: any
+    dnd: any
+    intl: any
+    web_components: any
+dependency_overrides:
+    route_hierarchical:
+        path: /opt/route.dart
+transformers:
+- angular
