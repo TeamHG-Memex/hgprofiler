@@ -5,4 +5,5 @@ fabfile.py
 **/dart/.packages
 __pycache__
 nohup.out
+**static/.webassets-cache
 TODO*
