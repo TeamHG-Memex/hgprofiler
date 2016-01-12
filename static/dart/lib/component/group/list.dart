@@ -6,6 +6,8 @@ import 'package:angular/angular.dart';
 import 'package:bootjack/bootjack.dart';
 import 'package:dquery/dquery.dart';
 import 'package:hgprofiler/authentication.dart';
+import 'package:hgprofiler/query_watcher.dart';
+
 import 'package:hgprofiler/component/breadcrumbs.dart';
 import 'package:hgprofiler/component/pager.dart';
 import 'package:hgprofiler/component/title.dart';
@@ -21,7 +23,7 @@ import 'package:hgprofiler/sse.dart';
     templateUrl: 'packages/hgprofiler/component/group/list.html',
     useShadowDom: false
 )
-class GroupListComponent extends Object with CurrentPageMixin
+class GroupListComponent extends Object
                     implements ShadowRootAware {
 
     List<Breadcrumb> crumbs = [
@@ -48,7 +50,6 @@ class GroupListComponent extends Object with CurrentPageMixin
     InputElement _inputEl;
     Router _router;
 
-    final int _resultsPerPage = 100;
     final AuthenticationController _auth;
     final RestApiController _api;
     final RouteProvider _rp;
@@ -59,23 +60,24 @@ class GroupListComponent extends Object with CurrentPageMixin
     GroupListComponent(this._auth, this._api, this._element, 
                        this._router, this._rp, this._sse, this._ts) {
 
-        this.initCurrentPage(this._rp.route, this._fetchCurrentPage);
         this._ts.title = 'Groups';
 
         // Add event listeners...
         RouteHandle rh = this._rp.route.newHandle();
+        this._queryWatcher = new QueryWatcher(
+            rh,
+            ['page', 'rpp'],
+            this._fetchCurrentPage
+        );
 
         List<StreamSubscription> listeners = [
-            this._sse.onGroup.listen(this.groupListener),
-            rh.onEnter.listen((e) {
-                this._fetchCurrentPage();
-            }),
+            this._sse.onGroup.listen(this._groupListener),
         ];
 
         // ...and remove event listeners when we leave this route.
-        rh.onLeave.take(1).listen((e) {
-            listeners.forEach((listener) => listener.cancel());
-        });
+        UnsubOnRouteLeave(rh, [
+            this._sse.onGroup.listen(this._groupListener),
+        ]);
 
         this._fetchCurrentPage();
         this._fetchSites();
@@ -109,8 +111,8 @@ class GroupListComponent extends Object with CurrentPageMixin
         this.loading++;
         String pageUrl = '/api/group/';
         Map urlArgs = {
-            'page': this.currentPage,
-            'rpp': this._resultsPerPage,
+            'page': this._queryWatcher['page'] ?? '1',
+            'rpp': this._queryWatcher['rpp'] ?? '100',
         };
         this.groups = new List<Group>();
 
@@ -132,11 +134,11 @@ class GroupListComponent extends Object with CurrentPageMixin
                 });
                 // Deleting groups affects paging of results, redirect to the final page
                 // if the page no longer exists.
-                int lastPage = (response.data['total_count']/this._resultsPerPage).ceil();
+                int lastPage = (response.data['total_count']/int.parse(this._queryWatcher['rpp'] ?? '100')).ceil();
                 if (lastPage == 0) { 
                     lastPage = 1;
                 }
-                if (this.currentPage > lastPage) {
+                if (int.parse(this._queryWatcher['page'] ?? '1') > lastPage) {
                     Uri uri = Uri.parse(window.location.toString());
                     Map queryParameters = new Map.from(uri.queryParameters);
 
@@ -151,8 +153,8 @@ class GroupListComponent extends Object with CurrentPageMixin
                 }
 
                 this.pager = new Pager(response.data['total_count'],
-                                       this.currentPage,
-                                       resultsPerPage:this._resultsPerPage);
+                                       int.parse(this._queryWatcher['page'] ?? '1'),
+                                       resultsPerPage: int.parse(this._queryWatcher['rpp'] ?? '100'));
                 new Future(() {
                     this.groupIds = new List<String>.from(this.groups.keys);
                 });
@@ -281,28 +283,48 @@ class GroupListComponent extends Object with CurrentPageMixin
 
     }
 
-    /// Fetch a page of profiler sites. 
-    void _fetchSites() {
+    /// Fetch all profiler sites. 
+    Future _fetchSites() {
         this.error = null;
         this.loading++;
         String pageUrl = '/api/site/';
-        Map urlArgs = {
-            'page': this.currentPage,
-            'rpp': this._resultsPerPage,
-        };
+        bool finished = false;
+        int page = 1;
+        int totalCount = 0;
 
-        this._api
-            .get(pageUrl, urlArgs: urlArgs, needsAuth: true)
-            .then((response) {
-                this.sites = new List<Site>();
-                response.data['sites'].forEach((site) {
-                    this.sites.add(site);
-                });
-            })
-            .catchError((response) {
-                this.error = response.data['message'];
-            })
-            .whenComplete(() {this.loading--;});
+        while (!finished) {
+            Map urlArgs = {
+                'page': page,
+                'rpp': 100,
+            };
+            new Future(() {
+                this._api
+                    .get(pageUrl, urlArgs: urlArgs, needsAuth: true)
+                    .then((response) {
+                        this.sites = new List<Site>();
+                        response.data['sites'].forEach((site) {
+                            this.sites.add(site);
+                        });
+                        if (response.data.containsKey('total_count')) {
+                            totalCount = response.data['total_count'];
+                        }
+                    })
+                    .catchError((response) {
+                        this.error = response.data['message'];
+                    })
+                    .whenComplete(() {});
+            }
+
+            if (totalCount == this.labels.length) {
+                finished = true;
+            } 
+            else {
+                page++;
+            }
+        }
+        this.loading--;
+        completer.complete();
+        return completer.future;
     }
 
     /// Trigger add group when the user presses enter in the group input.
@@ -313,7 +335,7 @@ class GroupListComponent extends Object with CurrentPageMixin
     }
 
     /// Listen for group updates.
-    void groupListener(Event e) {
+    void _groupListener(Event e) {
         Map json = JSON.decode(e.data);
 
         window.alert('called');
