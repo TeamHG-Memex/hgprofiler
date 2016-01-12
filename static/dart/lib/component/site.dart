@@ -4,6 +4,7 @@ import 'dart:convert';
 
 import 'package:angular/angular.dart';
 import 'package:hgprofiler/authentication.dart';
+import 'package:hgprofiler/query_watcher.dart';
 import 'package:hgprofiler/component/breadcrumbs.dart';
 import 'package:hgprofiler/component/pager.dart';
 import 'package:hgprofiler/component/title.dart';
@@ -18,7 +19,7 @@ import 'package:hgprofiler/sse.dart';
     templateUrl: 'packages/hgprofiler/component/site.html',
     useShadowDom: false
 )
-class SiteComponent extends Object with CurrentPageMixin
+class SiteComponent extends Object
                     implements ShadowRootAware {
 
     List<Breadcrumb> crumbs = [
@@ -45,8 +46,8 @@ class SiteComponent extends Object with CurrentPageMixin
 
     InputElement _inputEl;
     Router _router;
+    QueryWatcher _queryWatcher;
 
-    final int _resultsPerPage = 100;
     final AuthenticationController _auth;
     final RestApiController _api;
     final RouteProvider _rp;
@@ -55,23 +56,23 @@ class SiteComponent extends Object with CurrentPageMixin
 
     /// Constructor.
     SiteComponent(this._auth, this._api, this._element, this._router, this._rp, this._sse, this._ts) {
-        this.initCurrentPage(this._rp.route, this._fetchCurrentPage);
         this._ts.title = 'Sites';
 
         // Add event listeners...
         RouteHandle rh = this._rp.route.newHandle();
+        this._queryWatcher = new QueryWatcher(
+            rh,
+            ['page', 'rpp'],
+            this._fetchCurrentPage
+        );
 
         List<StreamSubscription> listeners = [
-            this._sse.onSite.listen(this.siteListener),
-            rh.onEnter.listen((e) {
-                this._fetchCurrentPage();
-            }),
+            this._sse.onSite.listen(this._siteListener),
         ];
-
         // ...and remove event listeners when we leave this route.
-        rh.onLeave.take(1).listen((e) {
-            listeners.forEach((listener) => listener.cancel());
-        });
+        UnsubOnRouteLeave(rh, [
+            this._sse.onSite.listen(this._siteListener),
+        ]);
 
         this._fetchCurrentPage();
     }
@@ -111,9 +112,11 @@ class SiteComponent extends Object with CurrentPageMixin
         this.loading++;
         String pageUrl = '/api/site/';
         Map urlArgs = {
-            'page': this.currentPage,
-            'rpp': this._resultsPerPage,
+            'page': this._queryWatcher['page'] ?? '1',
+            'rpp': this._queryWatcher['rpp'] ?? '10',
         };
+        window.alert('yaaaaa');
+
         this.sites = new Map<String>();
         this.siteCategories = new List<List>();
 
@@ -143,9 +146,9 @@ class SiteComponent extends Object with CurrentPageMixin
                 this.siteCategories.sort();
                 // Deleting sites affects paging of results, redirect to the final page
                 // if the page no longer exists.
-                int lastPage = (response.data['total_count']/this._resultsPerPage).ceil();
+                int lastPage = (response.data['total_count']/int.parse(this._queryWatcher['rpp'] ?? '10').ceil();
 
-                if (this.currentPage > lastPage) {
+                if (int.parse(this._queryWatcher['page'] ?? '1') > lastPage) {
                     Uri uri = Uri.parse(window.location.toString());
                     Map queryParameters = new Map.from(uri.queryParameters);
 
@@ -160,8 +163,8 @@ class SiteComponent extends Object with CurrentPageMixin
                 }
 
                 this.pager = new Pager(response.data['total_count'],
-                                       this.currentPage,
-                                       resultsPerPage:this._resultsPerPage);
+                                       int.parse(this._queryWatcher['page'] ?? '1'),
+                                       resultsPerPage:int.parse(this._queryWatcher['rpp'] ?? '10');
 
                 new Future(() {
                     this.siteIds = new List<String>.from(this.sites.keys);
@@ -226,7 +229,7 @@ class SiteComponent extends Object with CurrentPageMixin
     }
 
     /// Listen for site updates.
-    void siteListener(Event e) {
+    void _siteListener(Event e) {
         Map json = JSON.decode(e.data);
 
         if (json['error'] == null) {
