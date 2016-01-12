@@ -1,0 +1,24 @@
+[database]
+
+; Regular credentials: these are used by the application for all front-end
+; queries and should have limited privileges.
+
+username = ##DATABASE_USERNAME##
+password = ##DATABASE_PASSWORD##
+
+; Superuser credentials: these are used for building/dropping the database, and
+; this user will be the owner of all such objects. (You should configure
+; Agnostic migrations to use this same user.)
+
+super_username = ##DATABASE_SUPER_USERNAME##
+super_password = ##DATABASE_SUPER_PASSWORD##
+
+[flask]
+
+; Generate a random string for Flask to sign cookies.
+
+SECRET_KEY = ##FLASK_SECRET_KEY##
+
+; Uncomment the below to adjust Redis worker timeout limits (in seconds)
+; [redis_worker]
+; username_timeout = 300

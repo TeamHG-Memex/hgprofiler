@@ -1,0 +1,9 @@
+flask
+Flask-Assets
+flask-classy
+Flask-Failsafe
+progressbar2
+rq
+SQLAlchemy
+tornado
+

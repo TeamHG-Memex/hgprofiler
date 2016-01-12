@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html ng-app>
+  <head>
+    <title>HGProfiler | Loading…</title>
+    <base href="/static/dart/">
+    <link rel="icon" href="/static/img/favicon.png">
+    [% assets "less" -%]
+    <link rel="stylesheet" type="text/css" href="[[ASSET_URL]]">
+    [% endassets -%]
+    [% assets "dart" -%]
+    <script type="application/dart" src="[[ASSET_URL]]"></script>
+    [% endassets -%]
+    [% assets "javascript" -%]
+    <script type="text/javascript" src="[[ASSET_URL]]"></script>
+    [% endassets -%]
+  </head>
+  <body>
+    <div id="loading-screen">
+      <div class="loading-modal">
+        <img height='64'
+             width='64'
+             src="[[url_for('static', filename='img/spinner-login.gif')]]">
+        Loading…
+      </div>
+    </div>
+    <modal></modal>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-12">
+          <nav class="navbar navbar-inverse navbar-fixed-top"></nav>
+          <div class="main-content">
+            <ng-view></ng-view>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

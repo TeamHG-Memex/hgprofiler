@@ -1,0 +1,9 @@
+.agnostic_env
+fabfile.py
+*.pyc
+**.ropeproject/
+**/dart/.packages
+__pycache__
+nohup.out
+**.webassets-cache/
+TODO*

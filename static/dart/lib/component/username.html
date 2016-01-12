@@ -1,0 +1,105 @@
+
+<breadcrumbs crumbs=crumbs></breadcrumbs>
+
+<h1>
+  Search Usernames
+  <img ng-show='loading' src='/static/img/spinner-blue-on-white.gif'>
+</h1>
+
+<div class='row row-heading'>
+  <div class="col-sm-12">
+      <div class='input-group search-username-form'>
+          <input type='search'
+                ng-model='query'
+                ng-keypress='handleSearchKeypress($event)'
+                placeholder='Enter username'>
+
+          <button class='btn btn-primary'
+                  ng-click='searchUsername()'
+                  type='button'>
+            <i class='fa fa-search'></i> Search
+          </button>
+      </div>
+  </div>
+</div>
+
+<div class='alert alert-danger' role='alert' ng-hide='error == null'>
+  <i class='fa fa-exclamation-triangle fa-3x pull-left'></i>
+  <p><strong>{{error}}</strong></p>
+  <div class='clear'></div>
+</div>
+
+<div class='row' ng-show='awaitingResults'>
+  <div class="col-sm-12">
+      <progress-bar progress='(results.length/totalResults) * 100'
+                    type='progress-bar-success'>
+      </progress-bar>
+      <div ng-show="results.length == 0">
+       <i class="fa fa-cog fa-spin"></i> Queued
+      </div>
+
+      <div ng-show="results.length > 0">
+        <div class="row">
+          <div class="col-sm-6">
+            Searched {{results.length}} sites 
+            ({{(results.length/totalResults) * 100 | number:0}}%)
+            for "{{username}}"
+          </div>
+          <div class="col-sm-6">
+            <p class="text-right">
+              {{results[results.length -1].siteName}}: <span ng-hide="results[results.length-1].found">not</span> found
+            </p>
+          </div>
+        </div>
+      </div>
+
+  </div>
+</div>
+
+<div class="row" ng-show="!awaitingResults && results.length > 0">
+  <div class="col-sm-12">
+    <p><strong>Username "{{username}}" found on {{found}} of {{results.length}} sites.</strong></p> 
+  </div>
+</div>
+
+<div class="row" ng-repeat="result in results">
+  <div class="col-sm-12">
+    
+    <div class="panel panel-success" ng-show="result.found">
+      <div class="panel-heading">
+          <h3 class="panel-title">
+            {{result.siteName}}
+            <div class="pull-right">Found</div> 
+          </h3>
+      </div>
+      <div class="panel-body">
+        <a href="{{result.siteUrl}}" target="_blank">{{result.siteUrl}}</a>
+      </div>
+    </div>
+
+    <div class="panel panel-danger" ng-show="!result.found">
+      <div class="panel-heading">
+        <h3 class="panel-title">
+          {{result.siteName}} 
+          <div class="pull-right">Not found</div> 
+        </h3>
+      </div>
+      <div class="panel-body">
+        <a href="{{result.siteUrl}}" target="_blank">{{result.siteUrl}}</a>
+      </div>
+    </div>
+
+    <div class="panel panel-danger" ng-show="result.error != null">
+      <div class="panel-heading">
+        <h3 class="panel-title">
+          {{result.siteName}} 
+          <div class="pull-right">Error: {{result.error}}</div> 
+        </h3>
+      </div>
+      <div class="panel-body">
+        <a href="{{result.siteUrl}}" target="_blank">{{result.siteUrl}}</a>
+      </div>
+    </div>
+
+  </div>
+</div>

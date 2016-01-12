@@ -1,0 +1,45 @@
+<div ng-if='pager != null && pager.pages.length > 1' style='text-align: center'>
+  <ul class='pagination'>
+
+    <li ng-class='{"disabled": pager.previous.disabled || pagerDisabled}'>
+      <a href='{{pager.first.href}}'
+         ng-click='anchorClick($event)'
+         title='First Page'>
+        <i class='fa fa-angle-double-left'></i>
+      </a>
+    </li>
+
+    <li ng-class='{"disabled": pager.previous.disabled || pagerDisabled}'>
+      <a href='{{pager.previous.href}}'
+         ng-click='anchorClick($event)'
+         title='Previous Page'>
+        <i class='fa fa-angle-left'></i>
+      </a>
+    </li>
+
+    <li ng-class='{"disabled": page.disabled || pagerDisabled}'
+        ng-repeat='page in pager.pages'>
+      <a href='{{page.href}}'
+         ng-click='anchorClick($event)'
+         title='Page {{page.number}}'>
+        {{page.number}}
+      </a>
+    </li>
+
+    <li ng-class='{"disabled": pager.next.disabled || pagerDisabled}'>
+      <a href='{{pager.next.href}}'
+         ng-click='anchorClick($event)'
+         title='Next Page'>
+        <i class='fa fa-angle-right'></i>
+      </a>
+    </li>
+
+    <li ng-class='{"disabled": pager.next.disabled || pagerDisabled}'>
+      <a href='{{pager.last.href}}'
+         ng-click='anchorClick($event)'
+         title='Last Page'>
+        <i class='fa fa-angle-double-right'></i>
+      </a>
+    </li>
+  </ul>
+</div>

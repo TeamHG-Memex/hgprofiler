@@ -1,0 +1,47 @@
+<div class='login-modal'>
+  <h1><i class='fa fa-thumb-tack'></i> HGProfiler</h1>
+  <div class='panel panel-default'>
+    <div class='panel-heading'>
+      Log In
+    </div>
+    <div class='panel-body'>
+      <form>
+        <div class='alert alert-danger' role='alert' ng-hide='error.isEmpty'>
+          <p><strong>{{error}}</strong></p>
+          <p>
+            If you are having problems logging in, please contact your
+            administrator.
+          </p>
+        </div>
+
+        <div class='input-group'>
+          <div class='input-group-addon'>
+            <i class='fa fa-envelope-o fa-fw'></i>
+          </div>
+          <input ng-model='email'
+                 class='form-control'
+                 type='text'
+                 placeholder='E-mail Address'>
+        </div>
+
+        <div class='input-group'>
+          <div class='input-group-addon'>
+            <i class='fa fa-key fa-fw'></i>
+          </div>
+          <input ng-model='password'
+                 class='form-control'
+                 type='password'
+                 placeholder='Password'>
+        </div>
+
+        <button class='btn btn-primary btn-lg'
+                ng-disabled='email.isEmpty || password.isEmpty || buttonBusy'
+                ng-click='login()'>
+          <img src='/static/img/spinner-white-on-blue.gif'
+               ng-show='buttonBusy'>
+          Log In
+        </button>
+      </form>
+    </div>
+  </div>
+</div>

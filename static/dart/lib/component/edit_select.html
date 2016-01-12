@@ -1,0 +1,20 @@
+<span ng-hide='editing'
+      class='editable'
+      ng-class='{"editing": editing}'
+      ng-click='startEdit()'>
+  {{options[selectedIndex]}}
+</span>
+
+<select ng-show='editing'>
+  <option ng-repeat='option in options' value='{{option}}'>
+    {{option}}
+  </option>
+</select>
+
+<button ng-show='editing' ng-click='saveEdit()' class='btn btn-xs btn-success'>
+  <i class='fa fa-check-circle'></i> Save
+</button>
+
+<button ng-show='editing' ng-click='cancelEdit()' class='btn btn-xs btn-danger'>
+  <i class='fa fa-ban'></i> Cancel
+</button>
