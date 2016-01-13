@@ -32,23 +32,26 @@ class GroupListComponent extends Object
     ];
     bool allSites;
     String addGroupError;
-    Map<int> groups;
+    Map<Map> groups;
     int editingGroupId;
     List<int> editingGroupSiteIds;
     List<String> groupIds;
     final Element _element;
     String error;
     String editSitesError;
+    List<CheckboxInputElement> editSiteCheckboxes;
     String newGroupName;
     Pager pager;
     int loading = 0;
     List<Site> sites;
     bool showAdd = false;
-    string siteSearch = '';
+    String siteSearch = '';
     bool submittingGroup = false;
+    int totalSites;
 
     InputElement _inputEl;
     Router _router;
+    QueryWatcher _queryWatcher;
 
     final AuthenticationController _auth;
     final RestApiController _api;
@@ -74,13 +77,25 @@ class GroupListComponent extends Object
             this._sse.onGroup.listen(this._groupListener),
         ];
 
+        //editSiteCheckboxes.forEach((checkbox) {
+        //    listeners.add(checkbox.onChange.listen(editSite));
+        //});
+
         // ...and remove event listeners when we leave this route.
         UnsubOnRouteLeave(rh, [
             this._sse.onGroup.listen(this._groupListener),
         ]);
-
-        this._fetchCurrentPage();
+    
         this._fetchSites();
+        this._fetchCurrentPage();
+            //.then((_) {
+            //    String selector = 'input[name="edit-site-checkbox"][type="checkbox"]';
+            //    List<CheckboxInputElement> editSiteCheckboxes = querySelectorAll(selector);
+            //    editSiteCheckboxes.forEach((checkbox) {
+            //        listeners.add(checkbox.onChange.listen(editSite));
+            //    });
+            //    window.console.debug(editSiteCheckboxes);
+            //});
     }
 
     /// Show the "add profile" dialog.
@@ -106,7 +121,8 @@ class GroupListComponent extends Object
     }
 
     /// Fetch a page of profiler groups. 
-    void _fetchCurrentPage() {
+    Future _fetchCurrentPage() {
+        Completer completer = new Completer();
         this.error = null;
         this.loading++;
         String pageUrl = '/api/group/';
@@ -114,12 +130,11 @@ class GroupListComponent extends Object
             'page': this._queryWatcher['page'] ?? '1',
             'rpp': this._queryWatcher['rpp'] ?? '100',
         };
-        this.groups = new List<Group>();
+        this.groups = new Map<Map>();
 
         this._api
             .get(pageUrl, urlArgs: urlArgs, needsAuth: true)
             .then((response) {
-                this.groups = new Map<String>();
                 this.groupIds = new List<String>();
 
                 response.data['groups'].forEach((group) {
@@ -163,7 +178,11 @@ class GroupListComponent extends Object
             .catchError((response) {
                 this.error = response.data['message'];
             })
-            .whenComplete(() {this.loading--;});
+            .whenComplete(() {
+                this.loading--;
+                completer.complete();
+            });
+        return completer.future;
     }
 
     void saveGroup(String id_, String key, String value) {
@@ -178,7 +197,8 @@ class GroupListComponent extends Object
         this._api
             .put(pageUrl, body, needsAuth: true)
             .then((response) {
-                this.groups[id_][key] = value;
+                //this.groups[id_][key] = value;
+                this._fetchCurrentPage();
             })
             .catchError((response) {
                 this.error = response.data['message'];
@@ -208,26 +228,56 @@ class GroupListComponent extends Object
     }
     
     void editingGroup(int id_) {
+        this.error = null;
         this.editingGroupId = id_;
         this.editingGroupSiteIds = new List.generate(
                 this.groups[id_]['sites'].length,
                 (index) =>  this.groups[id_]['sites'][index].id);
+        String selector = 'input[name="site-checkboxes"][type="checkbox"]';
+        List<CheckboxInputElement> siteCheckboxes = this._element.querySelectorAll(selector);
+        siteCheckboxes.forEach((checkbox) {
+            if (this.editingGroupSiteIds.contains(int.parse(checkbox.value))) {
+                checkbox.checked = true;
+            } else {
+                checkbox.checked = false;
+            }
+        });
     }
 
-    void editSites(Event e, dynamic data, Function resetButton) {
-        List<int> sites = new List();
-        var query  = $('input[name="site-checkboxes"]:checked');
-        if (query.length == 0) {
-            this.editSitesError = 'You must select at least one site';
+    void editSite() {
+        String checkedSelector = 'input[name="edit-site-checkbox"][type="checkbox"]:checked'; 
+        List<CheckboxInputElement> siteCheckboxes = this._element.querySelectorAll(checkedSelector);
+        String toggleSelector = '#all-sites-toggle';
+        CheckboxInputElement toggleAllSitesCheckbox = this._element.querySelector(toggleSelector);
+        if (siteCheckboxes.length == this.totalSites) {
+            allSites = true;
         } else {
-            query.forEach((checkbox) {
-                sites.add(checkbox.value);
-            });
-            this.saveGroup(this.editingGroupId, 'sites', sites);
-            Modal.wire($("#edit-sites-modal")).hide();
+            allSites = false;
         }
-        resetButton();
     }
+
+    void saveGroupSites(Event e, dynamic data, Function resetButton) {
+        String selector = 'input[name="edit-site-checkbox"][type="checkbox"]:checked';
+        List<CheckboxInputElement> siteCheckboxes = this._element.querySelectorAll(selector);
+        window.console.debug(siteCheckboxes);
+        this.editingGroupSiteIds = new List();
+        siteCheckboxes.forEach((checkbox) {
+            this.editingGroupSiteIds.add(checkbox.value);
+        });
+        this.saveGroup(this.editingGroupId, 'sites', this.editingGroupSiteIds);
+        resetButton();
+        Modal.wire($("#edit-sites-modal")).hide();
+    }
+
+    void toggleSites() {
+        String selector = 'input[name="edit-site-checkbox"][type="checkbox"]';
+        List<CheckboxInputElement> siteCheckboxes = this._element.querySelectorAll(selector);
+        this.editingGroupSiteIds = new List();
+        siteCheckboxes.forEach((checkbox) {
+            checkbox.checked = this.allSites;
+        });
+    }
+
 
     void addGroup(Event e, dynamic data, Function resetButton) {
         List<int> sites = new List();
@@ -245,8 +295,7 @@ class GroupListComponent extends Object
         } else {
             query.forEach((checkbox) {
                 sites.add(checkbox.value);
-            });
-        }
+            }); }
 
         Map group  = {
             'name': this.newGroupName,
@@ -273,57 +322,60 @@ class GroupListComponent extends Object
             });
     }
 
-    void toggleSites() {
-        String selector = 'input[name="site-checkboxes"][type="checkbox"]';
-        List<CheckboxInputElement> siteCheckboxes = this._element.querySelectorAll(selector);
-        siteCheckboxes.forEach((checkbox) {
-            checkbox.checked = this.allSites;
-        });
 
+    /// Fetch a page of profiler sites.
+    Future _fetchPageOfSites(page) {
+        Completer completer = new Completer();
+        this.loading++;
+        String siteUrl = '/api/site/';
+        Map urlArgs = {
+            'page': page,
+            'rpp': 100,
+        };
+        int totalCount = 0;
+        Map result = new Map();
 
+        this._api
+            .get(siteUrl, urlArgs: urlArgs, needsAuth: true)
+            .then((response) {
+                if (response.data.containsKey('total_count')) {
+                    this.totalSites = response.data['total_count'];
+                }
+                response.data['sites'].forEach((site) {
+                    if (!this.sites.contains(site)) {
+                        this.sites.add(site);
+                    }
+                });
+                this.loading--;
+                completer.complete();
+            })
+            .catchError((response) {
+                this.error = response.data['message'];
+            });
+        return completer.future;
     }
 
-    /// Fetch all profiler sites. 
+    // Fetch all profiler sites.
     Future _fetchSites() {
+        Completer completer = new Completer();
+        Map result;
         this.error = null;
-        this.loading++;
-        String pageUrl = '/api/site/';
         bool finished = false;
         int page = 1;
+        this.sites = new List();
+        String siteUrl = '/api/site/';
         int totalCount = 0;
-
-        while (!finished) {
-            Map urlArgs = {
-                'page': page,
-                'rpp': 100,
-            };
-            new Future(() {
-                this._api
-                    .get(pageUrl, urlArgs: urlArgs, needsAuth: true)
-                    .then((response) {
-                        this.sites = new List<Site>();
-                        response.data['sites'].forEach((site) {
-                            this.sites.add(site);
-                        });
-                        if (response.data.containsKey('total_count')) {
-                            totalCount = response.data['total_count'];
-                        }
-                    })
-                    .catchError((response) {
-                        this.error = response.data['message'];
-                    })
-                    .whenComplete(() {});
-            }
-
-            if (totalCount == this.labels.length) {
-                finished = true;
-            } 
-            else {
+        this._fetchPageOfSites(page)
+            .then((_) {
+                int lastPage = (this.totalSites/100).ceil();
                 page++;
-            }
-        }
-        this.loading--;
-        completer.complete();
+                while(page <= lastPage) {
+                    this._fetchPageOfSites(page);
+                    page++;
+                }
+                completer.complete();
+
+            });
         return completer.future;
     }
 

@@ -73,7 +73,29 @@ class SiteComponent extends Object
         UnsubOnRouteLeave(rh, [
             this._sse.onSite.listen(this._siteListener),
         ]);
+        this.siteCategories = [
+            'blog',
+            'books',
+            'business',
+            'coding',
+            'dating',
+            'food',
+            'gaming',
+            'hacker',
+            'health',
+            'hobby',
+            'images',
+            'music',
+            'news',
+            'presos',
+            'shopping',
+            'social',
+            'support',
+            'travel',
+            'video',
+            'videos'
 
+        ];
         this._fetchCurrentPage();
     }
 
@@ -115,10 +137,8 @@ class SiteComponent extends Object
             'page': this._queryWatcher['page'] ?? '1',
             'rpp': this._queryWatcher['rpp'] ?? '10',
         };
-        window.alert('yaaaaa');
 
         this.sites = new Map<String>();
-        this.siteCategories = new List<List>();
 
         this._api
             .get(pageUrl, urlArgs: urlArgs, needsAuth: true)
@@ -146,7 +166,7 @@ class SiteComponent extends Object
                 this.siteCategories.sort();
                 // Deleting sites affects paging of results, redirect to the final page
                 // if the page no longer exists.
-                int lastPage = (response.data['total_count']/int.parse(this._queryWatcher['rpp'] ?? '10').ceil();
+                int lastPage = (response.data['total_count']/int.parse(this._queryWatcher['rpp'] ?? '10')).ceil();
 
                 if (int.parse(this._queryWatcher['page'] ?? '1') > lastPage) {
                     Uri uri = Uri.parse(window.location.toString());
@@ -164,7 +184,7 @@ class SiteComponent extends Object
 
                 this.pager = new Pager(response.data['total_count'],
                                        int.parse(this._queryWatcher['page'] ?? '1'),
-                                       resultsPerPage:int.parse(this._queryWatcher['rpp'] ?? '10');
+                                       resultsPerPage:int.parse(this._queryWatcher['rpp'] ?? '10'));
 
                 new Future(() {
                     this.siteIds = new List<String>.from(this.sites.keys);
@@ -307,10 +327,6 @@ class SiteComponent extends Object
                 break;
             }
         }
-        if(index == null) {
-           throw new NullThrownError('"${category}" not in siteCategories list'); 
-        } else {
-            return index;
-        }
+        return index;
     }
 }

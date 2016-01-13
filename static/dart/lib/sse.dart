@@ -30,3 +30,12 @@ class SseController {
         this.onGroup = this._eventSource.on['group'];
     }
 }
+
+/// A helper that unsubscribes a list of subscriptions when leaving a route.
+///
+/// This saves a lot of boilerplate code in each controller.
+void UnsubOnRouteLeave(RouteHandle rh, List<StreamSubscription> listeners) {
+    rh.onLeave.take(1).listen((e) {
+        listeners.forEach((listener) => listener.cancel());
+    });
+}

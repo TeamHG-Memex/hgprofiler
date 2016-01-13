@@ -119,14 +119,26 @@
               </div>
               <table class="table">
                 <thead>
-                  <th><input type="checkbox" ng-click="toggleSites()" ng-model='allSites'></th>
+                  <th>
+                    <input type="checkbox"
+                           id="all-sites-toggle"
+                           ng-click="toggleSites()"
+                           ng-model='allSites'>
+                    </input>
+                  </th>
                   <th>Site</th>
                   <th>Category</th>
                 </thead>
                 <tbody>
                   <tr ng-repeat='site in sites'
                       ng-show='site.name.contains(siteSearch) || site.category.contains(siteSearch)'>
-                    <td><input type="checkbox" name="site-checkboxes" value="{{site.id}}" ng-checked="editingGroupSiteIds.contains(site.id)"></td>
+                    <td>
+                      <input type="checkbox"
+                             name="site-checkboxes"
+                             value="{{site.id}}"
+                             ng-checked="editingGroupSiteIds.contains(site.id)">
+                     </input>
+                     </td>
                     <td>{{site.name}}</td>
                     <td>{{site.category}}</td>
                   </tr>
@@ -174,14 +186,28 @@
           </div>
           <table class="table">
             <thead>
-              <th><input type="checkbox" ng-click="toggleSites()" ng-model='allSites'></th>
+              <th>
+                <input type="checkbox"
+                       ng-click="toggleSites()"
+                       ng-checked="editingGroupSiteIds.length >= totalSites"
+                       ng-model='allSites'>
+                </input>
+              </th>
+              <th>{{editingGroupSiteIds.length}} {{totalSites}}</th>
               <th>Site</th>
               <th>Category</th>
             </thead>
             <tbody>
               <tr ng-repeat='site in sites'
                   ng-show='site.name.contains(siteSearch) || site.category.contains(siteSearch)'>
-                <td><input type="checkbox" name="site-checkboxes" value="{{site.id}}" ng-checked="editingGroupSiteIds.contains(site.id)"></td>
+                <td>
+                  <input type="checkbox" 
+                         name="edit-site-checkbox"
+                         value="{{site.id}}"
+                         ng-checked="editingGroupSiteIds.contains(site.id)"
+                         ng-change='editSite()'>
+                  </input>        
+                </td>
                 <td>{{site.name}}</td>
                 <td>{{site.category}}</td>
               </tr>
@@ -193,7 +219,7 @@
           <button type='button' class='btn btn-link pull-left' data-dismiss='modal'>
             Cancel
           </button>
-          <busy-button id='edit-sites-button' type='primary' click='editSites'>
+          <busy-button id='edit-sites-button' type='primary' click='saveGroupSites'>
            <i class="fa fa-check"></i> Save 
           </busy-button>
         </div>

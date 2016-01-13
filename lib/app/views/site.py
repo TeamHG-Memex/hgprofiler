@@ -294,7 +294,7 @@ class SiteView(FlaskView):
         :>json str name: the label name
         :>json str url: URL endpoint for retriving more data about this label
 
-        :status 202: created
+        :status 202: updated
         :status 400: invalid request body
         :status 401: authentication required
         :status 404: site does not exist
@@ -383,6 +383,46 @@ class SiteView(FlaskView):
 
         message = 'Site id "{}" deleted'.format(id_)
         response = jsonify(message=message)
+        response.status_code = 200
+
+        return response
+
+
+    def get_categories(self):
+        """
+        Return list of site categories.
+
+        For now, we simply return the categories that are already set in the existing/fixture data.
+        At some point, perhaps the available categories should be restricted.
+
+        **Example Response**
+
+        ..sourcecode:: json
+
+            {
+                "categories": [
+                    "books",
+                    "images",
+                    "pressies",
+                ]
+            }
+
+        :<header Content-Type: application/json
+        :<header X-Auth: the client's auth token
+
+        :>header Content-Type: application/json
+        :>json list categories: list of site categories
+        :>json str url: URL endpoint for retriving more data about this label
+
+        :status 200: ok
+        :status 400: invalid request body
+        :status 401: authentication required
+        """
+        categories = g.db.query(Site.category).distinct()
+        categories = [c[0] for c in categories]
+        categories.sort()
+
+        response = jsonify(categories=categories)
         response.status_code = 200
 
         return response
