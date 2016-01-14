@@ -73,29 +73,7 @@ class SiteComponent extends Object
         UnsubOnRouteLeave(rh, [
             this._sse.onSite.listen(this._siteListener),
         ]);
-        this.siteCategories = [
-            'blog',
-            'books',
-            'business',
-            'coding',
-            'dating',
-            'food',
-            'gaming',
-            'hacker',
-            'health',
-            'hobby',
-            'images',
-            'music',
-            'news',
-            'presos',
-            'shopping',
-            'social',
-            'support',
-            'travel',
-            'video',
-            'videos'
-
-        ];
+        this._fetchCategories();
         this._fetchCurrentPage();
     }
 
@@ -159,11 +137,7 @@ class SiteComponent extends Object
                         'saveStatusCode': (v) => this.saveSite(site['id'], 'status_code', v),
                     };
 
-                    if(!this.siteCategories.contains(site['category'])) {
-                        this.siteCategories.add(site['category']);
-                    };
                 });
-                this.siteCategories.sort();
                 // Deleting sites affects paging of results, redirect to the final page
                 // if the page no longer exists.
                 int lastPage = (response.data['total_count']/int.parse(this._queryWatcher['rpp'] ?? '10')).ceil();
@@ -194,6 +168,30 @@ class SiteComponent extends Object
                 this.error = response.data['message'];
             })
             .whenComplete(() {this.loading--;});
+    }
+
+    // Fetch list of site categories.
+    void _fetchCategories() {
+        this.loading++;
+        String categoriesUrl = '/api/site/categories';
+        this.siteCategories = new List();
+        Map urlArgs = new Map();
+
+        this._api
+            .get(categoriesUrl, urlArgs: urlArgs, needsAuth: true)
+            .then((response) {
+                response.data['categories'].forEach((category) {
+                    this.siteCategories.add(category);
+
+                });
+                this.siteCategories.sort();
+            })
+            .catchError((response) {
+                this.error = response.data['message'];
+            })
+            .whenComplete(() {
+                this.loading--;
+            });
     }
 
     /// Submit a new site.
