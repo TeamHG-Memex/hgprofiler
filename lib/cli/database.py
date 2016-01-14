@@ -61,11 +61,8 @@ class DatabaseCli(cli.BaseCli):
 
         session = app.database.get_session(self._db)
 
-        piscina_ui_url = Configuration('piscina_ui_url', 'http://192.168.31.1:8000')
-        session.add(piscina_ui_url)
-
-        piscina_proxy_url = Configuration('piscina_proxy_url', 'http://192.168.31.1:8080')
-        session.add(piscina_proxy_url)
+        for key, value in config.items('config_table'):
+            session.add(Configuration(key, value))
 
         session.commit()
 

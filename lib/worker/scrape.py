@@ -4,20 +4,20 @@ import json
 import requests
 import requests.exceptions
 from datetime import timedelta
+from tornado import httpclient, gen, ioloop, queues
 
 
 import app.database
 import app.queue
 from model import Site, Result, Group
+from model.configuration import get_config
 import worker
-from tornado import httpclient, gen, ioloop, queues
 
 USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) '\
              'Gecko/20100101 Firefox/40.1'
 
 httpclient.AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
 CONNECT_TIMEOUT = 10
-CONCURRENCY = 200
 
 
 class ScrapeException(Exception):
@@ -135,7 +135,7 @@ def scrape_username(username, group_id=None):
 
 
 @gen.coroutine
-def scrape_site_for_username(site, username):
+def scrape_site_for_username(site, username, request_timeout=10):
     """
     Download the page at `site.url` and parse for the username (asynchronous).
     """
@@ -153,7 +153,7 @@ def scrape_site_for_username(site, username):
     try:
         response = yield httpclient.AsyncHTTPClient().fetch(url,
                                                             headers=headers,
-                                                            connect_timeout=CONNECT_TIMEOUT,
+                                                            connect_timeout=request_timeout,
                                                             validate_cert=False)
         result['found'] = validate_response(site, response)
 
@@ -172,6 +172,17 @@ def scrape_sites(username, group_id=None):
     job = worker.get_job()
     redis = worker.get_redis()
     db_session = worker.get_session()
+    concurrency = get_config(db_session, 'scrape_concurrency', required=True).value
+    try:
+        concurrency = int(concurrency)
+    except:
+        raise ScrapeException('Value of scrape_concurrency must be an integer')
+
+    request_timeout = get_config(db_session, 'scrape_request_timeout', required=True).value
+    try:
+        request_timeout = int(request_timeout)
+    except:
+        raise ScrapeException('Value of scrape_request_timeout must be an integer')
 
     if group_id is not None:
         group = db_session.query(Group).get(group_id)
@@ -192,7 +203,7 @@ def scrape_sites(username, group_id=None):
                 return
 
             fetching.add(current_site)
-            scrape_result = yield scrape_site_for_username(current_site, username)
+            scrape_result = yield scrape_site_for_username(current_site, username, request_timeout)
             result = Result(
                 job_id=job.id,
                 site_name=scrape_result['site'].name,
@@ -217,7 +228,7 @@ def scrape_sites(username, group_id=None):
         q.put(site)
 
     # Start workers, then wait for the work queue to be empty.
-    for _ in range(CONCURRENCY):
+    for _ in range(concurrency):
         async_worker()
 
     yield q.join(timeout=timedelta(seconds=300))
