@@ -77,9 +77,6 @@ class GroupListComponent extends Object
             this._sse.onGroup.listen(this._groupListener),
         ];
 
-        //editSiteCheckboxes.forEach((checkbox) {
-        //    listeners.add(checkbox.onChange.listen(editSite));
-        //});
 
         // ...and remove event listeners when we leave this route.
         UnsubOnRouteLeave(rh, [
@@ -88,14 +85,6 @@ class GroupListComponent extends Object
     
         this._fetchSites();
         this._fetchCurrentPage();
-            //.then((_) {
-            //    String selector = 'input[name="edit-site-checkbox"][type="checkbox"]';
-            //    List<CheckboxInputElement> editSiteCheckboxes = querySelectorAll(selector);
-            //    editSiteCheckboxes.forEach((checkbox) {
-            //        listeners.add(checkbox.onChange.listen(editSite));
-            //    });
-            //    window.console.debug(editSiteCheckboxes);
-            //});
     }
 
     /// Show the "add profile" dialog.
@@ -229,6 +218,7 @@ class GroupListComponent extends Object
     
     void editingGroup(int id_) {
         this.error = null;
+        this.siteSearch = '';
         this.editingGroupId = id_;
         this.editingGroupSiteIds = new List.generate(
                 this.groups[id_]['sites'].length,
@@ -269,8 +259,17 @@ class GroupListComponent extends Object
         Modal.wire($("#edit-sites-modal")).hide();
     }
 
-    void toggleSites() {
+    void toggleEditSites() {
         String selector = 'input[name="edit-site-checkbox"][type="checkbox"]';
+        List<CheckboxInputElement> siteCheckboxes = this._element.querySelectorAll(selector);
+        this.editingGroupSiteIds = new List();
+        siteCheckboxes.forEach((checkbox) {
+            checkbox.checked = this.allSites;
+        });
+    }
+
+    void toggleAddSites() {
+        String selector = 'input[name="add-site-checkbox"][type="checkbox"]';
         List<CheckboxInputElement> siteCheckboxes = this._element.querySelectorAll(selector);
         this.editingGroupSiteIds = new List();
         siteCheckboxes.forEach((checkbox) {
@@ -281,15 +280,19 @@ class GroupListComponent extends Object
 
     void addGroup(Event e, dynamic data, Function resetButton) {
         List<int> sites = new List();
+        this.siteSearch = '';
         String pageUrl = '/api/group/';
         this.error = null;
         this.loading++;
 
         if (this.newGroupName == '' || this.newGroupName == null) {
             this.addGroupError = 'You must enter a name for the group';
+            resetButton();
+            this.loading--;
+            return;
         }
 
-        var query  = $('input[name="site-checkboxes"]:checked');
+        var query  = $('input[name="add-site-checkbox"]:checked');
         if (query.length == 0) {
             this.addGroupError = 'You must select at least one site';
         } else {
@@ -313,12 +316,16 @@ class GroupListComponent extends Object
                 this.addGroupError = null;
             })
             .catchError((response) {
-                this.error = response.data['message'];
+                this.loading--;
+                this.addGroupError = response.data['message'];
+                resetButton();
             })
             .whenComplete(() {
                 this.loading--;
                 resetButton();
-                Modal.wire($("#add-group-modal")).hide();
+                if (this.addGroupError == null) {
+                    Modal.wire($("#add-group-modal")).hide();
+                }
             });
     }
 
@@ -390,7 +397,6 @@ class GroupListComponent extends Object
     void _groupListener(Event e) {
         Map json = JSON.decode(e.data);
 
-        window.alert('called');
         if (json['error'] == null) {
             this._fetchCurrentPage();
         } 

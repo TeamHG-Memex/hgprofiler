@@ -91,11 +91,7 @@
 
           <div class="col-sm-12">
             <div ng-show='addGroupError != null' class='alert alert-danger' role='alert'>
-              <button ng-click="editSitesError = null" class="close" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
               <p>{{addGroupError}}</p>
-              <div class='clear'></div>
             </div>
           </div>
 
@@ -110,11 +106,10 @@
             <div class="panel panel-default">
               <div class="panel-heading">Add Sites</div>
               <div class="panel-body">
-                <div class="input-group">
-                  <input type="text" class="form-control" ng-model='siteSearch' placeholder="Search site...">
-                  <span class="input-group-btn">
-                    <button class="btn btn-default" type="button">Clear</button>
-                  </span>
+                <div class="col-sm-12">
+                  <div class="form-group">
+                    <input type="text" class="form-control" ng-model='siteSearch' placeholder="Search for...">
+                  </div>
                 </div>
               </div>
               <table class="table">
@@ -122,7 +117,7 @@
                   <th>
                     <input type="checkbox"
                            id="all-sites-toggle"
-                           ng-click="toggleSites()"
+                           ng-click="toggleAddSites()"
                            ng-model='allSites'>
                     </input>
                   </th>
@@ -134,9 +129,8 @@
                       ng-show='site.name.contains(siteSearch) || site.category.contains(siteSearch)'>
                     <td>
                       <input type="checkbox"
-                             name="site-checkboxes"
-                             value="{{site.id}}"
-                             ng-checked="editingGroupSiteIds.contains(site.id)">
+                             name="add-site-checkbox"
+                             value="{{site.id}}">
                      </input>
                      </td>
                     <td>{{site.name}}</td>
@@ -188,7 +182,7 @@
             <thead>
               <th>
                 <input type="checkbox"
-                       ng-click="toggleSites()"
+                       ng-click="toggleEditSites()"
                        ng-checked="editingGroupSiteIds.length >= totalSites"
                        ng-model='allSites'>
                 </input>

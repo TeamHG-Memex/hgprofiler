@@ -22,6 +22,7 @@ class NotificationView(FlaskView):
         'site',
         'result',
         'worker',
+        'group',
     )
 
     decorators = [login_required]
