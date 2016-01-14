@@ -8,6 +8,7 @@ import 'package:hgprofiler/component/breadcrumbs.dart';
 import 'package:hgprofiler/component/pager.dart';
 import 'package:hgprofiler/component/title.dart';
 import 'package:hgprofiler/model/result.dart';
+import 'package:hgprofiler/model/group.dart';
 import 'package:hgprofiler/rest_api.dart';
 import 'package:hgprofiler/sse.dart';
 
@@ -25,17 +26,21 @@ class UsernameComponent implements ShadowRootAware {
     ];
     int currentPage;
     String error;
-    bool loading = false;
+    int found;
+    Group selectedGroup;
+    List<Group> groups;
+    String groupDescription = 'All Sites';
+    int loading = 0;
     String jobId;
     List<Result> results;
     bool submittingUsername = false;
     bool awaitingResults = false;
     Pager pager;
     String query;
-    String username;
     int resultsPerPage = 10;
     int totalResults;
-    int found;
+    int totalGroups;
+    String username;
     String sort, sortDescription;
     List<String> urls;
 
@@ -71,6 +76,8 @@ class UsernameComponent implements ShadowRootAware {
         rh.onLeave.take(1).listen((e) {
             listeners.forEach((listener) => listener.cancel());
         });
+
+        this._fetchGroups();
     }
 
     // Request username search from background workers.
@@ -90,12 +97,16 @@ class UsernameComponent implements ShadowRootAware {
 
         String pageUrl = '/api/username/';
 
-        Map body = {
+        Map urlArgs = {
             'usernames': [this.query]
         };
 
+        if (this.selectedGroup != null) {
+            urlArgs['group'] = this.selectedGroup.id;
+        }
+
         this._api
-            .post(pageUrl, body, needsAuth: true)
+            .post(pageUrl, urlArgs, needsAuth: true)
             .then((response) {
                 this.query = '';
                 this.jobId = response.data['jobs'][0]['id'];
@@ -105,6 +116,67 @@ class UsernameComponent implements ShadowRootAware {
                 this.error = response.data['message'];
             })
             .whenComplete(() {this.submittingUsername = false;});
+    }
+
+    void setGroup(Group group) {
+        this.selectedGroup = group;
+        if(group == null) {
+            this.groupDescription = 'All Sites';
+        } else {
+            this.groupDescription = group.name;
+        }
+    }
+
+    /// Fetch a page of profiler site groups.
+    Future _fetchPageOfGroups(page) {
+        Completer completer = new Completer();
+        this.loading++;
+        String groupUrl = '/api/group/';
+        Map urlArgs = {
+            'page': page,
+            'rpp': 100,
+        };
+        int totalCount = 0;
+        this._api
+            .get(groupUrl, urlArgs: urlArgs, needsAuth: true)
+            .then((response) {
+                if (response.data.containsKey('total_count')) {
+                    this.totalGroups = response.data['total_count'];
+                }
+                response.data['groups'].forEach((group) {
+                    if (!this.groups.contains(group)) {
+                        this.groups.add(new Group.fromJson(group));
+                    }
+                });
+                this.loading--;
+                completer.complete();
+            })
+            .catchError((response) {
+                this.error = response.data['message'];
+            });
+        return completer.future;
+    }
+
+    // Fetch all profiler groups.
+    Future _fetchGroups() {
+        Completer completer = new Completer();
+        Map result;
+        this.error = null;
+        int page = 1;
+        this.groups = new List();
+        this._fetchPageOfGroups(page)
+            .then((_) {
+                int lastPage = (this.totalGroups/100).ceil();
+                page++;
+                while(page <= lastPage) {
+                    this._fetchPageOfGroups(page);
+                    page++;
+                }
+                window.console.debug(this.groups);
+                completer.complete();
+
+            });
+        return completer.future;
     }
 
     /// Listen for job results.

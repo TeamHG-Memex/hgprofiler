@@ -2,14 +2,13 @@
 
 import json
 import requests
-import time
 import requests.exceptions
 from datetime import timedelta
 
 
 import app.database
 import app.queue
-from model import Site, Result
+from model import Site, Result, Group
 import worker
 from tornado import httpclient, gen, ioloop, queues
 
@@ -91,7 +90,7 @@ def scrape_site(site, username):
     return result
 
 
-def scrape_username(username):
+def scrape_username(username, group_id=None):
     '''
     Scrape all sites for username (synchronous).
     '''
@@ -99,7 +98,13 @@ def scrape_username(username):
     job = worker.get_job()
     redis = worker.get_redis()
     db_session = worker.get_session()
-    sites = db_session.query(Site).all()
+
+    if group_id is not None:
+        group = db_session.query(Group).get(group_id)
+        sites = group.sites
+    else:
+        sites = db_session.query(Site).all()
+
     total = len(sites)
     number = 0
 
@@ -160,17 +165,22 @@ def scrape_site_for_username(site, username):
 
 
 @gen.coroutine
-def scrape_sites(username):
+def scrape_sites(username, group_id=None):
     """
     Scrape all sites for username (asynchronous).
     """
     job = worker.get_job()
     redis = worker.get_redis()
     db_session = worker.get_session()
-    sites = db_session.query(Site).all()
+
+    if group_id is not None:
+        group = db_session.query(Group).get(group_id)
+        sites = group.sites
+    else:
+        sites = db_session.query(Site).all()
+
     total = len(sites)
     q = queues.Queue()
-    start = time.time()
     fetching, fetched = set(), set()
     results = list()
 
@@ -218,12 +228,12 @@ def scrape_sites(username):
     db_session.commit()
 
 
-def search_username(username):
+def search_username(username, group=None):
     """
     Concurrently search username across all sites using an asyncronous loop.
     """
     worker.start_job()
     io_loop = ioloop.IOLoop.current()
-    io_loop.run_sync(lambda: scrape_sites(username))
+    io_loop.run_sync(lambda: scrape_sites(username, group))
     # Complete
     worker.finish_job()

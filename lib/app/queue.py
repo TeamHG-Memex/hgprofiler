@@ -12,12 +12,12 @@ _redis_worker = dict(_config.items('redis_worker'))
 _scrape_queue = Queue('scrape', connection=_redis)
 
 
-def schedule_username(username):
+def schedule_username(username, group_id=None):
     ''' Queue a job to fetch results for the specified username. '''
 
     job = _scrape_queue.enqueue_call(
         func=worker.scrape.search_username,
-        args=[username],
+        args=[username, group_id],
         timeout=_redis_worker['username_timeout']
     )
 
