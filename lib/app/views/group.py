@@ -8,12 +8,19 @@ import worker
 import app.config
 import app.queue
 from app.authorization import login_required
-from app.rest import get_int_arg
-from app.rest import url_for
-from app.rest import get_paging_arguments
+from app.rest import (get_int_arg,
+                      url_for,
+                      get_paging_arguments,
+                      validate_request_json,
+                      validate_json_attr)
 from model.group import Group
 from model.site import Site
 
+# Dictionary of group attributes used for validation of json POST/PUT requests
+GROUP_ATTRS = {
+    'name': {'type': str, 'required': True},
+    'sites': {'type': list, 'required': True},
+}
 
 class GroupView(FlaskView):
     '''
@@ -83,8 +90,10 @@ class GroupView(FlaskView):
 
                 {
                     "groups": [
-                        {"name": "gender"},
-                        {"name": "age"},
+                        {
+                            "name": "gender",
+                            "sites": [1, 2, 7]
+                        },
                         ...
                     ]
                 }
@@ -115,18 +124,11 @@ class GroupView(FlaskView):
         groups = list()
 
         # Validate input
-        for json_group in request_json['groups']:
-            if 'sites' not in json_group:
-                raise BadRequest('Sites are required for every group.')
-
-            if 'name' not in json_group:
-                raise BadRequest('Name is required for every group.')
-
-            if json_group['name'].strip() == '':
-                raise BadRequest('Group name is required')
+        for group_json in request_json['groups']:
+            validate_request_json(group_json, GROUP_ATTRS)
 
             try:
-                request_site_ids = [int(s) for s in json_group['sites']]
+                request_site_ids = [int(s) for s in group_json['sites']]
             except TypeError:
                 raise BadRequest('Sites must be integer site ids')
 
@@ -143,10 +145,10 @@ class GroupView(FlaskView):
                                  )
 
         # Create groups
-        for json_group in request_json['groups']:
+        for group_json in request_json['groups']:
             try:
                 group = Group(
-                    name=json_group['name'].lower().strip(),
+                    name=group_json['name'].lower().strip(),
                     sites=sites
                 )
                 g.db.add(group)
@@ -333,10 +335,8 @@ class GroupView(FlaskView):
                                  )
 
         if 'name' in request_json:
-            if request_json['name'].strip() != '':
-                group.name = request_json['name'].lower().strip()
-            else:
-                raise BadRequest("'name' cannot be an empty string")
+            validate_json_attr('name', GROUP_ATTRS, request_json)
+            group.name = request_json['name'].lower().strip()
 
         if 'sites' in request_json:
             try:

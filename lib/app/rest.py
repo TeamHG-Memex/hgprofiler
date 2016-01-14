@@ -1,7 +1,4 @@
 ''' Utility functions for the REST API. '''
-
-from datetime import datetime
-
 from flask import url_for as flask_url_for
 from sqlalchemy import case, extract, func
 from werkzeug.exceptions import BadRequest
@@ -112,3 +109,73 @@ def url_for(*args, **kwargs):
 
     kwargs['_external'] = True
     return flask_url_for(*args, **kwargs)
+
+
+def validate_json_attr(attr_name, attrs, request_json):
+    '''
+    Validate request_json to ensure that the the attribute `attr_name` conforms
+    to the criteria specified by the `attrs` dictionary.
+
+    Raise BadRequest on failure.
+
+    Requires that strings are not empty.
+
+    **Example**
+
+        attrs = {
+            'name': {'type': str, 'required': True},
+            'url': {'type': str, 'required': True},
+            'category': {'type': str, 'required': True},
+            'search_text': {'type': str, 'required': False},
+            'status_code': {'type': int, 'required': False},
+        }
+
+        request_json = request.get_json() # Flask request object
+        validate_json_attr('name', attrs, request_json)
+        validate_json_attr('url', attrs, request_json)
+        ...
+    '''
+    # Confirm attrbute exists in attrs.
+    try:
+        attr_type = attrs[attr_name]['type']
+    except KeyError:
+        raise BadRequest('Attribute "{}" does not exist.'.format(attr_name))
+
+    # Confirm attrbute exists in request_json.
+    try:
+        val = request_json[attr_name]
+    except KeyError:
+        raise BadRequest('{} is required.'.format(attr_name))
+
+    # Confirm attribute is of correct type.
+    if type(val) != attr_type:
+        raise BadRequest('{} must be {}.'.format(attr_name, attr_type.__name__))
+
+    # If attr_name is a string, confirm that it is not empty.
+    if attr_type == str and val.strip() == '':
+        raise BadRequest('{} cannot be empty.'.format(attr_name))
+
+
+def validate_request_json(request_json, attrs):
+    '''
+    Validate `request_json` for all attributes in `attrs`.
+    Calls validate_json_attr() on each attribute.
+
+    **Example**
+        attrs = {
+            'name': {'type': str, 'required': True},
+            'url': {'type': str, 'required': True},
+            'category': {'type': str, 'required': True},
+            'search_text': {'type': str, 'required': False},
+            'status_code': {'type': int, 'required': False},
+        }
+
+        request_json = request.get_json() # Flask request object
+        validate_request_json(request_json, attrs)
+    '''
+    for attr_name, attr_meta in attrs.items():
+        if attr_meta['required']:
+            validate_json_attr(attr_name, attrs, request_json)
+        else:
+            if attr_name in request_json:
+                validate_json_attr(attr_name, attrs, request_json)

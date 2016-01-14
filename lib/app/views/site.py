@@ -6,7 +6,10 @@ from sqlalchemy.exc import IntegrityError, DBAPIError
 
 import app.config
 from app.authorization import login_required
-from app.rest import get_int_arg, get_paging_arguments
+from app.rest import (get_int_arg,
+                      get_paging_arguments,
+                      validate_request_json,
+                      validate_json_attr)
 from model import Site
 import worker
 
@@ -18,87 +21,6 @@ SITE_ATTRS = {
     'search_text': {'type': str, 'required': False},
     'status_code': {'type': int, 'required': False},
 }
-
-
-def validate_attr(attr_name, site_json):
-    try:
-        attr_type = SITE_ATTRS[attr_name]['type']
-    except KeyError:
-        raise BadRequest('Attribute "{}" does not exist.'.format(attr_name))
-
-    try:
-        attr_type(site_json[attr_name])
-    except KeyError:
-        raise BadRequest('{} is required for all sites.'.format(attr_name))
-    except ValueError:
-        raise BadRequest(
-            '{} must be {}.'.format(
-                attr_name, SITE_ATTRS[attr_name]['type'].__name__
-            )
-        )
-
-    if attr_type == str and site_json[attr_name].strip() == '':
-        raise BadRequest(
-            '{} must be at least one character in length.'.format(attr_name)
-        )
-
-
-def validate_site_json(site_json):
-    for attr_name, attr_meta in SITE_ATTRS.items():
-        if attr_meta['required']:
-            validate_attr(attr_name, site_json)
-        else:
-            if attr_name in site_json:
-                validate_attr(attr_name, site_json)
-
-    # Validate name
-    # if 'name' not in site_json:
-    #     raise BadRequest('Name is required for all sites.')
-
-    # if site_json['name'] is None:
-    #     raise BadRequest('Name is required for all sites.')
-
-    # if site_json['name'].strip() == '':
-    #     raise BadRequest('Name is required for all sites.')
-
-    # # Validate url
-    # if 'url' not in site_json:
-    #     raise BadRequest('Url is required for all sites.')
-
-    # if site_json['url'] is None:
-    #     raise BadRequest('URL is required for all sites.')
-
-    # if site_json['url'].strip() == '':
-    #     raise BadRequest('Url is required for all sites.')
-
-    # # Validate category
-    # if 'category' not in site_json:
-    #     raise BadRequest('Category is required for all sites.')
-
-    # if site_json['category'] is None:
-    #     raise BadRequest('Category is required for all sites.')
-
-    # if site_json['category'].strip() == '':
-    #     raise BadRequest('Category is required for all sites.')
-
-    # # Validate search_text
-    # if 'search_text' in site_json:
-    #     if site_json['search_text'] is None:
-    #         raise BadRequest(
-    #             'search_text must be at least one character.'
-    #         )
-
-    #     if site_json['search_text'].strip() == '':
-    #         raise BadRequest(
-    #             'search_text must be at least one character.'
-    #         )
-
-    # # Validate status_code
-    # if 'status_code' in site_json:
-    #     try:
-    #         int(site_json['status_code'])
-    #     except:
-    #         raise BadRequest('status_code must be an integer.')
 
 
 class SiteView(FlaskView):
@@ -222,7 +144,7 @@ class SiteView(FlaskView):
 
         # Ensure all data is valid before db operations
         for site_json in request_json['sites']:
-            validate_site_json(site_json)
+            validate_request_json(site_json, SITE_ATTRS)
 
         # Save sites
         for site_json in request_json['sites']:
@@ -311,48 +233,24 @@ class SiteView(FlaskView):
 
         # Validate data and set attributes
         if 'name' in request_json:
-            validate_attr('name', request_json)
+            validate_json_attr('name', SITE_ATTRS, request_json)
             site.name = request_json['name'].lower().strip()
-            # if request_json['name'].strip() != '':
-            #     site.name = request_json['name'].lower().strip()
-            # else:
-            #     raise BadRequest('Attribute "name" cannot be an empty string')
 
         if 'url' in request_json:
-            validate_attr('url', request_json)
+            validate_json_attr('url', SITE_ATTRS, request_json)
             site.url = request_json['url'].lower().strip()
-            # if request_json['url'].strip() != '':
-            #     site.url = request_json['url'].lower().strip()
-            # else:
-            #     raise BadRequest('Attribute "url" cannot be an empty string')
 
         if 'category' in request_json:
-            validate_attr('category', request_json)
+            validate_attr('category', SITE_ATTRS, request_json)
             site.category = request_json['category'].lower().strip()
-            # if request_json['category'].strip() != '':
-            #     site.category = request_json['category'].lower().strip()
-            # else:
-            #     raise BadRequest(
-            #         'Attribute "category" cannot be an empty string'
-            #     )
 
         if 'search_text' in request_json:
-            validate_attr('search_text', request_json)
+            validate_json_attr('search_text', SITE_ATTRS, request_json)
             site.search_text = request_json['search_text'].lower().strip()
-            # if request_json['search_text'].strip() != '':
-            #     site.search_text = request_json['search_text'].lower().strip()
-            # else:
-            #     raise BadRequest(
-            #         'Attribute "search_text" cannot be an empty string'
-            #     )
 
         if 'status_code' in request_json:
-            validate_attr('status_code', request_json)
+            validate_json_attr('status_code', SITE_ATTRS, request_json)
             site.status_code = request_json['status_code'].lower().strip()
-            # try:
-            #     site.status_code = int(request_json['status_code'])
-            # except:
-            #     raise BadRequest('Attribute "status_code" must be an integer')
 
         # Save the updated label
         try:
