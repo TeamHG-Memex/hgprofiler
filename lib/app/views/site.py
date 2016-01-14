@@ -1,6 +1,6 @@
 import json
 from flask import g, jsonify, request
-from flask.ext.classy import FlaskView
+from flask.ext.classy import FlaskView, route
 from werkzeug.exceptions import BadRequest, NotFound
 from sqlalchemy.exc import IntegrityError, DBAPIError
 
@@ -25,6 +25,7 @@ SITE_ATTRS = {
 
 class SiteView(FlaskView):
     '''
+    Data about profiler sites.
     '''
 
     decorators = [login_required]
@@ -241,7 +242,7 @@ class SiteView(FlaskView):
             site.url = request_json['url'].lower().strip()
 
         if 'category' in request_json:
-            validate_attr('category', SITE_ATTRS, request_json)
+            validate_json_attr('category', SITE_ATTRS, request_json)
             site.category = request_json['category'].lower().strip()
 
         if 'search_text' in request_json:
@@ -285,13 +286,13 @@ class SiteView(FlaskView):
 
         return response
 
-
+    @route('/categories')
     def get_categories(self):
         """
         Return list of site categories.
 
         For now, we simply return the categories that are already set in the existing/fixture data.
-        At some point, perhaps the available categories should be restricted.
+        At some point, perhaps the available categories should be defined/configurable.
 
         **Example Response**
 
