@@ -132,6 +132,10 @@ class GroupView(FlaskView):
             except TypeError:
                 raise BadRequest('Sites must be integer site ids')
 
+            if len(request_site_ids) == 0:
+                raise BadRequest('At least one site is required.')
+
+
             sites = g.db.query(Site)\
                         .filter(Site.id.in_(request_site_ids))\
                         .all()
