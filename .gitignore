@@ -6,4 +6,5 @@ fabfile.py
 __pycache__
 nohup.out
 **.webassets-cache/
+pubspec.lock
 TODO*

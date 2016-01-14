@@ -145,7 +145,6 @@ def scrape_site_for_username(site, username):
         'url': url
     }
 
-    logging.debug('Trying {} - {}'.format(site.name, site.url))
     try:
         response = yield httpclient.AsyncHTTPClient().fetch(url,
                                                             headers=headers,
