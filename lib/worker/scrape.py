@@ -4,7 +4,8 @@ import json
 import requests
 import requests.exceptions
 from datetime import timedelta
-from tornado import httpclient, gen, ioloop, queues
+from tornado import httpclient, gen, ioloop, queues, escape
+from urllib.parse import quote_plus
 
 
 import app.database
@@ -39,13 +40,14 @@ def validate_site_response(site, response):
     return False
 
 
-def validate_response(site, response):
+def response_contains_username(site, response):
     """
     Parse response and test against site criteria to determine whether username exists. Used with
     tornado httpclient response object.
     """
     if response.code == site.status_code:
-        html = response.body if isinstance(response.body, str) else response.body.decode()
+        data = escape.json_decode(response.body)
+        html = data['html'] if isinstance(data['html'], str) else data['html'].decode()
         if(site.search_text in html or
            site.search_text in response.headers):
             return True
@@ -135,27 +137,34 @@ def scrape_username(username, group_id=None):
 
 
 @gen.coroutine
-def scrape_site_for_username(site, username, request_timeout=10):
+def scrape_site_for_username(site, username, splash_url, request_timeout=10):
     """
-    Download the page at `site.url` and parse for the username (asynchronous).
+    Download the page at `site.url` using Splash and parse for the username (asynchronous).
     """
-    url = site.url.replace('%s', username)
+    page_url = quote_plus(site.url.replace('%s', username))
+    url = '{}/render.json?url={}&html=1&frame=1&png=1&width=320&height=240'.format(splash_url,
+                                                                                   page_url)
     headers = {
-        'User-Agent': USER_AGENT
+        'User-Agent': USER_AGENT,
+        'X-Splash-render': 'render.json',
+        'X-Splash-timeout': '{}'.format(request_timeout)
     }
     result = {
         'site': site,
         'found': True,
         'error': None,
-        'url': url
+        'url': page_url
     }
 
     try:
         response = yield httpclient.AsyncHTTPClient().fetch(url,
                                                             headers=headers,
-                                                            connect_timeout=request_timeout,
+                                                            connect_timeout=5,
                                                             validate_cert=False)
-        result['found'] = validate_response(site, response)
+        data = escape.json_decode(response.body)
+        result['found'] = response_contains_username(site, response)
+        result['image'] = data['png']
+        result['code'] = response.code
 
     except Exception as e:
         result['error'] = e
@@ -184,6 +193,8 @@ def scrape_sites(username, group_id=None):
     except:
         raise ScrapeException('Value of scrape_request_timeout must be an integer')
 
+    splash_url = get_config(db_session, 'splash_url', required=True).value
+
     if group_id is not None:
         group = db_session.query(Group).get(group_id)
         sites = group.sites
@@ -203,7 +214,8 @@ def scrape_sites(username, group_id=None):
                 return
 
             fetching.add(current_site)
-            scrape_result = yield scrape_site_for_username(current_site, username, request_timeout)
+            scrape_result = yield scrape_site_for_username(
+                current_site, username, splash_url, request_timeout)
             result = Result(
                 job_id=job.id,
                 site_name=scrape_result['site'].name,
