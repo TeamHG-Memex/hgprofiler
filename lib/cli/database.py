@@ -1,20 +1,20 @@
-import base64
 import json
-import dateutil.parser
 import logging
 import os
+import shutil
 import subprocess
 import sys
-from textwrap import dedent
 
 from sqlalchemy.engine import reflection
-from sqlalchemy.schema import DropConstraint, DropTable, ForeignKeyConstraint, \
-                              MetaData, Table
-
+from sqlalchemy.schema import (DropConstraint,
+                               DropTable,
+                               ForeignKeyConstraint,
+                               MetaData,
+                               Table)
 from app.config import get_path
 import app.database
 import cli
-from model import Base, Configuration, File, User, Site
+from model import Base, Configuration, User, Site
 import model.user
 
 
@@ -31,7 +31,7 @@ class DatabaseCli(cli.BaseCli):
             'AGNOSTIC_PASSWORD': config.get('database', 'super_password'),
             'AGNOSTIC_SCHEMA': config.get('database', 'database'),
             'AGNOSTIC_MIGRATIONS_DIR': get_path('migrations'),
-            'LANG': os.environ['LANG'], # http://click.pocoo.org/4/python3/
+            'LANG': os.environ['LANG'],  # http://click.pocoo.org/4/python3/
             'PATH': os.environ['PATH'],
         }
 
@@ -45,7 +45,7 @@ class DatabaseCli(cli.BaseCli):
 
         if process.returncode != 0:
             args = (process.returncode, process.stderr.read().decode('ascii'))
-            self._logger.error('External process `agnostic bootstrap` failed ' \
+            self._logger.error('External process `agnostic bootstrap` failed '
                                'with error code (%d):\n%s' % args)
             sys.exit(1)
 
@@ -75,8 +75,8 @@ class DatabaseCli(cli.BaseCli):
         try:
             hash_rounds = int(config.get('password_hash', 'rounds'))
         except:
-            raise ValueError('Configuration value password_hash.rounds must' \
-                             ' be an integer: %s' % rounds)
+            raise ValueError('Configuration value password_hash.rounds must'
+                             ' be an integer: %s' % hash_rounds)
 
         admin = User('admin')
         admin.agency = 'HGProfiler'
@@ -114,6 +114,17 @@ class DatabaseCli(cli.BaseCli):
 
         session.commit()
 
+    def _delete_screenshots(self):
+        ''' Delete result screenshots stored in screenshot directory. '''
+        static_dir = get_path("data")
+        screenshot_dir = os.path.join(static_dir, 'screenshot')
+        for file_object in os.listdir(screenshot_dir):
+            file_object_path = os.path.join(screenshot_dir, file_object)
+            if os.path.isfile(file_object_path):
+                os.unlink(file_object_path)
+            else:
+                shutil.rmtree(file_object_path)
+
     def _drop_all(self):
         '''
         Drop database tables, foreign keys, etc.
@@ -137,7 +148,7 @@ class DatabaseCli(cli.BaseCli):
             for fk in inspector.get_foreign_keys(table_name):
                 if not fk['name']:
                     continue
-                fks.append(ForeignKeyConstraint((),(),name=fk['name']))
+                fks.append(ForeignKeyConstraint((), (), name=fk['name']))
 
             tables.append(Table(table_name, metadata, *fks))
             all_fks.extend(fks)
@@ -163,7 +174,7 @@ class DatabaseCli(cli.BaseCli):
 
         arg_parser.add_argument(
             'action',
-            choices=('build','drop'),
+            choices=('build', 'drop'),
             help='Specify what action to take.'
         )
 
@@ -198,6 +209,8 @@ class DatabaseCli(cli.BaseCli):
         if args.action in ('build', 'drop'):
             self._logger.info('Dropping database tables.')
             self._drop_all()
+            self._logger.info('Deleting screenshot images.')
+            self._delete_screenshots()
 
         if args.action == 'build':
             self._logger.info('Running Agnostic\'s bootstrap.')

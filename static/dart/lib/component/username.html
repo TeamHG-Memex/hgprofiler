@@ -7,44 +7,44 @@
 </h1>
 
 <div class='row row-heading'>
-  <div class="col-sm-9 col-sm-offset-3">
-    <div class="form-inline search-username-form">
-      <div class="form-group">
-
-            <input type='search'
-                  ng-model='query'
-                  ng-keypress='handleSearchKeypress($event)'
-                  placeholder='Enter username'>
-            </input>
-
-            <button class='btn btn-primary'
-                    ng-click='searchUsername()'
-                    type='button'>
-              <i class='fa fa-search'></i> Search
-            </button>
-
-            <div class='btn-group'>
-              <button type='button'
-                      class='btn btn-primary dropdown-toggle'
-                      data-toggle='dropdown'
-                      aria-expanded='false'>
-                      Group: {{groupDescription}} <span class='caret'></span>
+    <form role="form" class="form-inline search-username-form col-sm-9 col-sm-offset-3">
+        <div class="form-group col-sm-4">
+              <input type='search'
+                     class="form-control"
+                     ng-model='query'
+                     ng-keypress='handleSearchKeypress($event)'
+                     placeholder='Enter username'>
+              </input>
+        </div>
+        <div class="form-group">
+              <button class='btn btn-primary form-control'
+                      ng-click='searchUsername()'
+                      type='button'>
+                <i class='fa fa-search'></i> Search
               </button>
-              <ul class='dropdown-menu sort-by' role='menu'>
-                <li><a ng-click='setGroup(null)'>All Sites</a></li>
-                <li class='divider'></li>
-                <li ng-repeat='group in groups'>
-                  <a ng-click='setGroup(group)'>
-                    <i class='fa fa-check' ng-show='group == selectedGroup'></i>
-                    {{group.name}}
-                  </a>
-                </li>
-              </ul>
-            </div>
+        </div>
+        <div class="form-group">
+              <div class='btn-group'>
+                <button type='button'
+                        class='btn btn-primary dropdown-toggle'
+                        data-toggle='dropdown'
+                        aria-expanded='false'>
+                        Group: {{groupDescription}} <span class='caret'></span>
+                </button>
+                <ul class='dropdown-menu sort-by' role='menu'>
+                  <li><a ng-click='setGroup(null)'>All Sites</a></li>
+                  <li class='divider'></li>
+                  <li ng-repeat='group in groups'>
+                    <a ng-click='setGroup(group)'>
+                      <i class='fa fa-check' ng-show='group == selectedGroup'></i>
+                      {{group.name}}
+                    </a>
+                  </li>
+                </ul> 
+              </div> 
+        </div>
 
-      </div>
-    </div>
-  </div>
+    </form>
 </div>
 
 <div class='alert alert-danger' role='alert' ng-hide='error == null'>
@@ -98,6 +98,11 @@
       </div>
       <div class="panel-body">
         <a href="{{result.siteUrl}}" target="_blank">{{result.siteUrl}}</a>
+        <img class="thumbnail pull-right"
+            data-toggle="modal"
+            data-target="#screenshot"
+            ng-click="setScreenshot(result.siteName, result.image)"
+            src="/static/screenshot/{{result.image}}" />
       </div>
     </div>
 
@@ -125,5 +130,23 @@
       </div>
     </div>
 
+  </div>
+</div>
+
+<div class='modal fade screenshot' id='screenshot' role='dialog'>
+  <div class='modal-dialog'>
+    <div class='modal-content'>
+      <div class='modal-header'>
+        <h4 class='modal-title'>{{screenshotTitle}}</h4>
+      </div>
+      <div class='modal-body'>
+        <img src="/static/screenshot/{{screenshotImage}}" class="screenshot" />
+      </div>
+      <div class='modal-footer'>
+        <button type='button' class='btn btn-link pull-right' data-dismiss='modal'>
+          Close
+        </button>
+      </div>
+    </div>
   </div>
 </div>

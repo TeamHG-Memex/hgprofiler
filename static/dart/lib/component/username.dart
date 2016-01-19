@@ -38,6 +38,8 @@ class UsernameComponent implements ShadowRootAware {
     Pager pager;
     String query;
     int resultsPerPage = 10;
+    String screenshotImage;
+    String screenshotTitle;
     int totalResults;
     int totalGroups;
     String username;
@@ -127,6 +129,11 @@ class UsernameComponent implements ShadowRootAware {
         }
     }
 
+    void setScreenshot(String siteName, String image) {
+        this.screenshotImage = image;
+        this.screenshotTitle = siteName;
+    }
+
     /// Fetch a page of profiler site groups.
     Future _fetchPageOfGroups(page) {
         Completer completer = new Completer();
@@ -167,8 +174,7 @@ class UsernameComponent implements ShadowRootAware {
         this._fetchPageOfGroups(page)
             .then((_) {
                 int lastPage = (this.totalGroups/100).ceil();
-                page++;
-                while(page <= lastPage) {
+                page++; while(page <= lastPage) {
                     this._fetchPageOfGroups(page);
                     page++;
                 }
@@ -194,8 +200,6 @@ class UsernameComponent implements ShadowRootAware {
             }
         }
     }
-
-
     /// Handle a keypress in the search input field.
     void handleSearchKeypress(event) {
         if (event.keyCode == KeyCode.ENTER) {
