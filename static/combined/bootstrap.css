@@ -6882,6 +6882,7 @@ username .search-username-form input[type=search] {
   width: 100%;
   text-align: center;
   color: #555555;
+  margin-bottom: 10px;
 }
 username .search-username-form .btn-group {
   width: 100%;
