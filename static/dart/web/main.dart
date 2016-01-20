@@ -30,8 +30,8 @@ import 'package:hgprofiler/component/progress_bar.dart';
 import 'package:hgprofiler/component/site.dart';
 import 'package:hgprofiler/component/sort.dart';
 import 'package:hgprofiler/component/title.dart';
-//import 'package:hgprofiler/component/user/list.dart';
-//import 'package:hgprofiler/component/user/view.dart';
+import 'package:hgprofiler/component/user/list.dart';
+import 'package:hgprofiler/component/user/view.dart';
 import 'package:hgprofiler/component/username.dart';
 import 'package:hgprofiler/decorator/current_route.dart';
 import 'package:hgprofiler/formatter/date.dart';
@@ -88,8 +88,8 @@ class HGProfilerApplication extends Module {
         bind(SseController);
         bind(TitleComponent);
         bind(TitleService);
-        //bind(UserComponent);
-        //bind(UserListComponent);
+        bind(UserComponent);
+        bind(UserListComponent);
         bind(UsernameComponent);
     }
 }
