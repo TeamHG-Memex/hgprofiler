@@ -6,114 +6,128 @@
   </h1>
 </div>
 
-<h2>
-  Workers
-  <img ng-show='loadingWorkers' src='/static/img/spinner-blue-on-white.gif'>
-</h2>
 
-<table class='table table-striped'>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Queues</th>
-      <th>State</th>
-      <th>Current Task</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr ng-show='workers.length == 0'>
-      <td colspan='100' class='no-rows'>There are no workers.</td>
-    </tr>
-    <tr ng-repeat='worker in workers'>
-      <td>{{worker['name']}}</td>
-      <td>{{worker['queues'].join(', ')}}</td>
-      <td>{{worker['state']}}</td>
-      <td>
-        <span ng-show='worker["current_job"] == null'>N/A</span>
-        <div ng-show='worker["current_job"] != null'>
-          <span ng-show='worker["current_job"]["description"] == null'>
-            No description.
-          </span>
-          <span ng-show='worker["current_job"]["description"] != null'>
-            {{worker["current_job"]["description"]}}
-          </span>
-          <span ng-show='worker["current_job"]["progress"] != null'>
-            ({{worker["current_job"]["progress"] * 100 | number:0}}%)
-          </span>
-          <progress-bar ng-show='worker["current_job"]["progress"] != null'
-                        type='info'
-                        progress='worker["current_job"]["progress"] * 100'>
-          </progress-bar>
-        </div>
-      </td>
-    </tr>
-  </tbody>
-</table>
+<div class="panel panel-default">
+  <div class="panel-heading">
+      <i class="fa fa-bars"></i>
+      Workers
+      <img ng-show='loadingWorkers' src='/static/img/spinner-white-snake.gif'>
+  </div>
+  <div class="panel-body">
+    <table class='table table-striped'>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Queues</th>
+          <th>State</th>
+          <th>Current Task</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-show='workers.length == 0'>
+          <td colspan='100' class='no-rows'>There are no workers.</td>
+        </tr>
+        <tr ng-repeat='worker in workers'>
+          <td>{{worker['name']}}</td>
+          <td>{{worker['queues'].join(', ')}}</td>
+          <td>{{worker['state']}}</td>
+          <td>
+            <span ng-show='worker["current_job"] == null'>N/A</span>
+            <div ng-show='worker["current_job"] != null'>
+              <span ng-show='worker["current_job"]["description"] == null'>
+                No description.
+              </span>
+              <span ng-show='worker["current_job"]["description"] != null'>
+                {{worker["current_job"]["description"]}}
+              </span>
+              <span ng-show='worker["current_job"]["progress"] != null'>
+                ({{worker["current_job"]["progress"] * 100 | number:0}}%)
+              </span>
+              <progress-bar ng-show='worker["current_job"]["progress"] != null'
+                            type='info'
+                            progress='worker["current_job"]["progress"] * 100'>
+              </progress-bar>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
 
-<h2>
-  Queues
-  <img ng-show='loadingQueues' src='/static/img/spinner-blue-on-white.gif'>
-</h2>
 
-<table class='table table-striped'>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Pending Tasks</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr ng-show='queues.length == 0'>
-      <td colspan='100' class='no-rows'>There are no queues.</td>
-    </tr>
-    <tr ng-repeat='queue in queues'>
-      <td>{{queue['name']}}</td>
-      <td>{{queue['pending_tasks']}}</td>
-    </tr>
-  </tbody>
-</table>
+<div class="panel panel-default">
+  <div class="panel-heading">
+      <i class="fa fa-bars"></i>
+      Queues 
+      <img ng-show='loadingQueues' src='/static/img/spinner-white-snake.gif'>
+  </div>
+  <div class="panel-body">
+    <table class='table table-striped'>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Pending Tasks</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-show='queues.length == 0'>
+          <td colspan='100' class='no-rows'>There are no queues.</td>
+        </tr>
+        <tr ng-repeat='queue in queues'>
+          <td>{{queue['name']}}</td>
+          <td>{{queue['pending_tasks']}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
 
-<h2>
-  Failed Tasks
-  <img ng-show='loadingFailedTasks' src='/static/img/spinner-blue-on-white.gif'>
-</h2>
-
-<table class='table table-striped'>
-  <thead>
-    <tr>
-      <th>Description</th>
-      <th>Original Queue</th>
-      <th>Detail</th>
-      <th>&nbsp;</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr ng-show='failed.length == 0'>
-      <td colspan='100' class='no-rows'>There are no failed tasks.</td>
-    </tr>
-    <tr ng-repeat='failedTask in failed'>
-      <td>
-        <span ng-if='failedTask["description"] != null'>
-          {{failedTask['description']}}
-        </span>
-        <span ng-if='failedTask["description"] == null' class='no-description'>
-          <em>No description.</em>
-        </span>
-      </td>
-      <td>{{failedTask['original_queue']}}</td>
-      <td>
-        <pre><code>ID: {{failedTask['id']}}
-Function: {{failedTask['function']}}
-{{failedTask['exception']}}</code></pre>
-      </td>
-      <td>
-        <busy-button type='danger'
-                     size='sm'
-                     click='removeFailedTask'
-                     data='failedTask["id"]'>
-          <i class='fa fa-trash'></i> Remove
-        </busy-button>
-      </td>
-    </tr>
-  </tbody>
-</table>
+<div class="panel panel-default">
+  <div class="panel-heading">
+      <i class="fa fa-bars"></i>
+      Failed Tasks 
+      <img ng-show='loadingFailedTasks' src='/static/img/spinner-white-snake.gif'>
+  </div>
+  <div class="panel-body">
+    <table class='table table-striped'>
+      <thead>
+        <tr>
+          <th>Description</th>
+          <th>Original Queue</th>
+          <th>Detail</th>
+          <th>&nbsp;</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-show='failed.length == 0'>
+          <td colspan='100' class='no-rows'>There are no failed tasks.</td>
+        </tr>
+        <tr ng-repeat='failedTask in failed'>
+          <td>
+            <span ng-if='failedTask["description"] != null'>
+              {{failedTask['description']}}
+            </span>
+            <span ng-if='failedTask["description"] == null' class='no-description'>
+              <em>No description.</em>
+            </span>
+          </td>
+          <td>{{failedTask['original_queue']}}</td>
+          <td>
+            <pre><code>ID: {{failedTask['id']}}
+    Function: {{failedTask['function']}}
+    {{failedTask['exception']}}</code></pre>
+          </td>
+          <td>
+            <busy-button type='danger'
+                         size='sm'
+                         click='removeFailedTask'
+                         data='failedTask["id"]'>
+              <i class='fa fa-trash'></i> Remove
+            </busy-button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

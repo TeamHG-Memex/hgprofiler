@@ -6239,6 +6239,7 @@ body {
   -ms-user-select: none;
   user-select: none;
   cursor: default;
+  background-color: #f8f8f8;
 }
 button {
   transition: opacity 0.75s;
@@ -6330,6 +6331,38 @@ td {
 }
 .view-all {
   text-align: center;
+}
+.panel-default > .panel-heading {
+  color: white;
+  background-color: #222222;
+}
+.btn-primary {
+  color: white;
+  background-color: #222222;
+  border-color: #222222;
+}
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary.focus,
+.btn-primary:active,
+.btn-primary.active,
+.open > .dropdown-toggle.btn-primary {
+  color: black;
+  background-color: white;
+  border-color: black;
+}
+home h1 {
+  font-size: 94px;
+}
+home p {
+  font-size: 34px;
+}
+home .center {
+  text-align: center;
+}
+home .jumbotron {
+  background-color: #222222;
+  color: white;
 }
 background-tasks table tr td pre {
   overflow-x: auto;
@@ -6472,7 +6505,7 @@ heatmap text.legend {
   fill: #555555;
 }
 div#loading-screen {
-  background-color: #337ab7;
+  background-color: #222222;
   color: white;
   position: fixed;
   top: 0;
@@ -6600,6 +6633,9 @@ nav a.dropdown-toggle.user img {
 site .table.wrap td {
   word-wrap: break-word;
   word-break: break-word;
+}
+site .btn-add {
+  margin-bottom: 10px;
 }
 group-list .modal-dialog {
   overflow-y: initial !important;
@@ -6799,6 +6835,13 @@ user .form-group select {
 user-list td {
   vertical-align: middle !important;
 }
+username .jumbotron {
+  background-color: #222222;
+  color: white;
+}
+username .jumbotron h1 {
+  font-size: 34px;
+}
 username .screenshot img {
   width: 100%;
   height: 100%;
@@ -6839,10 +6882,51 @@ username .search-username-form .dropdown-menu {
   width: 100%;
 }
 username .thumbnail {
+  height: 100%;
+  width: 100%;
+  border: none;
+  padding: 0px;
+  margin-bottom: 0px;
+  border-bottom-right-radius: 0px;
+  border-bottom-left-radius: 0px;
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
+}
+username .panel-danger > .panel-heading {
+  background-color: white;
+}
+username .panel-success > .panel-heading {
+  background-color: white;
+}
+username .panel-body {
   border-style: solid;
-  border-width: 2px;
-  height: 100px;
-  width: 100px;
+  border-color: white;
+  border-width: 1px;
+  border-top-right-radius: 3px;
+  border-top-left-radius: 3px;
+  border-bottom: 0px;
+  padding: 0px;
+}
+username .panel-footer {
+  border-style: solid;
+  border-width: 1px;
+  color: white;
+  text-align: right;
+}
+username .panel-footer a {
+  color: white;
+}
+username .found {
+  background-color: #a3c86d;
+  border-color: #a3c86d;
+}
+username .not-found {
+  background-color: #fdd761;
+  border-color: #fdd761;
+}
+username .error {
+  background-color: #ff7857;
+  border-color: #ff7857;
 }
 username .tip {
   color: #555555;

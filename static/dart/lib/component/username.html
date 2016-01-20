@@ -1,9 +1,15 @@
 
 <breadcrumbs crumbs=crumbs></breadcrumbs>
 
+<div class="jumbotron">
+  <h1><i class='fa fa-lg fa-users'></i> HGProfiler</h1>
+  <p class="pull-right">
+    Search usernames across the web
+  </p>
+</div>
+
 <h1>
-  Search Usernames
-  <img ng-show='loading > 0' src='/static/img/spinner-blue-on-white.gif'>
+  <img ng-show='loading > 0' src='/static/img/spinner-white-snake.gif'>
 </h1>
 
 <div class='row row-heading'>
@@ -85,51 +91,77 @@
     <p><strong>Username "{{username}}" found on {{found}} of {{results.length}} sites.</strong></p> 
   </div>
 </div>
-
-<div class="row" ng-repeat="result in results">
-  <div class="col-sm-12">
-    
-    <div class="panel panel-success" ng-show="result.found">
-      <div class="panel-heading">
-          <h3 class="panel-title">
-            {{result.siteName}}
-            <div class="pull-right">Found</div> 
-          </h3>
-      </div>
+<!-- For styling tests, remove when finished
+<div class="row">
+  <div class="col-md-3 col-sm-3">
+    <div class="panel">
       <div class="panel-body">
-        <a href="{{result.siteUrl}}" target="_blank">{{result.siteUrl}}</a>
-        <img class="thumbnail pull-right"
+        <img class="thumbnail"
             data-toggle="modal"
             data-target="#screenshot"
+            src="/static/screenshot/62cf5d93-8380-4eaa-a02b-8faca6db5591.jpeg">
+      </div>
+      <div class="panel-footer found">
+        <i class="fa fa-check pull-left"></i> 
+        <a href="">acme.com</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-sm-3">
+    <div class="panel">
+      <div class="panel-body">
+        <img class="thumbnail"
+            data-toggle="modal"
+            data-target="#screenshot"
+            src="/static/screenshot/959b810d-e170-4776-a546-6cf0861c71a2.jpeg">
+      </div>
+      <div class="panel-footer not-found">
+        <i class="fa fa-times"></i> 
+        <a href="">acme.com</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-sm-3">
+    <div class="panel">
+      <div class="panel-body">
+        <img class="thumbnail"
+            data-toggle="modal"
+            data-target="#screenshot"
+            src="/static/screenshot/ab7f8295-df34-4988-b4fe-0591be2600fc.jpeg">
+      </div>
+      <div class="panel-footer error">
+        <i class="fa fa-exclamation-triangle"></i> 
+        <a href="">acme.com</a>
+      </div>
+    </div>
+  </div>
+</div>
+-->
+<div class="row">
+  <div class="col-md-3 col-sm-3" ng-repeat="result in results">
+    <div class="panel">
+      <div class="panel-body">
+        <img class="thumbnail"
+            data-toggle="modal"
+            ng-show="!result.error"
+            data-target="#screenshot"
             ng-click="setScreenshot(result.siteName, result.image)"
-            src="/static/screenshot/{{result.image}}" />
+            src="/static/screenshot/{{result.image}}">
+            <span ng-show="result.error">N/A</span>
+      </div>
+      <div ng-show="result.error" class="panel-footer error">
+        <i class="fa fa-exclamation-triangle pull-left"></i> 
+        <a href="{{result.siteUrl}}">{{result.siteName}}</a>
+      </div>
+      <div ng-show="!result.error && result.found" class="panel-footer found">
+        <i class="fa fa-check pull-left"></i> 
+        <a href="{{result.siteUrl}}">{{result.siteName}}</a>
+      </div>
+      <div ng-show="!result.error && !result.found" class="panel-footer not-found">
+        <i class="fa fa-times pull-left"></i> 
+        <a href="{{result.siteUrl}}">{{result.siteName}}</a>
       </div>
     </div>
-
-    <div class="panel panel-danger" ng-show="!result.found">
-      <div class="panel-heading">
-        <h3 class="panel-title">
-          {{result.siteName}} 
-          <div class="pull-right">Not found</div> 
-        </h3>
-      </div>
-      <div class="panel-body">
-        <a href="{{result.siteUrl}}" target="_blank">{{result.siteUrl}}</a>
-      </div>
-    </div>
-
-    <div class="panel panel-danger" ng-show="result.error != null">
-      <div class="panel-heading">
-        <h3 class="panel-title">
-          {{result.siteName}} 
-          <div class="pull-right">Error: {{result.error}}</div> 
-        </h3>
-      </div>
-      <div class="panel-body">
-        <a href="{{result.siteUrl}}" target="_blank">{{result.siteUrl}}</a>
-      </div>
-    </div>
-
   </div>
 </div>
 

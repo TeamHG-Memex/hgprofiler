@@ -1,29 +1,6 @@
 <breadcrumbs crumbs=crumbs></breadcrumbs>
 
-<div class='buttons'>
-  
-  <div class='btn-group pull-right'>
-    <a class='btn btn-primary btn-sm pull-right'
-       ng-disabled='showAdd'
-       ng-click='showAddDialog()'>
-      <i class='fa fa-plus'></i>
-      Add Sites 
-    </a>
-  </div>
 
-</div>
-
-<h1>
-  Sites
-  <img ng-show='loading > 0' src='/static/img/spinner-blue-on-white.gif'>
-</h1>
-
-<div class="row">
-  <div class="col-sm-12">
-    Showing {{pager.startingAt | number}}-{{pager.endingAt | number}}
-    of {{pager.totalResults | number}} sites.
-  </div>
-</div>
 
 <div class='alert alert-danger' role='alert' ng-show='error != null'>
   {{error}}
@@ -140,70 +117,87 @@
 </div>
 
 
-<div class="row">
-  <div class="col-sm-12">
-    <pager pager='pager'
-          disabled='loading'></pager>
-  </div>
-</div>
 
-<div class="container">
-  <div class="row">
-    <div class="col-sm-12">
-      <div class="table-responsive">
-        <table ng-show='sites != null' class='table table-striped wrap'>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>URL</th>
-              <th>Search Text</th>
-              <th>Status Code</th>
-              <th>Category</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr ng-repeat='id in siteIds'>
-              <td class="col-sm-1">
-                <edit-text text='sites[id]["name"]'
-                           onsave='sites[id]["saveName"]'
-                           >
-                </edit-text>
-              </td>
-              <td class="col-sm-4">
-                <edit-text text='sites[id]["url"]'
-                           onsave='sites[id]["saveUrl"]'
-                           size='50'>
-                </edit-text>
-              </td>
-              <td class="col-sm-3">
-                <edit-text text='sites[id]["searchText"]'
-                           onsave='sites[id]["saveSearchText"]'
-                           size='20'>
-                </edit-text>
-              </td>
-              <td class="col-sm-1">
-                <edit-text text='sites[id]["statusCode"].toString()'
-                           onsave='sites[id]["saveStatusCode"]'
-                           size='15'>
-                </edit-text>
-              </td>
-              <td class="col-sm-2">
-                <edit-select options='siteCategories'
-                             onsave='sites[id]["saveCategory"]'
-                             selected-index='siteCategoryIndex(sites[id]["category"])'>
-               </edit-select>
-              </td>
-              <td class="col-sm-1">
-                <button class="btn btn-default btn-xs" ng-click="deleteSite(id)">
-                  <i class='fa fa-trash'></i>
-                  Delete
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div<>
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <i class="fa fa-bars"></i>
+      Sites
+      <img ng-show='loading > 0' src='/static/img/spinner-white-snake.gif'>
+    </div>
+    <div class="panel-body">
+
+      <div class="row">
+        <div class="col-sm-12">
+          Showing {{pager.startingAt | number}}-{{pager.endingAt | number}}
+          of {{pager.totalResults | number}} sites.
+          <button class='btn btn-primary btn-sm pull-right btn-add'
+             ng-disabled='showAdd'
+             ng-click='showAddDialog()'>
+            <i class='fa fa-plus'></i>
+            Add Sites 
+          </button>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-sm-12">
+
+            <table ng-show='sites != null' class='table table-responsive table-striped wrap'>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>URL</th>
+                  <th>Search Text</th>
+                  <th>Status Code</th>
+                  <th>Category</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr ng-repeat='id in siteIds'>
+                  <td class="col-sm-1">
+                    <edit-text text='sites[id]["name"]'
+                               onsave='sites[id]["saveName"]'
+                               >
+                    </edit-text>
+                  </td>
+                  <td class="col-sm-4">
+                    <edit-text text='sites[id]["url"]'
+                               onsave='sites[id]["saveUrl"]'
+                               size='50'>
+                    </edit-text>
+                  </td>
+                  <td class="col-sm-3">
+                    <edit-text text='sites[id]["searchText"]'
+                               onsave='sites[id]["saveSearchText"]'
+                               size='20'>
+                    </edit-text>
+                  </td>
+                  <td class="col-sm-1">
+                    <edit-text text='sites[id]["statusCode"].toString()'
+                               onsave='sites[id]["saveStatusCode"]'
+                               size='15'>
+                    </edit-text>
+                  </td>
+                  <td class="col-sm-3">
+                    <edit-select options='siteCategories'
+                                 onsave='sites[id]["saveCategory"]'
+                                 selected-index='siteCategoryIndex(sites[id]["category"])'>
+                   </edit-select>
+                   <a ng-click="deleteSite(id)" class="pull-right">
+                    <i class='fa fa-trash'></i>
+                  </a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+        </div>
+        <div class="row">
+          <div class="col-sm-12">
+            <pager pager='pager'
+                  disabled='loading'></pager>
+          </div>
+        </div>
+
+        </div>
     </div>
   </div>
-</div>
