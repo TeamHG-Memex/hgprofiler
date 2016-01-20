@@ -1,54 +1,63 @@
 <breadcrumbs crumbs=crumbs></breadcrumbs>
 
-<button ng-if='auth.isAdmin()'
-        class='btn btn-primary pull-right'
-        data-toggle='modal'
-        href='#add-user-modal'>
-  <i class='fa fa-user-plus'></i>
-  Add New User
-</button>
+<div class="panel panel-default">
+  <div class="panel-heading">
+      <i class="fa fa-bars"></i>
+      Users 
+      <img ng-show='loading' src='/static/img/spinner-white-snake.gif'>
+  </div>
+  <div class="panel-body">
+    <div class="row">
+      <div class="col-sm-12">
+        Showing {{pager.startingAt | number}}-{{pager.endingAt | number}}
+        of {{pager.totalResults | number}} sites.
+        <button ng-if='auth.isAdmin()'
+                class='btn btn-primary pull-right'
+                data-toggle='modal'
+                href='#add-user-modal'>
+          <i class='fa fa-user-plus'></i>
+          Add New User
+        </button>
+      </div>
+    </div>
+    <table class='table table-striped'>
+      <thead>
+        <tr>
+          <th>&nbsp;</th>
+          <th>Name</th>
+          <th>Agency</th>
+          <th>E-mail <b class='caret'></b></th>
+          <th>Phone</th>
+          <th>Role</th>
+          <th>&nbsp;</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-show='users.length == 0'>
+          <td colspan='100' class='no-rows'>No users found.</td>
+        </tr>
 
-<h1>
-  User Directory
-  <img ng-show='loading' src='/static/img/spinner-blue-on-white.gif'>
-</h1>
+        <tr ng-repeat='user in users'>
+          <td><img ng-src='data:image/png;base64,{{user.thumb}}'></td>
+          <td>{{user.name}}</td>
+          <td>{{user.agency}}</td>
+          <td><a href='mailto:{{user.email}}?subject=HGProfiler' target="_top">{{user.email}}</a></td>
+          <td>{{user.phone}}</td>
+          <td>{{user.isAdmin ? 'Administrator' : 'User'}}</td>
+          <td><a class='btn btn-success btn-sm' href='/user/{{user.id}}'>View</a></td>
+        </tr>
+      </tbody>
+    </table>
 
-<p>
-  Showing {{pager.startingAt | number}}-{{pager.endingAt | number}}
-  of {{pager.totalResults | number}} users.
-</p>
+    <div class="row">
+      <div class="col-sm-12">
+        <pager pager='pager'
+               disabled='loading'></pager>
+      </div>
+    </div>
 
-<pager pager='pager'
-       disabled='loading'></pager>
-
-<table class='table table-striped'>
-  <thead>
-    <tr>
-      <th>&nbsp;</th>
-      <th>Name</th>
-      <th>Agency</th>
-      <th>E-mail <b class='caret'></b></th>
-      <th>Phone</th>
-      <th>Role</th>
-      <th>&nbsp;</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr ng-show='users.length == 0'>
-      <td colspan='100' class='no-rows'>No users found.</td>
-    </tr>
-
-    <tr ng-repeat='user in users'>
-      <td><img ng-src='data:image/png;base64,{{user.thumb}}'></td>
-      <td>{{user.name}}</td>
-      <td>{{user.agency}}</td>
-      <td><a href='mailto:{{user.email}}?subject=HGProfiler' target="_top">{{user.email}}</a></td>
-      <td>{{user.phone}}</td>
-      <td>{{user.isAdmin ? 'Administrator' : 'User'}}</td>
-      <td><a class='btn btn-success btn-sm' href='/user/{{user.id}}'>View</a></td>
-    </tr>
-  </tbody>
-</table>
+  </div>
+</div>
 
 <div class='modal fade' id='add-user-modal' role='dialog'>
   <div class='modal-dialog'>
