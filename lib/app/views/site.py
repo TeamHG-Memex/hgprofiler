@@ -268,6 +268,7 @@ class SiteView(FlaskView):
 
     def delete(self, id_):
         '''
+        Delete site identified by `id_`.
         '''
         # Get site.
         id_ = get_int_arg('id_', id_)
@@ -277,8 +278,13 @@ class SiteView(FlaskView):
             raise NotFound("Site '%s' does not exist." % id_)
 
         # Delete site
-        g.db.delete(site)
-        g.db.commit()
+        try:
+            g.db.delete(site)
+            g.db.commit()
+        except IntegrityError:
+            g.db.rollback()
+            raise BadRequest('"{}" must be removed from all groups before deleting.'
+                             .format(site.name))
 
         message = 'Site id "{}" deleted'.format(id_)
         response = jsonify(message=message)
