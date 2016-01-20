@@ -39,6 +39,18 @@ button {
     display: initial;
     visibility: hidden !important;
   }
+
+  .dropdown-toggle {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.dropdown-menu > li {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 button img.spinner {
@@ -75,6 +87,7 @@ th, td {
 textarea {
   border: 1px solid @gray-lighter;
 }
+
 
 .btn.btn-default {
   color: @gray;

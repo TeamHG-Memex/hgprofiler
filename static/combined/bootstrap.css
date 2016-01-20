@@ -6248,6 +6248,16 @@ button img.ng-hide {
   display: initial;
   visibility: hidden !important;
 }
+button .dropdown-toggle {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dropdown-menu > li {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 button img.spinner {
   margin: -4px -3px 0 -1px;
 }
