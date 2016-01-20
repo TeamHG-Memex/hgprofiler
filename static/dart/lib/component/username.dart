@@ -22,7 +22,6 @@ class UsernameComponent implements ShadowRootAware {
     Map backgroundTask;
     List<Breadcrumb> crumbs = [
         new Breadcrumb('HGProfiler', '/'),
-        new Breadcrumb('Usernames', '/username'),
     ];
     int currentPage;
     String error;

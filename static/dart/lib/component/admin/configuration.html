@@ -1,35 +1,36 @@
 <breadcrumbs crumbs=crumbs></breadcrumbs>
 
-<h1>
-  Configuration
-  <img ng-show='loading > 0' src='/static/img/spinner-blue-on-white.gif'>
-</h1>
-
-<p>
-  Manage HGProfiler settings.
-</p>
 
 <div class='alert alert-danger' role='alert' ng-show='error != null'>
   {{error}}
 </div>
 
-<table ng-show='configuration != null' class='table table-striped'>
-  <thead>
-    <tr>
-      <th width='25%'>Key</th>
-      <th width='75%'>Value</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr ng-repeat='key in keys'>
-      <td>
-        {{key}}
-      </td>
-      <td>
-        <edit-text text='configuration[key]["value"]'
-                   onsave='configuration[key]["save"]'
-                   size='60'></edit-text>
-      </td>
-    </tr>
-  </tbody>
-</table>
+<div class="panel panel-default">
+  <div class="panel-heading">
+      <i class="fa fa-bars"></i>
+      Configuration 
+      <img ng-show='loading > 0' src='/static/img/spinner-white-snake.gif'>
+  </div>
+  <div class="panel-body">
+    <table ng-show='configuration != null' class='table table-striped'>
+      <thead>
+        <tr>
+          <th width='25%'>Key</th>
+          <th width='75%'>Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat='key in keys'>
+          <td>
+            {{key}}
+          </td>
+          <td>
+            <edit-text text='configuration[key]["value"]'
+                       onsave='configuration[key]["save"]'
+                       size='60'></edit-text>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

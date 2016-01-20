@@ -96,7 +96,7 @@ class AuthenticationController {
 
         this._notLoggedInCompleter.future.then((result) {
             if (!result && this._router.activePath.length == 0) {
-                this._router.go('home', {});
+                this._router.go('username', {});
             }
         });
     }

@@ -31,11 +31,11 @@ class HGProfilerRouteInitializer implements Function {
                 preEnter: auth.requireLogin,
                 viewHtml: '<configuration-list></configuration-list>'
             ),
-            'home': ngRoute(
-                path: '/',
-                preEnter: auth.requireLogin,
-                viewHtml: '<home></home>'
-            ),
+            //'home': ngRoute(
+            //    path: '/',
+            //    preEnter: auth.requireLogin,
+            //    viewHtml: '<home></home>'
+            //),
             'login': ngRoute(
                 path: '/login',
                 preEnter: auth.requireNoLogin,
@@ -52,7 +52,7 @@ class HGProfilerRouteInitializer implements Function {
                 viewHtml: '<site></site>'
             ),
             'username':ngRoute(
-                path: '/username',
+                path: '/',
                 preEnter: auth.requireLogin,
                 viewHtml: '<username></username>'
             ),

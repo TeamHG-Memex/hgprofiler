@@ -1,82 +1,79 @@
 <breadcrumbs crumbs=crumbs></breadcrumbs>
 
-<div class='buttons'>
-  
-  <div class='btn-group pull-right'>
-    <button data-toggle='modal' 
-            type='button'
-            class='btn btn-primary btn-sm pull-right'
-            href="#add-group-modal">
-            <i class='fa fa-plus'></i>
-            Add Groups
-    </button>
-  </div>
-
-</div>
-
-<h1>
-  Site Groups
-  <img ng-show='loading > 0' src='/static/img/spinner-blue-on-white.gif'>
-</h1>
-
-<div class="row">
-  <div class="col-sm-12">
-    Showing {{pager.startingAt | number}}-{{pager.endingAt | number}}
-    of {{pager.totalResults | number}} groups.
-  </div>
-</div>
 
 <div class='alert alert-danger' role='alert' ng-show='error != null'>
   {{error}}
 </div>
 
 
-<div class="row">
-  <div class="col-sm-12">
-    <pager pager='pager'
-          disabled='loading'></pager>
-  </div>
-</div>
 
-<div class="row">
-  <div class="col-sm-12">
-    <div class="table-responsive">
-      <table ng-show='groups != null' class='table table-striped wrap'>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Sites</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr ng-repeat='id in groupIds'>
-            <td class="col-sm-4">
-                <edit-text text='groups[id]["name"]'
-                           onsave='groups[id]["saveName"]'
-                           >
-                </edit-text>
-            </td>
-            <td class="col-sm-3">
-              <button data-toggle='modal' 
-                      type='button'
-                      class='no-button'
-                      ng-click="editingGroup(id)"
-                      href="#edit-sites-modal">
-                      {{groups[id]["sites"].length}} sites
-              </button>
-            </td>
-            <td>
-              <button type="button" 
-                      class="btn btn-default btn-xs pull-right"
-                      ng-click="deleteGroup(id)">
-                <i class="fa fa-trash"></i> Delete
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div<>
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <i class="fa fa-bars"></i>
+    Groups 
+    <img ng-show='loading > 0' src='/static/img/spinner-white-snake.gif'>
+  </div>
+  <div class="panel-body">
+
+    <div class="row">
+      <div class="col-sm-12">
+        Showing {{pager.startingAt | number}}-{{pager.endingAt | number}}
+        of {{pager.totalResults | number}} groups.
+        <button data-toggle='modal' 
+                type='button'
+                class='btn btn-primary btn-sm pull-right'
+                href="#add-group-modal">
+                <i class='fa fa-plus'></i>
+                Add Groups
+        </button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-sm-12">
+          <table ng-show='groups != null' class='table table-responsive table-striped wrap'>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Sites</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat='id in groupIds'>
+                <td class="col-sm-4">
+                    <edit-text text='groups[id]["name"]'
+                               onsave='groups[id]["saveName"]'
+                               >
+                    </edit-text>
+                </td>
+                <td class="col-sm-3">
+                  <button data-toggle='modal' 
+                          type='button'
+                          class='no-button'
+                          ng-click="editingGroup(id)"
+                          href="#edit-sites-modal">
+                          {{groups[id]["sites"].length}} sites
+                  </button>
+                </td>
+                <td>
+                   <a ng-click="deleteGroup(id)" class="pull-right">
+                    <i class='fa fa-trash'></i>
+                  </a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-sm-12">
+        <pager pager='pager'
+              disabled='loading'></pager>
+      </div>
+    </div>
+
   </div>
 </div>
 
