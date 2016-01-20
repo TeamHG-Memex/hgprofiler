@@ -6335,6 +6335,7 @@ td {
 .panel-default > .panel-heading {
   color: white;
   background-color: #222222;
+  border-color: #222222;
 }
 .btn-primary {
   color: white;
