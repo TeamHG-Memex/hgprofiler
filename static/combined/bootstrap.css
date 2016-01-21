@@ -6404,10 +6404,10 @@ td {
   border-color: #fcc10b;
 }
 home h1 {
-  font-size: 94px;
+  font-size: 3em;
 }
 home p {
-  font-size: 34px;
+  font-size: 1.2em;
 }
 home .center {
   text-align: center;
@@ -6892,7 +6892,12 @@ username .jumbotron {
   color: white;
 }
 username .jumbotron h1 {
-  font-size: 34px;
+  font-size: 3.5em;
+}
+username .jumbotron p {
+  font-size: 1.6em;
+  text-align: right;
+  margin-bottom: 1px;
 }
 username .screenshot img {
   width: 100%;
