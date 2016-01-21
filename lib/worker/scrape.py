@@ -1,7 +1,10 @@
 import json
 import base64
 import os
-import requests
+import io
+import csv
+import time
+import zipfile
 from datetime import timedelta
 from tornado import httpclient, gen, ioloop, queues, escape
 from urllib.parse import quote_plus
@@ -19,10 +22,6 @@ USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) '\
              'Gecko/20100101 Firefox/40.1'
 
 httpclient.AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
-CONNECT_TIMEOUT = 10
-
-import logging
-logging.basicConfig(filename='/var/log/hgprofiler.log', level=logging.ERROR)
 
 
 class ScrapeException(Exception):
@@ -30,18 +29,6 @@ class ScrapeException(Exception):
 
     def __init__(self, message):
         self.message = message
-
-
-def validate_site_response(site, response):
-    """
-    Parse response and test against site criteria to determine whether username exists. Used with
-    python requests response object.
-    """
-    if response.status_code == site.status_code:
-        if(site.search_text in response.text or
-           site.search_text in response.headers):
-            return True
-    return False
 
 
 def response_contains_username(site, response):
@@ -56,88 +43,6 @@ def response_contains_username(site, response):
            site.search_text in response.headers):
             return True
     return False
-
-
-def scrape_site(site, username):
-    """
-    Download page at `site.url' and parse for username (synchronous).
-    """
-    url = site.url.replace('%s', username)
-
-    headers = {
-        'User-Agent': USER_AGENT
-    }
-
-    result = {
-        'site': site,
-        'found': True,
-        'error': None,
-        'url': url
-    }
-
-    try:
-        response = requests.get(
-            url,
-            headers=headers,
-            verify=False,
-            timeout=12
-        )
-        result['found'] = validate_site_response(site, response)
-    except requests.exceptions.ConnectionError:
-        result['found'] = False
-        result['error'] = 'Domain does not exist'
-    except requests.exceptions.Timeout:
-        result['found'] = False
-        result['error'] = 'Request timed out (limit 12 seconds)'
-    except requests.exceptions.InvalidURL:
-        result['found'] = False
-        result['error'] = 'URL invalid'
-
-    return result
-
-
-def scrape_username(username, group_id=None):
-    '''
-    Scrape all sites for username (synchronous).
-    '''
-    worker.start_job()
-    job = worker.get_job()
-    redis = worker.get_redis()
-    db_session = worker.get_session()
-
-    if group_id is not None:
-        group = db_session.query(Group).get(group_id)
-        sites = group.sites
-    else:
-        sites = db_session.query(Site).all()
-
-    total = len(sites)
-    number = 0
-
-    for site in sites:
-        scrape_result = scrape_site(site, username)
-
-        result = Result(
-            job_id=job.id,
-            site_name=scrape_result['site'].name,
-            site_url=scrape_result['url'],
-            found=scrape_result['found'],
-            total=total,
-            number=number+1
-        )
-
-        if scrape_result['error'] is not None:
-            result.error = scrape_result['error']
-
-        db_session.add(result)
-        db_session.flush()
-        redis.publish('result', json.dumps(result.as_dict()))
-        number += 1
-
-    # Save results
-    db_session.commit()
-    # Complete
-    worker.finish_job()
 
 
 @gen.coroutine
@@ -220,6 +125,7 @@ def scrape_sites(username, group_id=None):
     """
     job = worker.get_job()
     redis = worker.get_redis()
+
     db_session = worker.get_session()
     concurrency = get_config(db_session, 'scrape_concurrency', required=True).value
 
@@ -245,7 +151,7 @@ def scrape_sites(username, group_id=None):
     total = len(sites)
     q = queues.Queue()
     fetching, fetched = set(), set()
-    #results = list()
+    results = list()
 
     @gen.coroutine
     def scrape_site():
@@ -261,6 +167,7 @@ def scrape_sites(username, group_id=None):
                 current_site, username, splash_url, request_timeout)
             # Parse result
             result = yield parse_result(scrape_result, total, job.id)
+            results.add(result)
             db_session.add(result)
             db_session.flush()
 
@@ -285,8 +192,10 @@ def scrape_sites(username, group_id=None):
     yield q.join(timeout=timedelta(seconds=300))
     assert fetching == fetched
 
-    # Save results
+    # Save results to db
     db_session.commit()
+    # Save zip archive
+    yield create_zip(job.id, results)
 
 
 def search_username(username, group=None):
