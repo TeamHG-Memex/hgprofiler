@@ -158,7 +158,7 @@ class AuthenticationController {
     void _redirect(bool verified) {
         if (verified) {
             if (this._stashedUrl == null) {
-                this._router.go('home', {});
+                this._router.go('username', {});
             } else {
                 this._router.gotoUrl(this._stashedUrl);
                 this._stashedUrl = null;
