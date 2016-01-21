@@ -26,6 +26,8 @@ class UsernameComponent implements ShadowRootAware {
     int currentPage;
     String error;
     int found;
+    String filter;
+    String filterDescription = 'All';
     Group selectedGroup;
     List<Group> groups;
     String groupDescription = 'All Sites';
@@ -128,9 +130,34 @@ class UsernameComponent implements ShadowRootAware {
         }
     }
 
+    void setFilter(String filter) {
+        this.filter = filter;
+        if(filter == null) {
+            this.filterDescription = 'All';
+        } else {
+            this.filterDescription = filter;
+        }
+    }
+
     void setScreenshot(String siteName, String image) {
         this.screenshotImage = image;
         this.screenshotTitle = siteName;
+    }
+
+    void showResult(Result result) {
+        if (this.filter == null) {
+            return true;
+        }
+        if (this.filter == 'Found' && result.found) {
+            return true;
+        }
+        if (this.filter == 'Not Found' && !result.found) {
+            return true;
+        }
+        if (this.filter == 'Error' && result.error) {
+            return true;
+        }
+        return false;
     }
 
     /// Fetch a page of profiler site groups.
