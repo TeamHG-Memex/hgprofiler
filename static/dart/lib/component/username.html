@@ -90,58 +90,37 @@
 
 <div class="row" ng-show="!awaitingResults && results.length > 0">
   <div class="col-sm-12">
-    <p><strong>Username "{{username}}" found on {{found}} of {{results.length}} sites.</strong></p> 
-  </div>
-</div>
-<!-- For styling tests, remove when finished
-<div class="row">
-  <div class="col-md-3 col-sm-3">
-    <div class="panel">
-      <div class="panel-body">
-        <img class="thumbnail"
-            data-toggle="modal"
-            data-target="#screenshot"
-            src="/static/screenshot/62cf5d93-8380-4eaa-a02b-8faca6db5591.jpeg">
-      </div>
-      <div class="panel-footer found">
-        <i class="fa fa-check pull-left"></i> 
-        <a href="">acme.com</a>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-3 col-sm-3">
-    <div class="panel">
-      <div class="panel-body">
-        <img class="thumbnail"
-            data-toggle="modal"
-            data-target="#screenshot"
-            src="/static/screenshot/959b810d-e170-4776-a546-6cf0861c71a2.jpeg">
-      </div>
-      <div class="panel-footer not-found">
-        <i class="fa fa-times"></i> 
-        <a href="">acme.com</a>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-3 col-sm-3">
-    <div class="panel">
-      <div class="panel-body">
-        <img class="thumbnail"
-            data-toggle="modal"
-            data-target="#screenshot"
-            src="/static/screenshot/ab7f8295-df34-4988-b4fe-0591be2600fc.jpeg">
-      </div>
-      <div class="panel-footer error">
-        <i class="fa fa-exclamation-triangle"></i> 
-        <a href="">acme.com</a>
-      </div>
+    <div class="alert alert-info">
+      <p><strong>Username "{{username}}" found on {{found}} of {{results.length}} sites.</strong></p> 
     </div>
   </div>
 </div>
--->
+
+<div class="row" ng-show="results.length > 0">
+  <div class="form-group col-sm-2 pull-right" ng-show="results.length > 0">
+    <div class='btn-group pull-right'>
+      <button type='button'
+              class='btn btn-default dropdown-toggle'
+              data-toggle='dropdown'
+              aria-expanded='false'>
+              Show: {{filterDescription}} <span class='caret'></span>
+      </button>
+      <ul class='dropdown-menu sort-by' role='menu'>
+        <li><a ng-click='setFilter(null)'>All Results</a></li>
+        <li class='divider'></li>
+        <li><a ng-click='setFilter("Found")'>Found</a></li>
+        <li><a ng-click='setFilter("Not Found")'>Not Found</a></li>
+        <li><a ng-click='setFilter("Error")'>Error</a></li>
+      </ul> 
+    </div> 
+  </div>
+</div>
+
 <div class="row">
-  <div class="col-md-3 col-sm-3" ng-repeat="result in results">
-    <div class="panel">
+  <div class="col-md-3 col-sm-3"
+       ng-show="showResult(result)"
+       ng-repeat="result in results">
+<div class="panel">
       <div class="panel-body">
         <img class="thumbnail"
             data-toggle="modal"
@@ -164,6 +143,8 @@
         <a href="{{result.siteUrl}}">{{result.siteName}}</a>
       </div>
     </div>
+    </div>
+    
   </div>
 </div>
 
