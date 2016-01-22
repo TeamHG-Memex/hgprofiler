@@ -88,12 +88,42 @@
 <div class="row" ng-show="!awaitingResults && results.length > 0">
   <div class="col-sm-12">
     <div class="alert alert-info">
-      <p><strong>Username "{{username}}" found on {{found}} of {{results.length}} sites.</strong></p> 
+        <div class="row">
+
+          <div class="col-sm-6">
+            <strong>Username "{{username}}" found on {{found}} of {{results.length}} sites.</strong>
+          </div>
+          <div class="col-sm-6">
+            <div class="form-group">
+              <div class='btn-group pull-right'>
+                <button type='button'
+                        class='btn btn-success dropdown-toggle pull-right'
+                        data-toggle='dropdown'
+                        aria-expanded='false'>
+                        <i class="fa fa-download"></i>
+                        Export
+                </button>
+                <ul class='dropdown-menu sort-by' role='menu'>
+                  <li ng-show="archiveFile != null"><a href="/static/archive/{{archiveFile}}">Zip</a></li>
+                  <li ng-show="archiveFile == null" class="pull-right">
+                    <a>
+                      Generating zip
+                      <img src='/static/img/spinner-black-snake.gif'>
+                    </a>
+                  </li>
+                </ul> 
+              </div> 
+            </div>
+          </div>
+
+      </div>
     </div>
   </div>
 </div>
 
 <div class="row" ng-show="results.length > 0">
+
+
   <div class="form-group col-sm-2 pull-right" ng-show="results.length > 0">
     <div class='btn-group pull-right'>
       <button type='button'
@@ -111,6 +141,7 @@
       </ul> 
     </div> 
   </div>
+  
 </div>
 
 <div class="row">

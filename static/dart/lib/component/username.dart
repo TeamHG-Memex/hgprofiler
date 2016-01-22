@@ -19,6 +19,7 @@ import 'package:hgprofiler/sse.dart';
     useShadowDom: false
 )
 class UsernameComponent implements ShadowRootAware {
+    String archiveFile;
     Map backgroundTask;
     List<Breadcrumb> crumbs = [
         new Breadcrumb('HGProfiler', '/'),

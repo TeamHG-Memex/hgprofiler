@@ -1,15 +1,10 @@
 import json
 import base64
 import os
-import io
-import csv
-import time
-import zipfile
+import requests
 from datetime import timedelta
 from tornado import httpclient, gen, ioloop, queues, escape
 from urllib.parse import quote_plus
-import uuid
-
 
 import app.database
 import app.queue
@@ -22,6 +17,7 @@ USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) '\
              'Gecko/20100101 Firefox/40.1'
 
 httpclient.AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
+CONNECT_TIMEOUT = 10
 
 
 class ScrapeException(Exception):
@@ -63,7 +59,6 @@ def scrape_site_for_username(site, username, splash_url, request_timeout=10):
     url = '{}/render.json?url={}&html=1&frame=1&jpeg=1'.format(splash_url, quote_plus(page_url))
     headers = {
         'User-Agent': USER_AGENT,
-        'X-Splash-timeout': '{}'.format(request_timeout)
     }
     result = {
         'site': site,
@@ -71,7 +66,6 @@ def scrape_site_for_username(site, username, splash_url, request_timeout=10):
         'error': None,
         'url': page_url
     }
-    headers = {}
 
     try:
         response = yield httpclient.AsyncHTTPClient().fetch(url,
@@ -104,7 +98,7 @@ def parse_result(scrape_result, total, job_id):
     )
     # Save image
     if scrape_result['error'] is None:
-        image_name = uuid.uuid4()
+        image_name = '{}-{}'.format(job_id, result.site_name)
         thumb_name = '{}-thumb'.format(image_name)
         image_name = '{}.jpeg'.format(image_name)
         thumb_name = '{}.jpeg'.format(thumb_name)
@@ -123,9 +117,9 @@ def scrape_sites(username, group_id=None):
     """
     Scrape all sites for username (asynchronous).
     """
+    worker.start_job()
     job = worker.get_job()
     redis = worker.get_redis()
-
     db_session = worker.get_session()
     concurrency = get_config(db_session, 'scrape_concurrency', required=True).value
 
@@ -167,9 +161,9 @@ def scrape_sites(username, group_id=None):
                 current_site, username, splash_url, request_timeout)
             # Parse result
             result = yield parse_result(scrape_result, total, job.id)
-            results.add(result)
             db_session.add(result)
             db_session.flush()
+            results.append(result)
 
             fetched.add(current_site)
             # Notify clients of the result
@@ -192,10 +186,8 @@ def scrape_sites(username, group_id=None):
     yield q.join(timeout=timedelta(seconds=300))
     assert fetching == fetched
 
-    # Save results to db
+    # Save results
     db_session.commit()
-    # Save zip archive
-    yield create_zip(job.id, results)
 
 
 def search_username(username, group=None):
