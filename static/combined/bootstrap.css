@@ -6521,8 +6521,6 @@ edit-text button {
 edit-select input,
 edit-text input {
   margin: 0 0;
-  min-width: 1em;
-  max-width: 4em;
 }
 edit-select select,
 edit-text select {
