@@ -125,6 +125,17 @@ class DatabaseCli(cli.BaseCli):
             else:
                 shutil.rmtree(file_object_path)
 
+    def _delete_archives(self):
+        ''' Delete result archives stored in archive directory. '''
+        static_dir = get_path("data")
+        archive_dir = os.path.join(static_dir, 'archive')
+        for file_object in os.listdir(archive_dir):
+            file_object_path = os.path.join(archive_dir, file_object)
+            if os.path.isfile(file_object_path):
+                os.unlink(file_object_path)
+            else:
+                shutil.rmtree(file_object_path)
+
     def _drop_all(self):
         '''
         Drop database tables, foreign keys, etc.
@@ -190,6 +201,24 @@ class DatabaseCli(cli.BaseCli):
             help='Create sample data.'
         )
 
+        arg_parser.add_argument(
+            '--delete-screenshots',
+            action='store_true',
+            help='Delete screenshot images from data directory.'
+        )
+
+        arg_parser.add_argument(
+            '--delete-archives',
+            action='store_true',
+            help='Delete archive zip files from data directory.'
+        )
+
+        arg_parser.add_argument(
+            '--delete-data',
+            action='store_true',
+            help='Delete archive and screenshot files from data directory.'
+        )
+
     def _run(self, args, config):
         ''' Main entry point. '''
 
@@ -209,8 +238,13 @@ class DatabaseCli(cli.BaseCli):
         if args.action in ('build', 'drop'):
             self._logger.info('Dropping database tables.')
             self._drop_all()
-            self._logger.info('Deleting screenshot images.')
-            self._delete_screenshots()
+
+            if args.delete_screenshots or args.delete_data:
+                self._logger.info('Deleting screenshots.')
+                self._delete_screenshots()
+            if args.delete_archives or args.delete_data:
+                self._logger.info('Deleting zip archives.')
+                self._delete_archives()
 
         if args.action == 'build':
             self._logger.info('Running Agnostic\'s bootstrap.')
