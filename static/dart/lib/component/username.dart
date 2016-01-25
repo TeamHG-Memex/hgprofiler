@@ -7,6 +7,7 @@ import 'package:hgprofiler/authentication.dart';
 import 'package:hgprofiler/component/breadcrumbs.dart';
 import 'package:hgprofiler/component/pager.dart';
 import 'package:hgprofiler/component/title.dart';
+import 'package:hgprofiler/model/archive.dart';
 import 'package:hgprofiler/model/result.dart';
 import 'package:hgprofiler/model/group.dart';
 import 'package:hgprofiler/rest_api.dart';
@@ -19,6 +20,7 @@ import 'package:hgprofiler/sse.dart';
     useShadowDom: false
 )
 class UsernameComponent implements ShadowRootAware {
+    Archive archive;
     String archiveFile;
     Map backgroundTask;
     List<Breadcrumb> crumbs = [
@@ -70,6 +72,7 @@ class UsernameComponent implements ShadowRootAware {
 
         List<StreamSubscription> listeners = [
             this._sse.onResult.listen(this._resultListener),
+            this._sse.onArchive.listen(this._archiveListener),
             rh.onEnter.listen((e) {
                 this._parseQueryParameters(e.queryParameters);
                 this._fetchCurrentPage();
@@ -227,6 +230,19 @@ class UsernameComponent implements ShadowRootAware {
             }
         }
     }
+
+    /// Listen for job results.
+    void _archiveListener(Event e) {
+        window.alert('Archive sse');
+        Map json = JSON.decode(e.data);
+        window.console.debug(json);
+        Archive archive = new Archive.fromJson(json);
+        window.console.debug(archive);
+        if (archive.jobId == this.jobId) {
+            this.archive = archive;
+        }
+    }
+
     /// Handle a keypress in the search input field.
     void handleSearchKeypress(event) {
         if (event.keyCode == KeyCode.ENTER) {

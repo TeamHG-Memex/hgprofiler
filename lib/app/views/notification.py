@@ -19,10 +19,11 @@ class NotificationView(FlaskView):
     '''
 
     CHANNELS = (
-        'site',
-        'result',
-        'worker',
+        'archive',
         'group',
+        'result',
+        'site',
+        'worker',
     )
 
     decorators = [login_required]

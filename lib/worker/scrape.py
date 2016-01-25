@@ -17,7 +17,6 @@ USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) '\
              'Gecko/20100101 Firefox/40.1'
 
 httpclient.AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
-CONNECT_TIMEOUT = 10
 
 
 class ScrapeException(Exception):
@@ -163,7 +162,7 @@ def scrape_sites(username, group_id=None):
             result = yield parse_result(scrape_result, total, job.id)
             db_session.add(result)
             db_session.flush()
-            results.append(result)
+            results.append(result.as_dict())
 
             fetched.add(current_site)
             # Notify clients of the result
@@ -186,8 +185,10 @@ def scrape_sites(username, group_id=None):
     yield q.join(timeout=timedelta(seconds=300))
     assert fetching == fetched
 
-    # Save results
+    # Save results to db
     db_session.commit()
+    # Queue worker to create archive db record and zip file.
+    app.queue.schedule_archive(username, job.id, results)
 
 
 def search_username(username, group=None):

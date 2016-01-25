@@ -48,7 +48,7 @@ class Result(Base):
         self.error = error
 
     def as_dict(self):
-        ''' Return dictionary representation of this site. '''
+        ''' Return dictionary representation of this result. '''
         return {
             'id': self.id,
             'job_id': self.job_id,

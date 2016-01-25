@@ -104,8 +104,8 @@
                         Export
                 </button>
                 <ul class='dropdown-menu sort-by' role='menu'>
-                  <li ng-show="archiveFile != null"><a href="/static/archive/{{archiveFile}}">Zip</a></li>
-                  <li ng-show="archiveFile == null" class="pull-right">
+                  <li ng-show="archive != null"><a href="/static/archive/{{archive.file}}">Zip</a></li>
+                  <li ng-show="archive == null" class="pull-right">
                     <a>
                       Generating zip
                       <img src='/static/img/spinner-black-snake.gif'>
