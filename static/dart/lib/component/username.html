@@ -3,9 +3,8 @@
 <div class="jumbotron">
   <h1>
     <i class='fa fa-lg fa-users'></i>  HGProfiler</h1>
-    <img ng-show='loading > 0' src='/static/img/spinner-login-white.gif'>
   <p>
-    Search usernames across the web
+    Username search 
   </p>
 </div>
 
@@ -37,7 +36,12 @@
                         Group: {{groupDescription}} <span class='caret'></span>
                 </button>
                 <ul class='dropdown-menu sort-by' role='menu'>
-                  <li><a ng-click='setGroup(null)'>All Sites</a></li>
+                  <li>
+                    <a ng-click='setGroup(null)'>
+                      <i class='fa fa-check' ng-show='selectedGroup == null'></i>
+                      All Sites
+                    </a>
+                  </li>
                   <li class='divider'></li>
                   <li ng-repeat='group in groups'>
                     <a ng-click='setGroup(group)'>
@@ -97,14 +101,16 @@
             <div class="form-group">
               <div class='btn-group pull-right'>
                 <button type='button'
-                        class='btn btn-success dropdown-toggle pull-right'
+                        class='btn btn-primary dropdown-toggle pull-right'
                         data-toggle='dropdown'
                         aria-expanded='false'>
                         <i class="fa fa-download"></i>
                         Export
                 </button>
                 <ul class='dropdown-menu sort-by' role='menu'>
-                  <li ng-show="archive != null"><a href="/static/archive/{{archive.file}}">Zip</a></li>
+                  <li ng-show="archive != null">
+                    <a ng-href="{{api.authorizeUrl(archive.zipFileUrl)}}" target="_blank">Zip</a>
+                  </li>
                   <li ng-show="archive == null" class="pull-right">
                     <a>
                       Generating zip
@@ -155,7 +161,7 @@
             ng-show="!result.error"
             data-target="#screenshot"
             ng-click="setScreenshot(result.siteName, result.image)"
-            src="/static/screenshot/{{result.image}}">
+            ng-src='{{api.authorizeUrl(result.imageFileUrl)}}'>
             <span ng-show="result.error">N/A</span>
       </div>
       <div ng-show="result.error" class="panel-footer error">

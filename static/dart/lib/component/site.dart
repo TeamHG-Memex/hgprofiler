@@ -13,7 +13,7 @@ import 'package:hgprofiler/model/site.dart';
 import 'package:hgprofiler/rest_api.dart';
 import 'package:hgprofiler/sse.dart';
 
-/// A component for viewing and modifying credentials.
+/// A component for viewing and modifying sites.
 @Component(
     selector: 'site',
     templateUrl: 'packages/hgprofiler/component/site.html',

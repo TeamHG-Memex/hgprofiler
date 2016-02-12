@@ -67,12 +67,12 @@ def schedule_username(username, group_id=None):
     return job.id
 
 
-def schedule_archive(username, job_id, results):
+def schedule_archive(username, group_id, job_id, results):
     ''' Queue a job to archive results for the job id. '''
 
     job = _archive_queue.enqueue_call(
         func=worker.archive.create_archive,
-        args=[job_id, username, results],
+        args=[job_id, username, group_id, results],
         timeout=_redis_worker['archive_timeout']
     )
 

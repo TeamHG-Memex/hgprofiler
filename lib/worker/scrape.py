@@ -1,7 +1,6 @@
 import json
 import base64
 import os
-import requests
 from datetime import timedelta
 from tornado import httpclient, gen, ioloop, queues, escape
 from urllib.parse import quote_plus
@@ -9,7 +8,10 @@ from urllib.parse import quote_plus
 import app.database
 import app.queue
 from app.config import get_path
-from model import Site, Result, Group
+from model.site import Site
+from model.result import Result
+from model.group import Group
+from model.file import File
 from model.configuration import get_config
 import worker
 
@@ -17,6 +19,9 @@ USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) '\
              'Gecko/20100101 Firefox/40.1'
 
 httpclient.AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
+
+import logging
+logging.basicConfig(filename="/var/log/hgprofiler.log", level=logging.DEBUG)
 
 
 class ScrapeException(Exception):
@@ -87,6 +92,7 @@ def scrape_site_for_username(site, username, splash_url, request_timeout=10):
 
 @gen.coroutine
 def parse_result(scrape_result, total, job_id):
+    db_session = worker.get_session()
     result = Result(
         job_id=job_id,
         site_name=scrape_result['site'].name,
@@ -95,18 +101,23 @@ def parse_result(scrape_result, total, job_id):
         total=total,
         number=1
     )
+
     # Save image
     if scrape_result['error'] is None:
-        image_name = '{}-{}'.format(job_id, result.site_name)
-        thumb_name = '{}-thumb'.format(image_name)
-        image_name = '{}.jpeg'.format(image_name)
-        thumb_name = '{}.jpeg'.format(thumb_name)
+        image_name = '{}.jpg'.format(result.site_name)
+        content = base64.decodestring(scrape_result['image'].encode('utf8'))
+        image_file = File(name=image_name,
+                          mime='image/jpeg',
+                          content=content)
+        db_session.add(image_file)
+
         try:
-            save_image(image_name, scrape_result['image'])
-            result.image = image_name
-            result.thumb = thumb_name
-        except Exception as e:
-            raise ScrapeException('{}'.format(e))
+            db_session.commit()
+        except:
+            db_session.rollback()
+            raise ScrapeException('Could not save image')
+
+        result.image_file_id = image_file.id
 
     raise gen.Return(result)
 
@@ -162,11 +173,18 @@ def scrape_sites(username, group_id=None):
             result = yield parse_result(scrape_result, total, job.id)
             db_session.add(result)
             db_session.flush()
-            results.append(result.as_dict())
-
+            result_dict = result.as_dict()
             fetched.add(current_site)
             # Notify clients of the result
-            redis.publish('result', json.dumps(result.as_dict()))
+            redis.publish('result', json.dumps(result_dict))
+            # Add image path for zip archive creation
+            if result.image_file is not None:
+                result_dict['image_file_path'] = result.image_file.relpath()
+            else:
+                result_dict['image_file_path'] = None
+
+            results.append(result_dict)
+
         finally:
             q.task_done()
 
@@ -188,7 +206,7 @@ def scrape_sites(username, group_id=None):
     # Save results to db
     db_session.commit()
     # Queue worker to create archive db record and zip file.
-    app.queue.schedule_archive(username, job.id, results)
+    app.queue.schedule_archive(username, group_id, job.id, results)
 
 
 def search_username(username, group=None):

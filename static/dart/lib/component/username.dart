@@ -54,14 +54,14 @@ class UsernameComponent implements ShadowRootAware {
 
     final AuthenticationController _auth; 
     final Element _element;
-    final RestApiController _api;
+    final RestApiController api;
     final RouteProvider _rp;
     final Router _router;
     final SseController _sse;
     final TitleService _ts;
 
     /// Constructor
-    UsernameComponent(this._api, this._auth, this._element, this._rp, this._router, this._sse, this._ts) {
+    UsernameComponent(this.api, this._auth, this._element, this._rp, this._router, this._sse, this._ts) {
         // Get the current query parameters from URL...
         var route = this._rp.route;
         this._parseQueryParameters(route.queryParameters);
@@ -112,7 +112,7 @@ class UsernameComponent implements ShadowRootAware {
             urlArgs['group'] = this.selectedGroup.id;
         }
 
-        this._api
+        this.api
             .post(pageUrl, urlArgs, needsAuth: true)
             .then((response) {
                 this.query = '';
@@ -174,7 +174,7 @@ class UsernameComponent implements ShadowRootAware {
             'rpp': 100,
         };
         int totalCount = 0;
-        this._api
+        this.api
             .get(groupUrl, urlArgs: urlArgs, needsAuth: true)
             .then((response) {
                 if (response.data.containsKey('total_count')) {
@@ -233,11 +233,8 @@ class UsernameComponent implements ShadowRootAware {
 
     /// Listen for job results.
     void _archiveListener(Event e) {
-        window.alert('Archive sse');
         Map json = JSON.decode(e.data);
-        window.console.debug(json);
         Archive archive = new Archive.fromJson(json);
-        window.console.debug(archive);
         if (archive.jobId == this.jobId) {
             this.archive = archive;
         }
@@ -372,7 +369,7 @@ class UsernameComponent implements ShadowRootAware {
             job['Description'] = '(Loading Description...)';
             this.backgroundTask = job;
 
-            this._api
+            this.api
                 .get('/api/tasks/job/${job["id"]}', needsAuth: true)
                 .then((response) {
                     String description = response.data['description'];

@@ -1,10 +1,13 @@
 from sqlalchemy import (Boolean,
                         Column,
+                        ForeignKey,
                         Integer,
                         String,
                         UniqueConstraint)
+from sqlalchemy.orm import relationship
 
 from model import Base
+from model.file import File
 
 
 class Result(Base):
@@ -22,7 +25,8 @@ class Result(Base):
     found = Column(Boolean, default=False)
     number = Column(Integer, nullable=False)
     total = Column(Integer, nullable=False)
-    image = Column(String(255), nullable=True)
+    image_file_id = Column(Integer, ForeignKey('file.id', name='fk_image_file'), nullable=True)
+    image_file = relationship('File', primaryjoin='Result.image_file_id == File.id')
     error = Column(String(255), nullable=True)
 
     def __init__(self,
@@ -32,7 +36,7 @@ class Result(Base):
                  found,
                  number,
                  total,
-                 image=None,
+                 image_file_id=None,
                  thumb=None,
                  error=None):
         ''' Constructor. '''
@@ -43,18 +47,27 @@ class Result(Base):
         self.found = found
         self.number = number
         self.total = total
-        self.image = image
+        self.image_file_id = image_file_id
         self.thumb = thumb
         self.error = error
 
     def as_dict(self):
         ''' Return dictionary representation of this result. '''
+        if self.image_file is not None:
+            image_file_url = '/api/file/{}'.format(self.image_file_id)
+            image_file_name = self.image_file.name
+        else:
+            image_file_url = None
+            image_file_name = None
+
         return {
             'id': self.id,
             'job_id': self.job_id,
             'site_name': self.site_name,
             'site_url': self.site_url,
-            'image': self.image,
+            'image_file_id': self.image_file_id,
+            'image_file_name': image_file_name,
+            'image_file_url': image_file_url,
             'found': self.found,
             'number': self.number,
             'total': self.total,

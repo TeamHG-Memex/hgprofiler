@@ -12,4 +12,10 @@ class ProgressBarComponent {
 
     @NgOneWay('progress')
     double progress;
+
+    @NgOneWay('number')
+    int number;
+
+    @NgOneWay('srOnly')
+    bool srOnly = true;
 }

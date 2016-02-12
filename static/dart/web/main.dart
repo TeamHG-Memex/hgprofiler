@@ -10,6 +10,7 @@ import 'package:hgprofiler/authentication.dart';
 import 'package:hgprofiler/component/admin/background_tasks.dart';
 import 'package:hgprofiler/component/admin/configuration.dart';
 import 'package:hgprofiler/component/admin/index.dart';
+import 'package:hgprofiler/component/archive.dart';
 import 'package:hgprofiler/component/breadcrumbs.dart';
 import 'package:hgprofiler/component/busy_button.dart';
 import 'package:hgprofiler/component/d3/grip.dart';
@@ -56,6 +57,7 @@ class HGProfilerApplication extends Module {
             ..allowElement('img', attributes: ['alt', 'src']);
 
         bind(AdminIndexComponent);
+        bind(ArchiveComponent);
         bind(AuthenticationController);
         bind(BackgroundTasksComponent);
         bind(BreadcrumbsComponent);
