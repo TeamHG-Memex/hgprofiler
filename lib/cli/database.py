@@ -114,23 +114,11 @@ class DatabaseCli(cli.BaseCli):
 
         session.commit()
 
-    def _delete_screenshots(self):
-        ''' Delete result screenshots stored in screenshot directory. '''
-        static_dir = get_path("data")
-        screenshot_dir = os.path.join(static_dir, 'screenshot')
-        for file_object in os.listdir(screenshot_dir):
-            file_object_path = os.path.join(screenshot_dir, file_object)
-            if os.path.isfile(file_object_path):
-                os.unlink(file_object_path)
-            else:
-                shutil.rmtree(file_object_path)
-
-    def _delete_archives(self):
-        ''' Delete result archives stored in archive directory. '''
-        static_dir = get_path("data")
-        archive_dir = os.path.join(static_dir, 'archive')
-        for file_object in os.listdir(archive_dir):
-            file_object_path = os.path.join(archive_dir, file_object)
+    def _delete_data(self):
+        ''' Delete files stored in the data directory. '''
+        data_dir = get_path("data")
+        for file_object in os.listdir(data_dir):
+            file_object_path = os.path.join(data_dir, file_object)
             if os.path.isfile(file_object_path):
                 os.unlink(file_object_path)
             else:
@@ -202,18 +190,6 @@ class DatabaseCli(cli.BaseCli):
         )
 
         arg_parser.add_argument(
-            '--delete-screenshots',
-            action='store_true',
-            help='Delete screenshot images from data directory.'
-        )
-
-        arg_parser.add_argument(
-            '--delete-archives',
-            action='store_true',
-            help='Delete archive zip files from data directory.'
-        )
-
-        arg_parser.add_argument(
             '--delete-data',
             action='store_true',
             help='Delete archive and screenshot files from data directory.'
@@ -239,12 +215,9 @@ class DatabaseCli(cli.BaseCli):
             self._logger.info('Dropping database tables.')
             self._drop_all()
 
-            if args.delete_screenshots or args.delete_data:
-                self._logger.info('Deleting screenshots.')
-                self._delete_screenshots()
-            if args.delete_archives or args.delete_data:
-                self._logger.info('Deleting zip archives.')
-                self._delete_archives()
+            if args.delete_data:
+                self._logger.info('Deleting data.')
+                self._delete_data()
 
         if args.action == 'build':
             self._logger.info('Running Agnostic\'s bootstrap.')

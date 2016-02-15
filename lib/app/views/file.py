@@ -1,10 +1,11 @@
-from flask import g, send_from_directory
+from flask import g, send_from_directory, jsonify
 from flask.ext.classy import FlaskView
-from werkzeug.exceptions import NotFound
+from werkzeug.exceptions import NotFound, BadRequest
 
 import app.config
 from app.authorization import login_required
-from app.rest import url_for
+from app.config import get_path
+from app.rest import get_int_arg
 from model import File
 
 
@@ -22,8 +23,8 @@ class FileView(FlaskView):
         :status 404: no file with that ID
         '''
 
-        file_ = g.db.query(File).filter(File.id==id_).first()
-        data_dir = app.config.get_path('data')
+        file_ = g.db.query(File).filter(File.id == id_).first()
+        data_dir = get_path('data')
         cache_timeout = 0 if g.debug else None
 
         if file_ is None:
@@ -57,7 +58,7 @@ class FileView(FlaskView):
         if file_ is None:
             raise NotFound("File '%s' does not exist." % id_)
 
-        # Delete file
+        # Delete db file record
         try:
             g.db.delete(file_)
             g.db.commit()
