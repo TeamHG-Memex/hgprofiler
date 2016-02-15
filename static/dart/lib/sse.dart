@@ -6,10 +6,12 @@ import 'package:hgprofiler/rest_api.dart';
 /// Handles server-sent events.
 @Injectable()
 class SseController {
-    Stream<Event> onWorker;
-    Stream<Event> onSite;
-    Stream<Event> onResult;
+
+    Stream<Event> onArchive;
     Stream<Event> onGroup;
+    Stream<Event> onResult;
+    Stream<Event> onSite;
+    Stream<Event> onWorker;
 
     RestApiController _api;
     EventSource _eventSource;
@@ -24,10 +26,11 @@ class SseController {
         });
 
         // Set up event streams.
-        this.onWorker = this._eventSource.on['worker'];
-        this.onSite = this._eventSource.on['site'];
-        this.onResult = this._eventSource.on['result'];
+        this.onArchive = this._eventSource.on['archive'];
         this.onGroup = this._eventSource.on['group'];
+        this.onResult = this._eventSource.on['result'];
+        this.onSite = this._eventSource.on['site'];
+        this.onWorker = this._eventSource.on['worker'];
     }
 }
 

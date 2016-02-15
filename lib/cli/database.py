@@ -114,12 +114,11 @@ class DatabaseCli(cli.BaseCli):
 
         session.commit()
 
-    def _delete_screenshots(self):
-        ''' Delete result screenshots stored in screenshot directory. '''
-        static_dir = get_path("data")
-        screenshot_dir = os.path.join(static_dir, 'screenshot')
-        for file_object in os.listdir(screenshot_dir):
-            file_object_path = os.path.join(screenshot_dir, file_object)
+    def _delete_data(self):
+        ''' Delete files stored in the data directory. '''
+        data_dir = get_path("data")
+        for file_object in os.listdir(data_dir):
+            file_object_path = os.path.join(data_dir, file_object)
             if os.path.isfile(file_object_path):
                 os.unlink(file_object_path)
             else:
@@ -190,6 +189,12 @@ class DatabaseCli(cli.BaseCli):
             help='Create sample data.'
         )
 
+        arg_parser.add_argument(
+            '--delete-data',
+            action='store_true',
+            help='Delete archive and screenshot files from data directory.'
+        )
+
     def _run(self, args, config):
         ''' Main entry point. '''
 
@@ -209,8 +214,10 @@ class DatabaseCli(cli.BaseCli):
         if args.action in ('build', 'drop'):
             self._logger.info('Dropping database tables.')
             self._drop_all()
-            self._logger.info('Deleting screenshot images.')
-            self._delete_screenshots()
+
+            if args.delete_data:
+                self._logger.info('Deleting data.')
+                self._delete_data()
 
         if args.action == 'build':
             self._logger.info('Running Agnostic\'s bootstrap.')

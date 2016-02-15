@@ -1,17 +1,17 @@
 import json
 import base64
 import os
-import requests
 from datetime import timedelta
 from tornado import httpclient, gen, ioloop, queues, escape
 from urllib.parse import quote_plus
-import uuid
-
 
 import app.database
 import app.queue
 from app.config import get_path
-from model import Site, Result, Group
+from model.site import Site
+from model.result import Result
+from model.group import Group
+from model.file import File
 from model.configuration import get_config
 import worker
 
@@ -19,10 +19,9 @@ USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) '\
              'Gecko/20100101 Firefox/40.1'
 
 httpclient.AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
-CONNECT_TIMEOUT = 10
 
 import logging
-logging.basicConfig(filename='/var/log/hgprofiler.log', level=logging.ERROR)
+logging.basicConfig(filename="/var/log/hgprofiler.log", level=logging.DEBUG)
 
 
 class ScrapeException(Exception):
@@ -30,18 +29,6 @@ class ScrapeException(Exception):
 
     def __init__(self, message):
         self.message = message
-
-
-def validate_site_response(site, response):
-    """
-    Parse response and test against site criteria to determine whether username exists. Used with
-    python requests response object.
-    """
-    if response.status_code == site.status_code:
-        if(site.search_text in response.text or
-           site.search_text in response.headers):
-            return True
-    return False
 
 
 def response_contains_username(site, response):
@@ -56,88 +43,6 @@ def response_contains_username(site, response):
            site.search_text in response.headers):
             return True
     return False
-
-
-def scrape_site(site, username):
-    """
-    Download page at `site.url' and parse for username (synchronous).
-    """
-    url = site.url.replace('%s', username)
-
-    headers = {
-        'User-Agent': USER_AGENT
-    }
-
-    result = {
-        'site': site,
-        'found': True,
-        'error': None,
-        'url': url
-    }
-
-    try:
-        response = requests.get(
-            url,
-            headers=headers,
-            verify=False,
-            timeout=12
-        )
-        result['found'] = validate_site_response(site, response)
-    except requests.exceptions.ConnectionError:
-        result['found'] = False
-        result['error'] = 'Domain does not exist'
-    except requests.exceptions.Timeout:
-        result['found'] = False
-        result['error'] = 'Request timed out (limit 12 seconds)'
-    except requests.exceptions.InvalidURL:
-        result['found'] = False
-        result['error'] = 'URL invalid'
-
-    return result
-
-
-def scrape_username(username, group_id=None):
-    '''
-    Scrape all sites for username (synchronous).
-    '''
-    worker.start_job()
-    job = worker.get_job()
-    redis = worker.get_redis()
-    db_session = worker.get_session()
-
-    if group_id is not None:
-        group = db_session.query(Group).get(group_id)
-        sites = group.sites
-    else:
-        sites = db_session.query(Site).all()
-
-    total = len(sites)
-    number = 0
-
-    for site in sites:
-        scrape_result = scrape_site(site, username)
-
-        result = Result(
-            job_id=job.id,
-            site_name=scrape_result['site'].name,
-            site_url=scrape_result['url'],
-            found=scrape_result['found'],
-            total=total,
-            number=number+1
-        )
-
-        if scrape_result['error'] is not None:
-            result.error = scrape_result['error']
-
-        db_session.add(result)
-        db_session.flush()
-        redis.publish('result', json.dumps(result.as_dict()))
-        number += 1
-
-    # Save results
-    db_session.commit()
-    # Complete
-    worker.finish_job()
 
 
 @gen.coroutine
@@ -158,7 +63,6 @@ def scrape_site_for_username(site, username, splash_url, request_timeout=10):
     url = '{}/render.json?url={}&html=1&frame=1&jpeg=1'.format(splash_url, quote_plus(page_url))
     headers = {
         'User-Agent': USER_AGENT,
-        'X-Splash-timeout': '{}'.format(request_timeout)
     }
     result = {
         'site': site,
@@ -166,7 +70,6 @@ def scrape_site_for_username(site, username, splash_url, request_timeout=10):
         'error': None,
         'url': page_url
     }
-    headers = {}
 
     try:
         response = yield httpclient.AsyncHTTPClient().fetch(url,
@@ -189,6 +92,7 @@ def scrape_site_for_username(site, username, splash_url, request_timeout=10):
 
 @gen.coroutine
 def parse_result(scrape_result, total, job_id):
+    db_session = worker.get_session()
     result = Result(
         job_id=job_id,
         site_name=scrape_result['site'].name,
@@ -197,18 +101,23 @@ def parse_result(scrape_result, total, job_id):
         total=total,
         number=1
     )
+
     # Save image
     if scrape_result['error'] is None:
-        image_name = uuid.uuid4()
-        thumb_name = '{}-thumb'.format(image_name)
-        image_name = '{}.jpeg'.format(image_name)
-        thumb_name = '{}.jpeg'.format(thumb_name)
+        image_name = '{}.jpg'.format(result.site_name)
+        content = base64.decodestring(scrape_result['image'].encode('utf8'))
+        image_file = File(name=image_name,
+                          mime='image/jpeg',
+                          content=content)
+        db_session.add(image_file)
+
         try:
-            save_image(image_name, scrape_result['image'])
-            result.image = image_name
-            result.thumb = thumb_name
-        except Exception as e:
-            raise ScrapeException('{}'.format(e))
+            db_session.commit()
+        except:
+            db_session.rollback()
+            raise ScrapeException('Could not save image')
+
+        result.image_file_id = image_file.id
 
     raise gen.Return(result)
 
@@ -218,6 +127,7 @@ def scrape_sites(username, group_id=None):
     """
     Scrape all sites for username (asynchronous).
     """
+    worker.start_job()
     job = worker.get_job()
     redis = worker.get_redis()
     db_session = worker.get_session()
@@ -245,7 +155,7 @@ def scrape_sites(username, group_id=None):
     total = len(sites)
     q = queues.Queue()
     fetching, fetched = set(), set()
-    #results = list()
+    results = list()
 
     @gen.coroutine
     def scrape_site():
@@ -263,10 +173,18 @@ def scrape_sites(username, group_id=None):
             result = yield parse_result(scrape_result, total, job.id)
             db_session.add(result)
             db_session.flush()
-
+            result_dict = result.as_dict()
             fetched.add(current_site)
             # Notify clients of the result
-            redis.publish('result', json.dumps(result.as_dict()))
+            redis.publish('result', json.dumps(result_dict))
+            # Add image path for zip archive creation
+            if result.image_file is not None:
+                result_dict['image_file_path'] = result.image_file.relpath()
+            else:
+                result_dict['image_file_path'] = None
+
+            results.append(result_dict)
+
         finally:
             q.task_done()
 
@@ -285,8 +203,10 @@ def scrape_sites(username, group_id=None):
     yield q.join(timeout=timedelta(seconds=300))
     assert fetching == fetched
 
-    # Save results
+    # Save results to db
     db_session.commit()
+    # Queue worker to create archive db record and zip file.
+    app.queue.schedule_archive(username, group_id, job.id, results)
 
 
 def search_username(username, group=None):

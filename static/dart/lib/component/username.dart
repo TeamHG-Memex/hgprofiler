@@ -7,6 +7,7 @@ import 'package:hgprofiler/authentication.dart';
 import 'package:hgprofiler/component/breadcrumbs.dart';
 import 'package:hgprofiler/component/pager.dart';
 import 'package:hgprofiler/component/title.dart';
+import 'package:hgprofiler/model/archive.dart';
 import 'package:hgprofiler/model/result.dart';
 import 'package:hgprofiler/model/group.dart';
 import 'package:hgprofiler/rest_api.dart';
@@ -19,6 +20,8 @@ import 'package:hgprofiler/sse.dart';
     useShadowDom: false
 )
 class UsernameComponent implements ShadowRootAware {
+    Archive archive;
+    String archiveFile;
     Map backgroundTask;
     List<Breadcrumb> crumbs = [
         new Breadcrumb('HGProfiler', '/'),
@@ -51,14 +54,14 @@ class UsernameComponent implements ShadowRootAware {
 
     final AuthenticationController _auth; 
     final Element _element;
-    final RestApiController _api;
+    final RestApiController api;
     final RouteProvider _rp;
     final Router _router;
     final SseController _sse;
     final TitleService _ts;
 
     /// Constructor
-    UsernameComponent(this._api, this._auth, this._element, this._rp, this._router, this._sse, this._ts) {
+    UsernameComponent(this.api, this._auth, this._element, this._rp, this._router, this._sse, this._ts) {
         // Get the current query parameters from URL...
         var route = this._rp.route;
         this._parseQueryParameters(route.queryParameters);
@@ -69,6 +72,7 @@ class UsernameComponent implements ShadowRootAware {
 
         List<StreamSubscription> listeners = [
             this._sse.onResult.listen(this._resultListener),
+            this._sse.onArchive.listen(this._archiveListener),
             rh.onEnter.listen((e) {
                 this._parseQueryParameters(e.queryParameters);
                 this._fetchCurrentPage();
@@ -108,7 +112,7 @@ class UsernameComponent implements ShadowRootAware {
             urlArgs['group'] = this.selectedGroup.id;
         }
 
-        this._api
+        this.api
             .post(pageUrl, urlArgs, needsAuth: true)
             .then((response) {
                 this.query = '';
@@ -170,7 +174,7 @@ class UsernameComponent implements ShadowRootAware {
             'rpp': 100,
         };
         int totalCount = 0;
-        this._api
+        this.api
             .get(groupUrl, urlArgs: urlArgs, needsAuth: true)
             .then((response) {
                 if (response.data.containsKey('total_count')) {
@@ -226,6 +230,16 @@ class UsernameComponent implements ShadowRootAware {
             }
         }
     }
+
+    /// Listen for job results.
+    void _archiveListener(Event e) {
+        Map json = JSON.decode(e.data);
+        Archive archive = new Archive.fromJson(json);
+        if (archive.jobId == this.jobId) {
+            this.archive = archive;
+        }
+    }
+
     /// Handle a keypress in the search input field.
     void handleSearchKeypress(event) {
         if (event.keyCode == KeyCode.ENTER) {
@@ -355,7 +369,7 @@ class UsernameComponent implements ShadowRootAware {
             job['Description'] = '(Loading Description...)';
             this.backgroundTask = job;
 
-            this._api
+            this.api
                 .get('/api/tasks/job/${job["id"]}', needsAuth: true)
                 .then((response) {
                     String description = response.data['description'];

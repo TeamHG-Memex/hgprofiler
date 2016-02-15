@@ -6284,6 +6284,12 @@ td.sparkline {
 textarea {
   border: 1px solid #eeeeee;
 }
+.progress-bar-success {
+  background-color: #a3c86d;
+}
+.tbl-action {
+  margin-right: 5px;
+}
 .btn.btn-default {
   color: #555555;
 }
@@ -6342,10 +6348,16 @@ td {
 .view-all {
   text-align: center;
 }
+.black {
+  color: #333;
+}
 .panel-default > .panel-heading {
-  color: white;
-  background-color: #222222;
-  border-color: #222222;
+  background-color: #eeeeee;
+  border-color: #dddddd;
+  color: #222222;
+}
+.breadcrumb {
+  background-color: white;
 }
 .btn-primary {
   color: white;

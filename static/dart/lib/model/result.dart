@@ -5,7 +5,8 @@ class Result {
     String jobId;
     String siteName;
     String siteUrl;
-    String image;
+    int imageFileId;
+    String imageFileUrl;
     bool found;
     int number;
     int total;
@@ -27,7 +28,8 @@ class Result {
         this.jobId = json['job_id'];
         this.siteName = json['site_name'];
         this.siteUrl = json['site_url'];
-        this.image = json['image'];
+        this.imageFileId = json['image_file_id'];
+        this.imageFileUrl = json['image_file_url'];
         this.number = json['number'];
         this.total = json['total'];
         this.error = json['error'];
