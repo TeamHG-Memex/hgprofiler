@@ -20,9 +20,6 @@ USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) '\
 
 httpclient.AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
 
-import logging
-logging.basicConfig(filename="/var/log/hgprofiler.log", level=logging.DEBUG)
-
 
 class ScrapeException(Exception):
     ''' Represents a user-facing exception. '''

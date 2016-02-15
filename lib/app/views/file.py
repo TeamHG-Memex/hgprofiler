@@ -1,9 +1,10 @@
+import os
 from flask import g, send_from_directory, jsonify
 from flask.ext.classy import FlaskView
 from werkzeug.exceptions import NotFound, BadRequest
 
 import app.config
-from app.authorization import login_required
+from app.authorization import login_required, admin_required
 from app.config import get_path
 from app.rest import get_int_arg
 from model import File
@@ -47,6 +48,7 @@ class FileView(FlaskView):
                 cache_timeout=cache_timeout
             )
 
+    @admin_required
     def delete(self, id_):
         '''
         Delete file identified by `id_`.
@@ -54,9 +56,15 @@ class FileView(FlaskView):
         # Get site.
         id_ = get_int_arg('id_', id_)
         file_ = g.db.query(File).filter(File.id == id_).first()
+        data_dir = app.config.get_path("data")
 
         if file_ is None:
             raise NotFound("File '%s' does not exist." % id_)
+
+
+        # Get filesystem path
+        relpath = file_.relpath()
+        file_object_path = os.path.join(data_dir, relpath)
 
         # Delete db file record
         try:
@@ -65,6 +73,12 @@ class FileView(FlaskView):
         except Exception as e:
             g.db.rollback()
             raise BadRequest(e)
+
+        # Delete file from filesystem
+        if os.path.isfile(file_object_path):
+            os.unlink(file_object_path)
+
+
 
         message = 'File id "{}" deleted'.format(id_)
         response = jsonify(message=message)
