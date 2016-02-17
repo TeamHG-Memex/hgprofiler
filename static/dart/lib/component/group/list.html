@@ -5,6 +5,108 @@
   {{error}}
 </div>
 
+<div class='alert alert-success' role='alert' ng-repeat='msg in successMsgs'>
+  <i class='fa fa-check-circle fa-2x pull-left'></i>
+  {{msg}}
+</div>
+
+<div ng-show="showAdd" class="row">
+  <div class="col-sm-12">
+    <div class="panel {{dialogClass}}">
+      <div class="panel-heading">
+        <i class="fa fa-exchange"></i>
+        {{dialogTitle}} 
+      </div>
+      <div class="panel-body">
+
+        <form class='form-horizontal add-site-form'>
+
+          <div class='form-group'>
+            <label class="col-sm-1" for='siteName'>Name*</label>
+            <div class="col-sm-3">
+              <input type='text'
+                     class='form-control'
+                     ng-model='newGroupName'
+                     id='siteName'
+                     placeholder='Enter a group name.'>
+            </div>
+          </div>
+
+            <div class="panel panel-default">
+              <div class="panel-heading">Group Sites</div>
+              <div class="panel-body">
+                <div class="form-group">
+                  <div class="col-sm-3 pull-right">
+                    <input type="text" id="searchInput" class="form-control" ng-model='siteSearch' placeholder="Search for...">
+                  </div>
+                </div>
+
+                <table class="table table-fixedheader table-responsive table-striped">
+                  <thead style="height:30px;">
+                    <th width="20%">
+                      <input type="checkbox"
+                             id="all-sites-toggle"
+                             ng-click="toggleAddSites()"
+                             ng-model='allSites'>
+                      </input>
+                    </th>
+                    <th width="40%">Site</th>
+                    <th width="40%">Category</th>
+                  </thead>
+                  <tbody style="height:300px">
+                    <tr ng-repeat='site in sites'
+                        ng-show='site.name.contains(siteSearch) || site.category.contains(siteSearch)'>
+                      <td width="20%">
+                        <input type="checkbox"
+                               name="add-site-checkbox"
+                               value="{{site.id}}">
+                       </input>
+                       </td>
+                      <td width="40%">{{site.name}}</td>
+                      <td width="40%">{{site.category}}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+            </div>
+
+          <div class="form-group">
+            <div class='col-sm-12'>
+              <div class="pull-right">
+                <button class='btn btn-default'
+                        ng-click='hideAddDialog()'
+                        ng-disabled='submittingGroup'>
+                  Cancel
+                </button>
+                <busy-button id='add-group-button' 
+                             type='primary' 
+                             ng-show='editingGroupId != null'
+                             click='saveGroup'>
+                 <i class="fa fa-check"></i> Save 
+                </busy-button>
+                <busy-button id='add-group-button' 
+                             type='success' 
+                             ng-show='editingGroupId == null'
+                             click='addGroup'>
+                 <i class="fa fa-check"></i> Add 
+                </busy-button>
+              </div>
+
+            </div>
+          </div>
+
+        </form>
+
+        <div ng-show='addGroupError != null' class='alert alert-danger' role='alert'>
+          <p>{{addGroupError}}</p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
 
 
 <div class="panel panel-default">
@@ -19,47 +121,50 @@
       <div class="col-sm-12">
         Showing {{pager.startingAt | number}}-{{pager.endingAt | number}}
         of {{pager.totalResults | number}} groups.
-        <button data-toggle='modal' 
-                type='button'
-                class='btn btn-primary btn-sm pull-right'
-                href="#add-group-modal">
+        <button ng-click='showAddDialog("add")'
+                ng-disabled='showAdd'
+                class='btn btn-success btn-sm pull-right btn-add'>
                 <i class='fa fa-plus'></i>
-                Add Groups
+                Add Group
         </button>
       </div>
     </div>
 
     <div class="row">
       <div class="col-sm-12">
+
           <table ng-show='groups != null' class='table table-responsive table-striped wrap'>
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Sites</th>
-                <th></th>
+                <th width="70%">Name</th>
+                <th width="10%" class="text-center">Sites</th>
+                <th width="10%" class="text-center">Edit</th>
+                <th width="10%" class="text-center">Delete</th>
               </tr>
             </thead>
             <tbody>
               <tr ng-repeat='id in groupIds'>
-                <td class="col-sm-4">
-                    <edit-text text='groups[id]["name"]'
-                               onsave='groups[id]["saveName"]'
-                               >
-                    </edit-text>
+                <td>
+                  {{groups[id]["name"]}}
                 </td>
-                <td class="col-sm-3">
-                  <button data-toggle='modal' 
-                          type='button'
-                          class='no-button'
-                          ng-click="editingGroup(id)"
-                          href="#edit-sites-modal">
-                          {{groups[id]["sites"].length}} sites
+                <td class="text-center">
+                  <strong>{{groups[id]["sites"].length}}</strong>
+                </td>
+                <td class="text-center">
+                  <button type='button'
+                          ng-click='editingGroup(id)'
+                          ng-disabled='showAdd'
+                          class='btn btn-sm btn-primary'>
+                          <i class="fa fa-pencil"></i>
                   </button>
                 </td>
-                <td>
-                   <a ng-click="deleteGroup(id)" class="pull-right">
+                <td class="text-center">
+                  <button type='button'
+                     ng-disabled='showAdd'
+                     ng-click='setDeleteId(id)'
+                     class='btn btn-sm btn-danger'>
                     <i class='fa fa-trash'></i>
-                  </a>
+                  </button>
                 </td>
               </tr>
             </tbody>
@@ -77,143 +182,29 @@
   </div>
 </div>
 
-<div class='modal fade' id='add-group-modal' role='dialog'>
+<div class='modal fade' id='confirm-delete-modal' role='dialog'>
   <div class='modal-dialog'>
     <div class='modal-content'>
-      <div class='modal-header'>
-        <h4 class='modal-title'>Create Group</h4>
+      <div class='modal-header warning'>
+        <h4 class='modal-title'>Delete</h4>
       </div>
-      <form class='form-horizontal'>
-        <div class='modal-body'><!--Start modal body -->
-
-          <div class="col-sm-12">
-            <div ng-show='addGroupError != null' class='alert alert-danger' role='alert'>
-              <p>{{addGroupError}}</p>
-            </div>
-          </div>
-
-          <div class="form-group col-sm-12">
-            <div class="input-group">
-              <span class="input-group-addon" id="group-name-addon">Name</span>
-              <input type="text" class="form-control" ng-model='newGroupName' placeholder="Enter group name...">
-            </div>
-          </div>
-
-          <div class="form-group col-sm-12">
-            <div class="panel panel-default">
-              <div class="panel-heading">Add Sites</div>
-              <div class="panel-body">
-                <div class="col-sm-12">
-                  <div class="form-group">
-                    <input type="text" class="form-control" ng-model='siteSearch' placeholder="Search for...">
-                  </div>
-                </div>
-              </div>
-              <table class="table">
-                <thead>
-                  <th>
-                    <input type="checkbox"
-                           id="all-sites-toggle"
-                           ng-click="toggleAddSites()"
-                           ng-model='allSites'>
-                    </input>
-                  </th>
-                  <th>Site</th>
-                  <th>Category</th>
-                </thead>
-                <tbody>
-                  <tr ng-repeat='site in sites'
-                      ng-show='site.name.contains(siteSearch) || site.category.contains(siteSearch)'>
-                    <td>
-                      <input type="checkbox"
-                             name="add-site-checkbox"
-                             value="{{site.id}}">
-                     </input>
-                     </td>
-                    <td>{{site.name}}</td>
-                    <td>{{site.category}}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-  
-
-        </div><!--End modal body -->
-
-        <div class='modal-footer'><!-- Start modal footer -->
-          <button type='button' class='btn btn-link pull-left' data-dismiss='modal'>
-            Cancel
-          </button>
-          <busy-button id='add-group-button' type='primary' click='addGroup'>
-           <i class="fa fa-check"></i> Add 
-          </busy-button>
-        </div><!-- End modal footer -->
-
-      </form>
+      <div class='modal-body'>
+        Are you sure you want to delete this group?
+      </div>
+      <div class='modal-footer'>
+        <busy-button id='confirmDeleteButton'
+                     type='danger'
+                     class='pull-left'
+                     click='deleteGroup'>
+         <i class='fa fa-trash'></i> Delete
+        </busy-button>
+        <button type='button'
+                class='btn btn-default'
+                data-dismiss='modal'>
+          Cancel
+        </button>
+      </div>
     </div>
   </div>
 </div>
 
-<div class='modal fade' id='edit-sites-modal' role='dialog'>
-  <div class='modal-dialog'>
-    <div class='modal-content'>
-      <form class='form-horizontal'>
-        <div class='modal-header'>
-          <h4 class='modal-title'>Edit Sites</h4>
-        </div>
-        <div class='modal-body'>
-          <div ng-show='editSitesError != null' class='alert alert-danger' role='alert'>
-            <button ng-click="editSitesError = null" class="close" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-            <p>{{editSitesError}}</p>
-            <div class='clear'></div>
-          </div>
-          <div class="col-sm-12">
-            <div class="form-group">
-              <input type="text" class="form-control" ng-model='siteSearch' placeholder="Search for...">
-            </div>
-          </div>
-          <table class="table">
-            <thead>
-              <th>
-                <input type="checkbox"
-                       ng-click="toggleEditSites()"
-                       ng-checked="editingGroupSiteIds.length >= totalSites"
-                       ng-model='allSites'>
-                </input>
-              </th>
-              <th>Site</th>
-              <th>Category</th>
-            </thead>
-            <tbody>
-              <tr ng-repeat='site in sites'
-                  ng-show='site.name.contains(siteSearch) || site.category.contains(siteSearch)'>
-                <td>
-                  <input type="checkbox" 
-                         name="edit-site-checkbox"
-                         value="{{site.id}}"
-                         ng-checked="editingGroupSiteIds.contains(site.id)"
-                         ng-change='editSite()'>
-                  </input>        
-                </td>
-                <td>{{site.name}}</td>
-                <td>{{site.category}}</td>
-              </tr>
-            </tbody>
-          </table>
-
-        </div>
-        <div class='modal-footer'>
-          <button type='button' class='btn btn-link pull-left' data-dismiss='modal'>
-            Cancel
-          </button>
-          <busy-button id='edit-sites-button' type='primary' click='saveGroupSites'>
-           <i class="fa fa-check"></i> Save 
-          </busy-button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div

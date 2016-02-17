@@ -32,6 +32,7 @@ class SiteComponent extends Object
     List<String> siteIds;
     final Element _element;
     String error;
+    String addSiteError;
     String newSite;
     String newSiteCategory;
     String newSiteUrl;
@@ -80,6 +81,7 @@ class SiteComponent extends Object
     /// Show the "add profile" dialog.
     void showAddDialog() {
         this.showAdd = true;
+        this.addSiteError = null;
 
         if (this._inputEl != null) {
             // Allow Angular to digest showAdd before trying to focus. (Can't
@@ -97,6 +99,7 @@ class SiteComponent extends Object
     void hideAddDialog() {
         this.showAdd = false;
         this.newSite = '';
+        this.error = null;
     }
 
     /// Select a category in the "Add Site" form.
@@ -197,7 +200,7 @@ class SiteComponent extends Object
     /// Submit a new site.
     void addSite() {
         String pageUrl = '/api/site/';
-        this.error = null;
+        this.addSiteError = null;
         this.submittingSite = true;
         this.loading++;
 
@@ -231,7 +234,7 @@ class SiteComponent extends Object
                 });
             })
             .catchError((response) {
-                this.error = response.data['message'];
+                this.addSiteError = response.data['message'];
             })
             .whenComplete(() {
                 this.submittingSite = false;

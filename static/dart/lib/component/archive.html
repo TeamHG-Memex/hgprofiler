@@ -34,8 +34,8 @@
                   <th>Found</th>
                   <th>Errors</th>
                   <th>Time</th>
-                  <th>File</th>
-                  <th></th>
+                  <th class="text-center">Download</th>
+                  <th class="text-center">Delete</th>
                 </tr>
               </thead>
               <tbody>
@@ -67,16 +67,16 @@
                   <td>
                     {{archives[id].date | date:'yyyy-MM-dd h:mm a'}}
                   </td>
-                  <td>
+                  <td class="text-center">
                     <a ng-href="{{api.authorizeUrl(archives[id].zipFileUrl)}}"
-                       target="_blank"
-                       class='btn btn-sm btn-primary'>
+                       class="btn btn-sm btn-success"
+                       target="_blank">
                        <i class="fa fa-download"></i>
-                       Zip 
                       </a>
                   </td>
-                  <td>
-                     <a ng-click="deleteArchive(id)" class="pull-right">
+                  <td class="text-center">
+                     <a ng-click="deleteArchive(id)"
+                        class="btn btn-sm btn-danger">
                       <i class='fa fa-trash'></i>
                      </a>
                    </td>
