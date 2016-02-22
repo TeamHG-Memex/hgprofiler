@@ -1,111 +1,132 @@
 <breadcrumbs crumbs=crumbs></breadcrumbs>
 
-
-
 <div class='alert alert-danger' role='alert' ng-show='error != null'>
-  {{error}}
+  <button ng-click="error = null" class="close" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+  <p>{{error}}</p>
+  <div class='clear'></div>
+</div>
+
+<div class='alert alert-success' role='alert' ng-repeat='msg in successMsgs'>
+  <i class='fa fa-check-circle fa-2x pull-left'></i>
+  {{msg}}
 </div>
 
 <div ng-show="showAdd" class="row">
   <div class="col-sm-12 pull-right">
-    <div class="panel panel-default">
+    <div class="panel {{dialogClass}}">
+      <div class="panel-heading">
+        <i class="fa fa-exchange"></i>
+        {{dialogTitle}} 
+      </div>
       <div class="panel-body">
 
-        <form class='form add-site-form'>
+        <form class='form-horizontal add-site-form'>
 
-          <div class="row">
-            <div class='form-group col-sm-12'>
-              <div class='input-group'>
-                <div class='input-group-addon'><strong>Name*</strong></div>
-                <input type='text'
-                       class='form-control'
-                       ng-model='newSite'
-                       ng-keypress='handleAddSiteKeypress($event)'
-                       ng-disabled='submittingSite'
-                       placeholder='Enter a site name.'>
-              </div>
+          <div class='form-group'>
+            <label class="col-sm-1" for='site-name'>Name*</label>
+            <div class="col-sm-3">
+              <input type='text'
+                     class='form-control'
+                     id='site-name'
+                     ng-model='newSiteName'
+                     ng-keypress='handleAddSiteKeypress($event)'
+                     ng-disabled='submittingSite'
+                     placeholder='Enter a site name.'>
+           </div>
+          </div>
+
+          <div class='form-group'>
+            <label for="url" class='col-sm-1'>URL*</label>
+            <div class="col-sm-6">
+              <input type='text'
+                     class='form-control'
+                     id="url"
+                     size='50'
+                     ng-model='newSiteUrl'
+                     ng-keypress='handleAddSiteKeypress($event)'
+                     ng-disabled='submittingSite'
+                     placeholder='Enter the site search URL.'>
             </div>
           </div>
 
-          <div class="row">
-            <div class='form-group col-sm-12 pull-right'>
-              <div class='input-group'>
-                <div class='input-group-addon'><strong>URL*</strong></div>
-                <input type='text'
-                       class='form-control'
-                       size='50'
-                       ng-model='newSiteUrl'
-                       ng-keypress='handleAddSiteKeypress($event)'
-                       ng-disabled='submittingSite'
-                       placeholder='Enter the site search URL.'>
-              </div>
+          <div class='form-group'>
+            <label class='col-sm-1' for="status-code">Status code*</label>
+            <div class="col-sm-2">
+              <input type='text'
+                     class='form-control'
+                     id="status-code"
+                     size='10'
+                     ng-model='newSiteStatusCode'
+                     ng-keypress='handleAddSiteKeypress($event)'
+                     ng-disabled='submittingSite'
+                     placeholder='Enter status code.'>
             </div>
           </div>
 
-          <div class="row">
-            <div class='form-group col-sm-12 pull-right'>
-              <div class='input-group'>
-                <div class='input-group-addon'><strong>Status code</strong></div>
+            <div class='form-group'>
+              <label class='col-sm-1' for="search-text">Search text*</label>
+              <div class="col-sm-6">
                 <input type='text'
                        class='form-control'
-                       size='10'
-                       ng-model='newSiteStatusCode'
-                       ng-keypress='handleAddSiteKeypress($event)'
-                       ng-disabled='submittingSite'
-                       placeholder='Enter the site grc.'>
-              </div>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class='form-group col-sm-12 pull-right'>
-              <div class='input-group'>
-                <div class='input-group-addon'><strong>Search text</strong></div>
-                <input type='text'
-                       class='form-control'
+                       id="search-text"
                        size='30'
                        ng-model='newSiteSearchText'
                        ng-keypress='handleAddSiteKeypress($event)'
                        ng-disabled='submittingSite'
-                       placeholder='Enter the site grt.'>
+                       placeholder='Enter search text.'>
               </div>
             </div>
-          </div>
 
-          <div class="row">
-            <div class="form-group col-sm-12 pull-right">
-              <div class='btn-group'>
+            <div class="form-group">
+              <label for="category" class="col-sm-1">Category*</label>
+              <div class="col-sm-6">
                 <button type='button'
                         class='btn btn-default dropdown-toggle'
+                        id="category"
                         data-toggle='dropdown'
                         ng-disabled='submittingSite'
                         aria-expanded='false'>
-                  {{newSiteCategoryDescription}} <span class='caret'></span>
+                        {{newSiteCategoryDescription}} <span class='caret'></span>
                 </button>
                 <ul class='dropdown-menu sort-by' role='menu'>
-                  <li ng-repeat="category in siteCategories"><a ng-click='selectAddSiteCategory(category)'>{{category}}</a></li>
+                  <li ng-repeat="category in siteCategories"><a ng-click='setSiteCategory(category)'>{{category}}</a></li>
                 </ul>
               </div>
-            </div>
-          </div>
+           </div>
 
-          <div class="row">
-            <div class="form-group col-sm-12 pull-right">
-              <div class='pull-right'>
-                <button class='btn btn-link pull-left'
+           <div class="form-group">
+            <div class='col-sm-12'>
+              <div class="pull-right">
+
+                <button class='btn btn-default'
                         ng-click='hideAddDialog()'
                         ng-disabled='submittingSite'>
                   Cancel
                 </button>
+                <busy-button id='edit-site-button' 
+                             type='primary' 
+                             ng-show='editingSiteId != null'
+                             ng-disabled='submittingSite'
+                             click='saveSite'>
+                 <i class="fa fa-check"></i> Save 
+                </busy-button>
+                <busy-button id='add-site-button' 
+                             type='success' 
+                             ng-disabled='submittingSite'
+                             ng-show='editingSiteId == null'
+                             click='addSite'>
+                 <i class="fa fa-check"></i> Add 
+                </busy-button>
 
-                <button class='btn btn-primary'
-                        ng-click='addSite()'
-                        ng-disabled='submittingSite'>
-                  <i class='fa fa-plus'></i>
-                  Add
-                </button>
               </div>
             </div>
+          </div>
+
+
+          <div ng-show='addSiteError != null' class='alert alert-danger' role='alert'>
+            <p>{{addSiteError}}</p>
           </div>
 
         </form>
@@ -116,86 +137,113 @@
 
 
 
-  <div class="panel panel-default">
-    <div class="panel-heading">
-      <i class="fa fa-bars"></i>
-      Sites
-      <img ng-show='loading > 0' src='/static/img/spinner-black-snake.gif'>
-    </div>
-    <div class="panel-body">
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <i class="fa fa-bars"></i>
+    Sites
+    <img ng-show='loading > 0' src='/static/img/spinner-black-snake.gif'>
+  </div>
+  <div class="panel-body">
 
+    <div class="row">
+      <div class="col-sm-12">
+        Showing {{pager.startingAt | number}}-{{pager.endingAt | number}}
+        of {{pager.totalResults | number}} sites.
+        <button class='btn btn-success btn-sm pull-right btn-add'
+           ng-disabled='showAdd'
+           ng-click='showAddDialog("add")'>
+          <i class='fa fa-plus'></i>
+          Add Sites 
+        </button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-sm-12">
+
+          <table ng-show='sites != null' class='table table-responsive table-striped wrap'>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>URL</th>
+                <th>Search Text</th>
+                <th class="text-center">Status Code</th>
+                <th class="text-center">Category</th>
+                <th class="text-center">Edit</th>
+                <th class="text-center">Delete</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat='id in siteIds'>
+                <td class="col-sm-1">
+                  {{sites[id]["name"]}}
+                </td>
+                <td class="col-sm-3">
+                  {{sites[id]["url"]}}
+                </td>
+                <td class="col-sm-3">
+                  {{sites[id]["searchText"]}}
+                </td>
+                <td class="col-sm-1 text-center">
+                  {{sites[id]["statusCode"].toString()}}
+                </td>
+                <td class="col-sm-2 text-center">
+                  {{sites[id]["category"]}}
+                </td>
+                <td class="col-sm-1 text-center">
+                  <button type='button'
+                          ng-click='editingSite(id)'
+                          ng-disabled='showAdd'
+                          class='btn btn-sm btn-primary'>
+                          <i class="fa fa-pencil"></i>
+                  </button>
+                </td>
+                 <td class="col-sm-1 text-center">
+                  <button type='button'
+                     ng-disabled='showAdd'
+                     ng-click='setDeleteId(id)'
+                     class='btn btn-sm btn-danger'>
+                    <i class='fa fa-trash'></i>
+                  </button>
+                </td>
+
+              </tr>
+            </tbody>
+          </table>
+      </div>
       <div class="row">
         <div class="col-sm-12">
-          Showing {{pager.startingAt | number}}-{{pager.endingAt | number}}
-          of {{pager.totalResults | number}} sites.
-          <button class='btn btn-primary btn-sm pull-right btn-add'
-             ng-disabled='showAdd'
-             ng-click='showAddDialog()'>
-            <i class='fa fa-plus'></i>
-            Add Sites 
-          </button>
+          <pager pager='pager'
+                disabled='loading'></pager>
         </div>
       </div>
 
-      <div class="row">
-        <div class="col-sm-12">
+      </div>
+  </div>
+</div>
 
-            <table ng-show='sites != null' class='table table-responsive table-striped wrap'>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>URL</th>
-                  <th>Search Text</th>
-                  <th>Status Code</th>
-                  <th>Category</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr ng-repeat='id in siteIds'>
-                  <td class="col-sm-1">
-                    <edit-text text='sites[id]["name"]'
-                               onsave='sites[id]["saveName"]'
-                               >
-                    </edit-text>
-                  </td>
-                  <td class="col-sm-4">
-                    <edit-text text='sites[id]["url"]'
-                               onsave='sites[id]["saveUrl"]'
-                               size='50'>
-                    </edit-text>
-                  </td>
-                  <td class="col-sm-3">
-                    <edit-text text='sites[id]["searchText"]'
-                               onsave='sites[id]["saveSearchText"]'
-                               size='20'>
-                    </edit-text>
-                  </td>
-                  <td class="col-sm-1">
-                    <edit-text text='sites[id]["statusCode"].toString()'
-                               onsave='sites[id]["saveStatusCode"]'
-                               size='15'>
-                    </edit-text>
-                  </td>
-                  <td class="col-sm-3">
-                    <edit-select options='siteCategories'
-                                 onsave='sites[id]["saveCategory"]'
-                                 selected-index='siteCategoryIndex(sites[id]["category"])'>
-                   </edit-select>
-                   <a ng-click="deleteSite(id)" class="pull-right">
-                    <i class='fa fa-trash'></i>
-                  </a>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-        </div>
-        <div class="row">
-          <div class="col-sm-12">
-            <pager pager='pager'
-                  disabled='loading'></pager>
-          </div>
-        </div>
-
-        </div>
+<div class='modal fade' id='confirm-delete-modal' role='dialog'>
+  <div class='modal-dialog'>
+    <div class='modal-content'>
+      <div class='modal-header warning'>
+        <h4 class='modal-title'>Delete</h4>
+      </div>
+      <div class='modal-body'>
+        Are you sure you want to delete this site?
+      </div>
+      <div class='modal-footer'>
+        <busy-button id='confirm-delete-button'
+                     type='danger'
+                     class='pull-left'
+                     click='deleteSite'>
+         <i class='fa fa-trash'></i> Delete
+        </busy-button>
+        <button type='button'
+                class='btn btn-default'
+                data-dismiss='modal'>
+          Cancel
+        </button>
+      </div>
     </div>
   </div>
+</div>

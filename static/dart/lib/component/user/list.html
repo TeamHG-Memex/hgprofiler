@@ -12,7 +12,7 @@
         Showing {{pager.startingAt | number}}-{{pager.endingAt | number}}
         of {{pager.totalResults | number}} sites.
         <button ng-if='auth.isAdmin()'
-                class='btn btn-primary pull-right'
+                class='btn btn-success pull-right'
                 data-toggle='modal'
                 href='#add-user-modal'>
           <i class='fa fa-user-plus'></i>
@@ -44,7 +44,7 @@
           <td><a href='mailto:{{user.email}}?subject=HGProfiler' target="_top">{{user.email}}</a></td>
           <td>{{user.phone}}</td>
           <td>{{user.isAdmin ? 'Administrator' : 'User'}}</td>
-          <td><a class='btn btn-success btn-sm' href='/user/{{user.id}}'>View</a></td>
+          <td><a class='btn btn-primary btn-sm' href='/user/{{user.id}}'>View</a></td>
         </tr>
       </tbody>
     </table>
@@ -63,7 +63,7 @@
   <div class='modal-dialog'>
     <div class='modal-content'>
       <form class='form-horizontal' ng-submit='submitAddUser()'>
-        <div class='modal-header'>
+        <div class='modal-header success'>
           <h4 class='modal-title'>Add New User…</h4>
         </div>
         <div class='modal-body'>
@@ -109,8 +109,8 @@
           </div>
         </div>
         <div class='modal-footer'>
-          <button class='btn btn-link pull-left' data-dismiss='modal'>Cancel</button>
-          <busy-button id='add-button' type='primary' click='addUser'>
+          <button class='btn btn-default pull-left' data-dismiss='modal'>Cancel</button>
+          <busy-button id='add-button' type='success' click='addUser'>
             <i class='fa fa-user-plus'></i> Add
           </busy-button>
         </div>

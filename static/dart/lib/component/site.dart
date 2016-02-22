@@ -3,12 +3,14 @@ import 'dart:html';
 import 'dart:convert';
 
 import 'package:angular/angular.dart';
+import 'package:bootjack/bootjack.dart';
+import 'package:dquery/dquery.dart';
+
 import 'package:hgprofiler/authentication.dart';
 import 'package:hgprofiler/query_watcher.dart';
 import 'package:hgprofiler/component/breadcrumbs.dart';
 import 'package:hgprofiler/component/pager.dart';
 import 'package:hgprofiler/component/title.dart';
-import 'package:hgprofiler/mixin/current_page.dart';
 import 'package:hgprofiler/model/site.dart';
 import 'package:hgprofiler/rest_api.dart';
 import 'package:hgprofiler/sse.dart';
@@ -22,27 +24,32 @@ import 'package:hgprofiler/sse.dart';
 class SiteComponent extends Object
                     implements ShadowRootAware {
 
+    String addSiteError;
     List<Breadcrumb> crumbs = [
         new Breadcrumb('HGProfiler', '/'),
         new Breadcrumb('Sites', '/site'),
     ];
-
-    List<String> keys;
-    Map<String,Function> sites;
-    List<String> siteIds;
+    int deleteSiteId;
+    String dialogTitle;
+    String dialogClass;
+    int editingSiteId;
     final Element _element;
     String error;
-    String newSite;
+    List<String> keys;
+    int loading = 0;
+    String newSiteName;
     String newSiteCategory;
+    String newSiteCategoryDescription = 'Select a category';
     String newSiteUrl;
     String newSiteSearchText;
     int newSiteStatusCode;
-    List<String> siteCategories;
     Pager pager;
-    int loading = 0;
+    Map<String,Function> sites;
+    List<String> siteCategories;
+    List<String> siteIds;
     bool showAdd = false;
     bool submittingSite = false;
-    String newSiteCategoryDescription = 'Select a category';
+    List<String> successMsgs = []; 
 
     InputElement _inputEl;
     Router _router;
@@ -78,9 +85,19 @@ class SiteComponent extends Object
     }
 
     /// Show the "add profile" dialog.
-    void showAddDialog() {
+    void showAddDialog(string mode) {
+        if(mode == 'edit') {
+            this.dialogTitle = 'Edit Group';
+            this.dialogClass = 'panel-info';
+        } else {
+            this.dialogTitle = 'Add Group';
+            this.dialogClass = 'panel-success';
+        }
         this.showAdd = true;
+        this.addSiteError = null;
+        this.error = null;
 
+        this._inputEl = this._element.querySelector('#siteName');
         if (this._inputEl != null) {
             // Allow Angular to digest showAdd before trying to focus. (Can't
             // focus a hidden element.)
@@ -96,14 +113,41 @@ class SiteComponent extends Object
     /// Show the "add sites" dialog.
     void hideAddDialog() {
         this.showAdd = false;
-        this.newSite = '';
+        this.newSiteName = null;
+        this.newSiteCategory = null;
+        this.newSiteStatusCode = null;
+        this.newSiteSearchText = null;
+        this.newSiteCategoryDescription = 'Select a category';
+        this.newSiteUrl = null;
+        this.editingSiteId = null;
+        this.error = null;
     }
 
     /// Select a category in the "Add Site" form.
-    void selectAddSiteCategory(String category) {
+    void setSiteCategory(String category) {
         this.newSiteCategory = category;
         String categoryHuman = category.replaceRange(0, 1, category[0].toUpperCase());
         this.newSiteCategoryDescription = categoryHuman;
+    }
+
+    /// Set site for deletion and show confirmation modal
+    void setDeleteId(String id_) {
+        this.deleteSiteId = id_;
+        String selector = '#confirm-delete-modal';
+        DivElement modalDiv = this._element.querySelector(selector);
+        Modal.wire(modalDiv).show();
+    }
+
+    /// Set site to be edited and show add/edit dialog.    
+    void editingSite(int id_) {
+        this.error = null;
+        this.newSiteName = this.sites[id_]['name'];
+        this.setSiteCategory(this.sites[id_]['category']);
+        this.newSiteSearchText = this.sites[id_]['searchText'];
+        this.newSiteStatusCode = this.sites[id_]['statusCode'];
+        this.newSiteUrl = this.sites[id_]['url'];
+        this.editingSiteId = id_;
+        this.showAddDialog('edit');
     }
 
     /// Fetch a page of profiler sites. 
@@ -124,17 +168,13 @@ class SiteComponent extends Object
                 this.sites = new Map<String>();
 
                 response.data['sites'].forEach((site) {
+                    window.console.debug(site);
                     this.sites[site['id']] = {
                         'name': site['name'],
                         'url': site['url'],
                         'category': site['category'],
                         'statusCode': site['status_code'],
                         'searchText': site['search_text'],
-                        'saveUrl': (v) => this.saveSite(site['id'], 'url', v),
-                        'saveName': (v) => this.saveSite(site['id'], 'name', v),
-                        'saveCategory': (v) => this.saveSite(site['id'], 'category', this.siteCategories[v]),
-                        'saveSearchText': (v) => this.saveSite(site['id'], 'search_text', v),
-                        'saveStatusCode': (v) => this.saveSite(site['id'], 'status_code', v),
                     };
 
                 });
@@ -195,14 +235,55 @@ class SiteComponent extends Object
     }
 
     /// Submit a new site.
-    void addSite() {
+    void addSite(Event e, dynamic data, Function resetButton) {
         String pageUrl = '/api/site/';
-        this.error = null;
+        this.addSiteError = null;
         this.submittingSite = true;
         this.loading++;
 
+        // Validate input
+        bool valid = true;
+
+        if (this.newSiteCategory == '' || this.newSiteCategory == null) {
+            this.addSiteError = 'You must select a site category.';
+            valid = false;
+        }
+
+        if (this.newSiteSearchText == '' || this.newSiteSearchText == null) {
+            this.addSiteError = 'You must enter search text for the site.';
+            valid = false;
+        }
+
+        try {
+            int code = int.parse(this.newSiteStatusCode);
+        } on FormatException {
+            this.addSiteError = 'Status code must be a number.';
+            valid = false;
+        } on ArgumentError {
+            this.addSiteError = 'Status code must be a number.';
+            valid = false;
+        }
+
+        if (this.newSiteUrl == '' || this.newSiteUrl == null) {
+            this.addSiteError = 'You must enter a URL for the site.';
+            valid = false;
+        }
+
+        if (this.newSiteName == '' || this.newSiteName == null) {
+            this.addSiteError = 'You must enter a name for the site.';
+            valid = false;
+        }
+
+
+        if(!valid) {
+            this.submittingSite = false;
+            resetButton();
+            this.loading--;
+            return;
+        }
+
         Map site = {
-            'name': this.newSite,
+            'name': this.newSiteName,
             'url': this.newSiteUrl,
             'category': this.newSiteCategory,
         }; 
@@ -212,7 +293,7 @@ class SiteComponent extends Object
         }
 
         if (this.newSiteStatusCode != null) {
-            site['satus_code'] = this.newSiteStatusCode;
+            site['status_code'] = this.newSiteStatusCode;
         }
 
         Map body = {
@@ -222,20 +303,27 @@ class SiteComponent extends Object
         this._api
             .post(pageUrl, body, needsAuth: true)
             .then((response) {
-                new Timer(new Duration(seconds:0.1), () {
-                    this._inputEl.focus();
-                    this.newSite = '';
+            })
+            .catchError((response) {
+                this.addSiteError = response.data['message'];
+                this.loading--;
+                resetButton();
+            })
+            .whenComplete(() {
+                this._inputEl.focus();
+                this.submittingSite = false;
+                this.loading--;
+                resetButton();
+                if (this.addSiteError == null) {
+                    this.newSiteName = '';
                     this.newSiteUrl = '';
                     this.newSiteStatusCode = '';
                     this.newSiteSearchText = '';
-                });
-            })
-            .catchError((response) {
-                this.error = response.data['message'];
-            })
-            .whenComplete(() {
-                this.submittingSite = false;
-                this.loading--;
+                    this.showAdd = false;
+                    String msg = 'New site added site';
+                    this.successMsgs.add(msg);
+                    new Timer(new Duration(seconds:3), () => this.successMsgs.remove(msg));
+                }
             });
     }
 
@@ -255,6 +343,7 @@ class SiteComponent extends Object
         } 
     }
 
+   /// Convert string to camel case.
    String toCamelCase(String input, String separator) {
         List components = input.split(separator);
         if(components.length > 1) {
@@ -270,49 +359,68 @@ class SiteComponent extends Object
     } 
 
     /// Save an edited site.
-    void saveSite(String id_, String key, String value) {
-        String pageUrl = '/api/site/${id_}';
+    void saveSite(Event e, dynamic data, Function resetButton) {
+        String pageUrl = '/api/site/${this.editingSiteId}';
         this.error = null;
         this.loading++;
 
+        
         Map body = {
-            key: value,
+            'name': this.newSiteName,
+            'url': this.newSiteUrl,
+            'status_code': this.newSiteStatusCode,
+            'search_text': this.newSiteSearchText,
+            'category': this.newSiteCategory,
         };
 
         this._api
             .put(pageUrl, body, needsAuth: true)
             .then((response) {
-                key = this.toCamelCase(key, '_');
-                this.sites[id_][key] = value;
+                this._fetchCurrentPage();
             })
             .catchError((response) {
                 this.error = response.data['message'];
+                resetButton();
             })
             .whenComplete(() {
                 this.loading--;
+                resetButton();
+                this.showAdd = false;
+                String msg = 'Updated group';
+                this.successMsgs.add(msg);
+                new Timer(new Duration(seconds:3), () => this.successMsgs.remove(msg));
             });
     }
 
-    /// Delete site specified by id.
-    void deleteSite(String id_) {
-        String pageUrl = '/api/site/${id_}';
+    /// Delete group specified by deleteGroupId.
+    void deleteSite(Event e, dynamic data, Function resetButton) {
+        if(this.deleteSiteId == null) {
+            return;
+        }
         this.error = null;
+        String pageUrl = '/api/site/${this.deleteSiteId}';
         this.loading++;
 
         this._api
             .delete(pageUrl, needsAuth: true)
             .then((response) {
-                //this.sites.remove(id_);
-                //this.siteIds.remove(id_);
+                this.sites.remove(this.deleteSiteId);
+                this.siteIds.remove(this.deleteSiteId);
                 new Future(() {
                     this._fetchCurrentPage();
                 });
+                String msg = 'Deleted site ID "${this.deleteSiteId}"';
+                this.successMsgs.add(msg);
+                new Timer(new Duration(seconds:3), () => this.successMsgs.remove(msg));
             })
             .catchError((response) {
                 this.error = response.data['message'];
+                resetButton();
             })
             .whenComplete(() {
                 this.loading--;
+                resetButton();
+                Modal.wire($("#confirm-delete-modal")).hide();
             });
     }
 

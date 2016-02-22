@@ -5,13 +5,12 @@ import 'dart:convert';
 import 'package:angular/angular.dart';
 import 'package:bootjack/bootjack.dart';
 import 'package:dquery/dquery.dart';
+
 import 'package:hgprofiler/authentication.dart';
 import 'package:hgprofiler/query_watcher.dart';
-
 import 'package:hgprofiler/component/breadcrumbs.dart';
 import 'package:hgprofiler/component/pager.dart';
 import 'package:hgprofiler/component/title.dart';
-import 'package:hgprofiler/mixin/current_page.dart';
 import 'package:hgprofiler/model/group.dart';
 import 'package:hgprofiler/model/site.dart';
 import 'package:hgprofiler/rest_api.dart';
@@ -26,26 +25,30 @@ import 'package:hgprofiler/sse.dart';
 class GroupListComponent extends Object
                     implements ShadowRootAware {
 
+    String addGroupError;
+    bool allSites;
     List<Breadcrumb> crumbs = [
         new Breadcrumb('HGProfiler', '/'),
         new Breadcrumb('Groups', '/group'),
     ];
-    bool allSites;
-    String addGroupError;
-    Map<Map> groups;
+    int deleteGroupId;
+    String dialogTitle;
+    String dialogClass;
     int editingGroupId;
     List<int> editingGroupSiteIds;
-    List<String> groupIds;
-    final Element _element;
-    String error;
     String editSitesError;
+    final Element _element;
     List<CheckboxInputElement> editSiteCheckboxes;
+    String error;
+    List<String> groupIds;
+    Map<Map> groups;
+    int loading = 0;
     String newGroupName;
     Pager pager;
-    int loading = 0;
-    List<Site> sites;
     bool showAdd = false;
+    List<Site> sites;
     String siteSearch = '';
+    List<String> successMsgs = []; 
     bool submittingGroup = false;
     int totalSites;
 
@@ -88,9 +91,20 @@ class GroupListComponent extends Object
     }
 
     /// Show the "add profile" dialog.
-    void showAddDialog() {
-        this.showAdd = true;
+    void showAddDialog(String mode) {
+        if(mode == 'edit') {
+            this.dialogTitle = 'Edit Group';
+            this.dialogClass = 'panel-info';
+        } else {
+            this.dialogTitle = 'Add Group';
+            this.dialogClass = 'panel-success';
+        }
 
+        this.showAdd = true;
+        this.addGroupError = null;
+        this.error = null;
+ 
+        this._inputEl = this._element.querySelector('#groupName');
         if (this._inputEl != null) {
             // Allow Angular to digest showAdd before trying to focus. (Can't
             // focus a hidden element.)
@@ -106,7 +120,13 @@ class GroupListComponent extends Object
     /// Show the "add groups" dialog.
     void hideAddDialog() {
         this.showAdd = false;
-        this.newGroup = '';
+        this.newGroupName = '';
+        String selector = 'input[name="add-site-checkbox"][type="checkbox"]';
+        List<CheckboxInputElement> siteCheckboxes = this._element.querySelectorAll(selector);
+        siteCheckboxes.forEach((checkbox) {
+            checkbox.checked = false;
+        });
+        this.editingGroupId = null;
     }
 
     /// Fetch a page of profiler groups. 
@@ -133,7 +153,6 @@ class GroupListComponent extends Object
                             group['sites'].length,
                             (index) => new Site.fromJson(group['sites'][index])
                         ),
-                        'saveName': (v) => this.saveGroup(group['id'], 'name', v)
                     };
                 });
                 // Deleting groups affects paging of results, redirect to the final page
@@ -174,31 +193,60 @@ class GroupListComponent extends Object
         return completer.future;
     }
 
-    void saveGroup(String id_, String key, String value) {
-        String pageUrl = '/api/group/${id_}';
+
+    //void saveGroup(String id_, String key, dynamic value) {
+    void saveGroup(Event e, dynamic data, Function resetButton) {
+        String selector = 'input[name="add-site-checkbox"][type="checkbox"]:checked';
+        List<CheckboxInputElement> siteCheckboxes = this._element.querySelectorAll(selector);
+        this.editingGroupSiteIds = new List();
+        siteCheckboxes.forEach((checkbox) {
+            this.editingGroupSiteIds.add(checkbox.value);
+        });
+
+
+        String pageUrl = '/api/group/${this.editingGroupId}';
         this.error = null;
         this.loading++;
 
         Map body = {
-            key: value,
+            'name': this.newGroupName,
+            'sites':  this.editingGroupSiteIds
         };
 
         this._api
             .put(pageUrl, body, needsAuth: true)
             .then((response) {
-                //this.groups[id_][key] = value;
                 this._fetchCurrentPage();
+                String msg = 'Updated group "${this.newGroupName}"';
+                this.successMsgs.add(msg);
+                new Timer(new Duration(seconds:3), () => this.successMsgs.remove(msg));
             })
             .catchError((response) {
                 this.error = response.data['message'];
+                resetButton();
             })
             .whenComplete(() {
                 this.loading--;
+                resetButton();
+                this.showAdd = false;
             });
     }
 
-    void deleteGroup(String id_) {
-        String pageUrl = '/api/group/${id_}';
+    /// Set group for deletion and show confirmation modal
+    void setDeleteId(String id_) {
+        this.deleteGroupId = id_;
+        String selector = '#confirm-delete-modal';
+        DivElement modalDiv = this._element.querySelector(selector);
+        Modal.wire(modalDiv).show();
+    }
+
+    /// Delete group specified by deleteGroupId.
+    void deleteGroup(Event e, dynamic data, Function resetButton) {
+        if(this.deleteGroupId == null) {
+            return;
+        }
+
+        String pageUrl = '/api/group/${this.deleteGroupId}';
         this.error = null;
         this.loading++;
         Map body = {};
@@ -206,24 +254,33 @@ class GroupListComponent extends Object
         this._api
             .delete(pageUrl, urlArgs: {}, needsAuth: true)
             .then((response) {
-                this.groups.remove(id_);
+                this.groups.remove(this.deleteGroupId);
+                this.groupIds.remove(this.deleteGroupId);
+                String msg = 'Deleted group ID "${this.deleteGroupId}"';
+                this.successMsgs.add(msg);
+                new Timer(new Duration(seconds:3), () => this.successMsgs.remove(msg));
             })
             .catchError((response) {
                 this.error = response.data['message'];
             })
             .whenComplete(() {
                 this.loading--;
+                Modal.wire($("#confirm-delete-modal")).hide();
+                resetButton();
             });
     }
-    
+
+    /// Set group to be edited and show add/edit dialog.    
     void editingGroup(int id_) {
         this.error = null;
+        this.newGroupName = this.groups[id_]['name'];
         this.siteSearch = '';
         this.editingGroupId = id_;
+        this.showAddDialog('edit');
         this.editingGroupSiteIds = new List.generate(
                 this.groups[id_]['sites'].length,
                 (index) =>  this.groups[id_]['sites'][index].id);
-        String selector = 'input[name="site-checkboxes"][type="checkbox"]';
+        String selector = 'input[name="add-site-checkbox"][type="checkbox"]';
         List<CheckboxInputElement> siteCheckboxes = this._element.querySelectorAll(selector);
         siteCheckboxes.forEach((checkbox) {
             if (this.editingGroupSiteIds.contains(int.parse(checkbox.value))) {
@@ -231,40 +288,6 @@ class GroupListComponent extends Object
             } else {
                 checkbox.checked = false;
             }
-        });
-    }
-
-    void editSite() {
-        String checkedSelector = 'input[name="edit-site-checkbox"][type="checkbox"]:checked'; 
-        List<CheckboxInputElement> siteCheckboxes = this._element.querySelectorAll(checkedSelector);
-        String toggleSelector = '#all-sites-toggle';
-        CheckboxInputElement toggleAllSitesCheckbox = this._element.querySelector(toggleSelector);
-        if (siteCheckboxes.length == this.totalSites) {
-            allSites = true;
-        } else {
-            allSites = false;
-        }
-    }
-
-    void saveGroupSites(Event e, dynamic data, Function resetButton) {
-        String selector = 'input[name="edit-site-checkbox"][type="checkbox"]:checked';
-        List<CheckboxInputElement> siteCheckboxes = this._element.querySelectorAll(selector);
-        window.console.debug(siteCheckboxes);
-        this.editingGroupSiteIds = new List();
-        siteCheckboxes.forEach((checkbox) {
-            this.editingGroupSiteIds.add(checkbox.value);
-        });
-        this.saveGroup(this.editingGroupId, 'sites', this.editingGroupSiteIds);
-        resetButton();
-        Modal.wire($("#edit-sites-modal")).hide();
-    }
-
-    void toggleEditSites() {
-        String selector = 'input[name="edit-site-checkbox"][type="checkbox"]';
-        List<CheckboxInputElement> siteCheckboxes = this._element.querySelectorAll(selector);
-        this.editingGroupSiteIds = new List();
-        siteCheckboxes.forEach((checkbox) {
-            checkbox.checked = this.allSites;
         });
     }
 
@@ -282,6 +305,7 @@ class GroupListComponent extends Object
         List<int> sites = new List();
         this.siteSearch = '';
         String pageUrl = '/api/group/';
+        this.addGroupError = null;
         this.error = null;
         this.loading++;
 
@@ -312,8 +336,6 @@ class GroupListComponent extends Object
         this._api
             .post(pageUrl, body, needsAuth: true)
             .then((response) {
-                this.newGroupName = ''; 
-                this.addGroupError = null;
             })
             .catchError((response) {
                 this.loading--;
@@ -324,8 +346,13 @@ class GroupListComponent extends Object
                 this.loading--;
                 resetButton();
                 if (this.addGroupError == null) {
-                    Modal.wire($("#add-group-modal")).hide();
+                    this.showAdd = false;
+                    String msg = 'Added group "${this.newGroupName}"';
+                    this.successMsgs.add(msg);
+                    new Timer(new Duration(seconds:3), () => this.successMsgs.remove(msg));
                 }
+                this.newGroupName = ''; 
+                this.addGroupError = null;
             });
     }
 

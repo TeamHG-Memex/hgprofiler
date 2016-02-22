@@ -1,98 +1,132 @@
 <breadcrumbs crumbs=crumbs></breadcrumbs>
 
-
-
 <div class='alert alert-danger' role='alert' ng-show='error != null'>
-  {{error}}
+  <button ng-click="error = null" class="close" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+  <p>{{error}}</p>
+  <div class='clear'></div>
 </div>
 
-  <div class="panel panel-default">
-    <div class="panel-heading">
-      <i class="fa fa-bars"></i>
-      Archived Searches
-      <img ng-show='loading > 0' src='/static/img/spinner-black-snake.gif'>
-    </div>
-    <div class="panel-body">
+<div class='alert alert-success' role='alert' ng-repeat='msg in successMsgs'>
+  <i class='fa fa-check-circle fa-2x pull-left'></i>
+  {{msg}}
+</div>
 
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <i class="fa fa-bars"></i>
+    Archived Searches
+    <img ng-show='loading > 0' src='/static/img/spinner-black-snake.gif'>
+  </div>
+  <div class="panel-body">
+
+    <div class="row">
+      <div class="col-sm-12">
+        Showing {{pager.startingAt | number}}-{{pager.endingAt | number}}
+        of {{pager.totalResults | number}} archives.
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-sm-12">
+
+        <div class="table-responsive">
+          <table ng-show='archives != null' class='table table-striped wrap'>
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Group</th>
+                <th>Sites</th>
+                <th>Found</th>
+                <th>Errors</th>
+                <th>Time</th>
+                <th class="text-center">Download</th>
+                <th class="text-center">Delete</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat='id in archiveIds'>
+                <td>
+                  {{archives[id].username}}
+                </td>
+                <td>
+                  <span ng-if='archives[id].group != null'>{{archives[id].group['name']}}</span>
+                  <span ng-if='archives[id].group == null'>All sites</span>
+                </td>
+                <td>
+                  {{archives[id].siteCount}}
+                </td>
+                <td>
+                  <progress-bar progress='(archives[id].foundCount/archives[id].siteCount) * 100'
+                                srOnly=false
+                                number='archives[id].foundCount'
+                                type='progress-bar-success'>
+                  </progress-bar>
+                </td>
+                <td>
+                  <progress-bar progress='(archives[id].errorCount/archives[id].siteCount) * 100'
+                                srOnly=false
+                                number='archives[id].errorCount'
+                                type='progress-bar-danger'>
+                  </progress-bar>
+                </td>
+                <td>
+                  {{archives[id].date | date:'yyyy-MM-dd h:mm a'}}
+                </td>
+                <td class="text-center">
+                  <a ng-href="{{api.authorizeUrl(archives[id].zipFileUrl)}}"
+                     class="btn btn-sm btn-success"
+                     target="_blank">
+                     <i class="fa fa-download"></i>
+                    </a>
+                </td>
+                <td class="text-center">
+                  <button type='button'
+                     ng-click='setDeleteId(id)'
+                     class='btn btn-sm btn-danger'>
+                    <i class='fa fa-trash'></i>
+                  </button>
+                 </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
       <div class="row">
         <div class="col-sm-12">
-          Showing {{pager.startingAt | number}}-{{pager.endingAt | number}}
-          of {{pager.totalResults | number}} archives.
+          <pager pager='pager'
+                disabled='loading'></pager>
         </div>
       </div>
 
-      <div class="row">
-        <div class="col-sm-12">
+      </div>
+  </div>
+</div>
 
-          <div class="table-responsive">
-            <table ng-show='archives != null' class='table table-striped wrap'>
-              <thead>
-                <tr>
-                  <th>Username</th>
-                  <th>Group</th>
-                  <th>Sites</th>
-                  <th>Found</th>
-                  <th>Errors</th>
-                  <th>Time</th>
-                  <th>File</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr ng-repeat='id in archiveIds'>
-                  <td>
-                    {{archives[id].username}}
-                  </td>
-                  <td>
-                    <span ng-if='archives[id].group != null'>{{archives[id].group['name']}}</span>
-                    <span ng-if='archives[id].group == null'>All sites</span>
-                  </td>
-                  <td>
-                    {{archives[id].siteCount}}
-                  </td>
-                  <td>
-                    <progress-bar progress='(archives[id].foundCount/archives[id].siteCount) * 100'
-                                  srOnly=false
-                                  number='archives[id].foundCount'
-                                  type='progress-bar-success'>
-                    </progress-bar>
-                  </td>
-                  <td>
-                    <progress-bar progress='(archives[id].errorCount/archives[id].siteCount) * 100'
-                                  srOnly=false
-                                  number='archives[id].errorCount'
-                                  type='progress-bar-danger'>
-                    </progress-bar>
-                  </td>
-                  <td>
-                    {{archives[id].date | date:'yyyy-MM-dd h:mm a'}}
-                  </td>
-                  <td>
-                    <a ng-href="{{api.authorizeUrl(archives[id].zipFileUrl)}}"
-                       target="_blank"
-                       class='btn btn-sm btn-primary'>
-                       <i class="fa fa-download"></i>
-                       Zip 
-                      </a>
-                  </td>
-                  <td>
-                     <a ng-click="deleteArchive(id)" class="pull-right">
-                      <i class='fa fa-trash'></i>
-                     </a>
-                   </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-        </div>
-        <div class="row">
-          <div class="col-sm-12">
-            <pager pager='pager'
-                  disabled='loading'></pager>
-          </div>
-        </div>
-
-        </div>
+<div class='modal fade' id='confirm-delete-modal' role='dialog'>
+  <div class='modal-dialog'>
+    <div class='modal-content'>
+      <div class='modal-header warning'>
+        <h4 class='modal-title'>Delete</h4>
+      </div>
+      <div class='modal-body'>
+        Are you sure you want to delete this archive?
+      </div>
+      <div class='modal-footer'>
+        <busy-button id='confirm-delete-button'
+                     type='danger'
+                     class='pull-left'
+                     click='deleteArchive'>
+         <i class='fa fa-trash'></i> Delete
+        </busy-button>
+        <button type='button'
+                class='btn btn-default'
+                data-dismiss='modal'>
+          Cancel
+        </button>
+      </div>
     </div>
   </div>
+</div>

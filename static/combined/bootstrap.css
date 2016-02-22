@@ -6261,6 +6261,9 @@ button .dropdown-toggle {
 button img.spinner {
   margin: -4px -3px 0 -1px;
 }
+button.btn-add {
+  margin-bottom: 5px;
+}
 code {
   font-size: 100%;
   border: 1px solid #D8A8B4;
@@ -6320,6 +6323,18 @@ textarea {
   margin-top: 1em;
   margin-bottom: 1em;
 }
+.modal-header.warning {
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  background-color: #ff4f24;
+  color: white;
+}
+.modal-header.success {
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  background-color: #a3c86d;
+  color: white;
+}
 .ng-hide {
   display: none !important;
 }
@@ -6351,10 +6366,23 @@ td {
 .black {
   color: #333;
 }
+.panel {
+  border: none;
+}
+.panel-heading {
+  border: none;
+}
 .panel-default > .panel-heading {
   background-color: #eeeeee;
-  border-color: #dddddd;
   color: #222222;
+}
+.panel-success > .panel-heading {
+  background-color: #a3c86d;
+  color: white;
+}
+.panel-info > .panel-heading {
+  background-color: #7acbee;
+  color: white;
 }
 .breadcrumb {
   background-color: white;
@@ -6415,14 +6443,80 @@ td {
   background-color: #fcca2f;
   border-color: #fcc10b;
 }
+/*
+Force table width to 100%
+*/
+table.table-fixedheader {
+  width: 100%;
+}
+/*
+Set table elements to block mode.  (Normally they are inline).
+This allows a responsive table, such as one where columns can be stacked
+if the display is narrow.
+*/
+table.table-fixedheader,
+table.table-fixedheader > thead,
+table.table-fixedheader > tbody,
+table.table-fixedheader > thead > tr,
+table.table-fixedheader > tbody > tr,
+table.table-fixedheader > thead > tr > th,
+table.table-fixedheader > tbody > td {
+  display: block;
+}
+table.table-fixedheader > thead > tr:after,
+table.table-fixedheader > tbody > tr:after {
+  content: ' ';
+  display: block;
+  visibility: hidden;
+  clear: both;
+}
+/*
+When scrolling the table, actually it is only the tbody portion of the
+table that scrolls (not the entire table: we want the thead to remain
+fixed).  We must specify an explicit height for the tbody.  We include
+100px as a default, but it can be overridden elsewhere.
+
+Also, we force the scrollbar to always be displayed so that the usable
+width for the table contents doesn't change (such as becoming narrower
+when a scrollbar is visible and wider when it is not).
+*/
+table.table-fixedheader > tbody {
+  overflow-y: scroll;
+  height: 100px;
+}
+/*
+Fixed header, scrolling table taken from jsfiddle example at
+http://jsfiddle.net/sschauhan/7h5eaeb6/
+*/
+table.table-fixedheader > thead {
+  overflow-y: scroll;
+}
+table.table-fixedheader > thead::-webkit-scrollbar {
+  background-color: inherit;
+}
+table.table-fixedheader > thead > tr > th:after,
+table.table-fixedheader > tbody > tr > td:after {
+  content: ' ';
+  display: table-cell;
+  visibility: hidden;
+  clear: both;
+}
+table.table-fixedheader > thead tr th,
+table.table-fixedheader > tbody tr td {
+  float: left;
+  word-wrap: break-word;
+}
+.text-center {
+  text-align: center;
+}
+.text-right {
+  text-align: right;
+}
 home h1 {
   font-size: 3em;
 }
 home p {
   font-size: 1.2em;
-}
-home .center {
-  text-align: center;
 }
 home .jumbotron {
   background-color: #222222;
@@ -6707,10 +6801,6 @@ site .btn-add {
 group-list .modal-dialog {
   overflow-y: initial !important;
 }
-group-list .modal-body {
-  height: 250px;
-  overflow-y: auto;
-}
 group-list button.no-button {
   border: none;
   background-color: transparent;
@@ -6954,6 +7044,15 @@ username .search-username-form .dropdown-toggle {
 username .search-username-form .dropdown-menu {
   width: 100%;
 }
+username .result-buttons-form .btn-group {
+  width: 100%;
+}
+username .result-buttons-form .dropdown-toggle {
+  width: 100%;
+}
+username .result-buttons-form .dropdown-menu {
+  width: 100%;
+}
 username .thumbnail {
   height: 100%;
   width: 100%;
@@ -6978,7 +7077,18 @@ username .panel-body {
   border-top-right-radius: 3px;
   border-top-left-radius: 3px;
   border-bottom: 0px;
+  margin-top: 10px;
   padding: 0px;
+}
+username .panel-body button {
+  margin-bottom: 5px;
+  margin-top: 5px;
+}
+username .panel-body p {
+  margin-bottom: 10px;
+  margin-top: 10px;
+  font-weight: bold;
+  text-align: center;
 }
 username .panel-footer {
   border-style: solid;
