@@ -127,7 +127,7 @@ def validate_json_attr(attr_name, attrs, request_json):
             'url': {'type': str, 'required': True},
             'category': {'type': str, 'required': True},
             'search_text': {'type': str, 'required': False},
-            'status_code': {'type': int, 'required': False},
+            'status_code': {'type': int, 'required': False, 'allow_null': True},
         }
 
         request_json = request.get_json() # Flask request object
@@ -135,20 +135,31 @@ def validate_json_attr(attr_name, attrs, request_json):
         validate_json_attr('url', attrs, request_json)
         ...
     '''
-    # Confirm attrbute exists in attrs.
+    # Confirm attribute exists in attrs.
     try:
         attr_type = attrs[attr_name]['type']
     except KeyError:
         raise BadRequest('Attribute "{}" does not exist.'.format(attr_name))
 
-    # Confirm attrbute exists in request_json.
+    # Confirm attribute exists in request_json.
     try:
         val = request_json[attr_name]
     except KeyError:
         raise BadRequest('{} is required.'.format(attr_name))
 
+    # Confirm that the attribute is not None
+    try:
+        allow_null = attrs[attr_name]['allow_null']
+    except KeyError:
+        allow_null = False
+
+    if not allow_null and val is None:
+        raise BadRequest('{} cannot be null.'.format(attr_name))
+
     # Confirm attribute is of correct type.
-    if type(val) != attr_type:
+    try:
+        attr_type(val)
+    except ValueError:
         raise BadRequest('{} must be {}.'.format(attr_name, attr_type.__name__))
 
     # If attr_name is a string, confirm that it is not empty.

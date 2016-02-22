@@ -3,6 +3,9 @@ import 'dart:html';
 import 'dart:convert';
 
 import 'package:angular/angular.dart';
+import 'package:bootjack/bootjack.dart';
+import 'package:dquery/dquery.dart';
+
 import 'package:hgprofiler/authentication.dart';
 import 'package:hgprofiler/query_watcher.dart';
 import 'package:hgprofiler/component/breadcrumbs.dart';
@@ -28,10 +31,12 @@ class ArchiveComponent extends Object {
     List<String> keys;
     Map<String, Archive> archives;
     List<String> archiveIds;
+    int deleteArchiveId;
     final Element _element;
     String error;
-    Pager pager;
     int loading = 0;
+    Pager pager;
+    List<String> successMsgs = []; 
 
     Router _router;
     QueryWatcher _queryWatcher;
@@ -107,24 +112,38 @@ class ArchiveComponent extends Object {
         } 
     }
 
-    /// Delete archive specified by id.
-    void deleteArchive(String id_) {
-        String pageUrl = '/api/archive/${id_}';
+    /// Set archive for deletion and show confirmation modal.
+    void setDeleteId(String id_) {
+        this.deleteArchiveId = id_;
+        String selector = '#confirm-delete-modal';
+        DivElement modalDiv = this._element.querySelector(selector);
+        Modal.wire(modalDiv).show();
+    }
+
+    /// Delete archive specified by deleteArchiveId. 
+    void deleteArchive(Event e, dynamic data, Function resetButton) {
+        String pageUrl = '/api/archive/${this.deleteArchiveId}';
         this.error = null;
         this.loading++;
 
         this.api
             .delete(pageUrl, needsAuth: true)
             .then((response) {
+                String msg = 'Deleted archive ID "${this.deleteArchiveId}"';
+                this.successMsgs.add(msg);
+                new Timer(new Duration(seconds:3), () => this.successMsgs.remove(msg));
                 new Future(() {
                     this._fetchCurrentPage();
                 });
             })
             .catchError((response) {
                 this.error = response.data['message'];
+                resetButton();
             })
             .whenComplete(() {
                 this.loading--;
+                resetButton();
+                Modal.wire($("#confirm-delete-modal")).hide();
             });
     }
 }

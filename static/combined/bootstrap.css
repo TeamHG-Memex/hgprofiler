@@ -7044,6 +7044,15 @@ username .search-username-form .dropdown-toggle {
 username .search-username-form .dropdown-menu {
   width: 100%;
 }
+username .result-buttons-form .btn-group {
+  width: 100%;
+}
+username .result-buttons-form .dropdown-toggle {
+  width: 100%;
+}
+username .result-buttons-form .dropdown-menu {
+  width: 100%;
+}
 username .thumbnail {
   height: 100%;
   width: 100%;
@@ -7068,7 +7077,18 @@ username .panel-body {
   border-top-right-radius: 3px;
   border-top-left-radius: 3px;
   border-bottom: 0px;
+  margin-top: 10px;
   padding: 0px;
+}
+username .panel-body button {
+  margin-bottom: 5px;
+  margin-top: 5px;
+}
+username .panel-body p {
+  margin-bottom: 10px;
+  margin-top: 10px;
+  font-weight: bold;
+  text-align: center;
 }
 username .panel-footer {
   border-style: solid;

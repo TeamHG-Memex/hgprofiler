@@ -158,7 +158,7 @@ class SiteView(FlaskView):
                 site.search_text = site_json['search_text'].lower().strip()
 
             if 'status_code' in site_json:
-                site.status_code = site_json['status_code']
+                site.status_code = int(site_json['status_code'])
 
             g.db.add(site)
 
@@ -251,7 +251,7 @@ class SiteView(FlaskView):
 
         if 'status_code' in request_json:
             validate_json_attr('status_code', SITE_ATTRS, request_json)
-            site.status_code = request_json['status_code'].lower().strip()
+            site.status_code = int(request_json['status_code'])
 
         # Save the updated label
         try:

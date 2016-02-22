@@ -11,7 +11,7 @@
 
 <div class="row">
   <div class="col-sm-12">
-    <form role="form" class="form-inline search-username-form ">
+    <form role="form" class="form-inline search-username-form">
         <div class="form-group col-sm-4 col-sm-offset-2 col-md-offset-3">
               <input type='search'
                      class="form-control"
@@ -30,10 +30,10 @@
         <div class="form-group col-sm-2">
               <div class='btn-group'>
                 <button type='button'
-                        class='btn btn-default dropdown-toggle'
+                        class='btn btn-primary dropdown-toggle'
                         data-toggle='dropdown'
                         aria-expanded='false'>
-                        Group: {{groupDescription}} <span class='caret'></span>
+                      {{groupDescription}} <span class='caret'></span>
                 </button>
                 <ul class='dropdown-menu sort-by' role='menu'>
                   <li>
@@ -91,92 +91,90 @@
 
 <div class="row" ng-show="!awaitingResults && results.length > 0">
   <div class="col-sm-12">
-    <div class="alert alert-info">
-        <div class="row">
-
-          <div class="col-sm-6">
-            <strong>Username "{{username}}" found on {{found}} of {{results.length}} sites.</strong>
-          </div>
-          <div class="col-sm-6">
-            <div class="form-group">
-              <div class='btn-group pull-right'>
-                <button type='button'
-                        class='btn btn-primary dropdown-toggle pull-right'
-                        data-toggle='dropdown'
-                        aria-expanded='false'>
-                        <i class="fa fa-download"></i>
-                        Export
-                </button>
-                <ul class='dropdown-menu sort-by' role='menu'>
-                  <li ng-show="archive != null">
-                    <a ng-href="{{api.authorizeUrl(archive.zipFileUrl)}}" target="_blank">Zip</a>
-                  </li>
-                  <li ng-show="archive == null" class="pull-right">
-                    <a>
-                      Generating zip
-                      <img src='/static/img/spinner-black-snake.gif'>
-                    </a>
-                  </li>
-                </ul> 
-              </div> 
-            </div>
-          </div>
-
+    <div class="panel panel-default">
+      <div class="panel-body">
+        <p>Username "{{username}}" found on {{found}} of {{results.length}} sites.</p>
       </div>
     </div>
   </div>
 </div>
 
+
 <div class="row" ng-show="results.length > 0">
+  <div class="col-sm-12">
 
+    <form role="form" class="form-inline result-buttons-form">
+      <div class="form-group pull-right">
+        <div class='btn-group'>
+          <button type='button'
+                  class='btn btn-default dropdown-toggle'
+                  data-toggle='dropdown'
+                  aria-expanded='false'>
+                  Show: {{filterDescription}} <span class='caret'></span>
+          </button>
+          <ul class='dropdown-menu sort-by' role='menu'>
+            <li><a ng-click='setFilter(null)'>All Results</a></li>
+            <li class='divider'></li>
+            <li><a ng-click='setFilter("Found")'>Found</a></li>
+            <li><a ng-click='setFilter("Not Found")'>Not Found</a></li>
+            <li><a ng-click='setFilter("Error")'>Error</a></li>
+          </ul> 
+        </div>
+      </div>
+      <div class="form-group pull-right" ng-show="!awaitingResults">
+        <div class='btn-group col-sm-1'>
+          <button type='button'
+                  class='btn btn-success dropdown-toggle'
+                  data-toggle='dropdown'
+                  aria-expanded='false'>
+                  <i class="fa fa-download"></i>
+                  Export
+          </button>
+          <ul class='dropdown-menu sort-by' role='menu'>
+            <li ng-show="archive != null">
+              <a ng-href="{{api.authorizeUrl(archive.zipFileUrl)}}" target="_blank">Zip</a>
+            </li>
+            <li ng-show="archive == null" class="pull-right">
+              <a>
+                Generating zip
+                <img src='/static/img/spinner-black-snake.gif'>
+              </a>
+            </li>
+          </ul> 
+        </div>
+      </div>
+    </form>
 
-  <div class="form-group col-sm-2 pull-right" ng-show="results.length > 0">
-    <div class='btn-group pull-right'>
-      <button type='button'
-              class='btn btn-default dropdown-toggle'
-              data-toggle='dropdown'
-              aria-expanded='false'>
-              Show: {{filterDescription}} <span class='caret'></span>
-      </button>
-      <ul class='dropdown-menu sort-by' role='menu'>
-        <li><a ng-click='setFilter(null)'>All Results</a></li>
-        <li class='divider'></li>
-        <li><a ng-click='setFilter("Found")'>Found</a></li>
-        <li><a ng-click='setFilter("Not Found")'>Not Found</a></li>
-        <li><a ng-click='setFilter("Error")'>Error</a></li>
-      </ul> 
-    </div> 
   </div>
-  
 </div>
 
 <div class="row">
   <div class="col-md-3 col-sm-3"
        ng-show="showResult(result)"
        ng-repeat="result in results">
-<div class="panel">
+    <div class="panel">
       <div class="panel-body">
         <img class="thumbnail"
             data-toggle="modal"
             ng-show="!result.error"
             data-target="#screenshot"
-            ng-click="setScreenshot(result.siteName, result.image)"
+            ng-click="setScreenshot(result.siteName, result.imageFileUrl)"
             ng-src='{{api.authorizeUrl(result.imageFileUrl)}}'>
             <span ng-show="result.error">N/A</span>
-      </div>
-      <div ng-show="result.error" class="panel-footer error">
-        <i class="fa fa-exclamation-triangle pull-left"></i> 
-        <a href="{{result.siteUrl}}">{{result.siteName}}</a>
-      </div>
-      <div ng-show="!result.error && result.found" class="panel-footer found">
-        <i class="fa fa-check pull-left"></i> 
-        <a href="{{result.siteUrl}}">{{result.siteName}}</a>
+        </div>
+        <div ng-show="result.error" class="panel-footer error">
+          <i class="fa fa-exclamation-triangle pull-left"></i> 
+          <a href="{{result.siteUrl}}">{{result.siteName}}</a>
+        </div>
+        <div ng-show="!result.error && result.found" class="panel-footer found">
+          <i class="fa fa-check pull-left"></i> 
+          <a href="{{result.siteUrl}}">{{result.siteName}}</a>
+        </div>
       </div>
       <div ng-show="!result.error && !result.found" class="panel-footer not-found">
         <i class="fa fa-times pull-left"></i> 
         <a href="{{result.siteUrl}}">{{result.siteName}}</a>
       </div>
-    </div>
     </div>
     
   </div>
@@ -189,7 +187,7 @@
         <h4 class='modal-title'>{{screenshotTitle}}</h4>
       </div>
       <div class='modal-body'>
-        <img src="/static/screenshot/{{screenshotImage}}" class="screenshot" />
+        <img ng-src='{{api.authorizeUrl(screenshotImage)}}' class="screenshot" />
       </div>
       <div class='modal-footer'>
         <button type='button' class='btn btn-link pull-right' data-dismiss='modal'>

@@ -5,13 +5,12 @@ import 'dart:convert';
 import 'package:angular/angular.dart';
 import 'package:bootjack/bootjack.dart';
 import 'package:dquery/dquery.dart';
+
 import 'package:hgprofiler/authentication.dart';
 import 'package:hgprofiler/query_watcher.dart';
-
 import 'package:hgprofiler/component/breadcrumbs.dart';
 import 'package:hgprofiler/component/pager.dart';
 import 'package:hgprofiler/component/title.dart';
-import 'package:hgprofiler/mixin/current_page.dart';
 import 'package:hgprofiler/model/group.dart';
 import 'package:hgprofiler/model/site.dart';
 import 'package:hgprofiler/rest_api.dart';
@@ -26,30 +25,30 @@ import 'package:hgprofiler/sse.dart';
 class GroupListComponent extends Object
                     implements ShadowRootAware {
 
+    String addGroupError;
+    bool allSites;
     List<Breadcrumb> crumbs = [
         new Breadcrumb('HGProfiler', '/'),
         new Breadcrumb('Groups', '/group'),
     ];
-    bool allSites;
-    String addGroupError;
-    List<String> successMsgs = []; 
     int deleteGroupId;
     String dialogTitle;
     String dialogClass;
-    Map<Map> groups;
     int editingGroupId;
     List<int> editingGroupSiteIds;
-    List<String> groupIds;
-    final Element _element;
-    String error;
     String editSitesError;
+    final Element _element;
     List<CheckboxInputElement> editSiteCheckboxes;
+    String error;
+    List<String> groupIds;
+    Map<Map> groups;
+    int loading = 0;
     String newGroupName;
     Pager pager;
-    int loading = 0;
-    List<Site> sites;
     bool showAdd = false;
+    List<Site> sites;
     String siteSearch = '';
+    List<String> successMsgs = []; 
     bool submittingGroup = false;
     int totalSites;
 
@@ -105,7 +104,7 @@ class GroupListComponent extends Object
         this.addGroupError = null;
         this.error = null;
  
-        this._inputEl = this._element.querySelector('#siteName');
+        this._inputEl = this._element.querySelector('#groupName');
         if (this._inputEl != null) {
             // Allow Angular to digest showAdd before trying to focus. (Can't
             // focus a hidden element.)
@@ -217,7 +216,6 @@ class GroupListComponent extends Object
         this._api
             .put(pageUrl, body, needsAuth: true)
             .then((response) {
-                //this.groups[id_][key] = value;
                 this._fetchCurrentPage();
                 String msg = 'Updated group "${this.newGroupName}"';
                 this.successMsgs.add(msg);
@@ -234,7 +232,7 @@ class GroupListComponent extends Object
             });
     }
 
-    /// Set group for deletoin and show confirmation modal
+    /// Set group for deletion and show confirmation modal
     void setDeleteId(String id_) {
         this.deleteGroupId = id_;
         String selector = '#confirm-delete-modal';
@@ -242,11 +240,11 @@ class GroupListComponent extends Object
         Modal.wire(modalDiv).show();
     }
 
+    /// Delete group specified by deleteGroupId.
     void deleteGroup(Event e, dynamic data, Function resetButton) {
         if(this.deleteGroupId == null) {
             return;
         }
-        this.error = null;
 
         String pageUrl = '/api/group/${this.deleteGroupId}';
         this.error = null;
@@ -257,20 +255,22 @@ class GroupListComponent extends Object
             .delete(pageUrl, urlArgs: {}, needsAuth: true)
             .then((response) {
                 this.groups.remove(this.deleteGroupId);
-                int index = this.successMsgs.length;
-                this.successMsgs.insert(index, 'Group ID ${this.deleteGroupId} deleted.');
-                new Timer(new Duration(seconds:3), () => this.successMsgs.removeAt(index));
+                this.groupIds.remove(this.deleteGroupId);
+                String msg = 'Deleted group ID "${this.deleteGroupId}"';
+                this.successMsgs.add(msg);
+                new Timer(new Duration(seconds:3), () => this.successMsgs.remove(msg));
             })
             .catchError((response) {
                 this.error = response.data['message'];
-                resetButton();
             })
             .whenComplete(() {
                 this.loading--;
                 Modal.wire($("#confirm-delete-modal")).hide();
+                resetButton();
             });
     }
-    
+
+    /// Set group to be edited and show add/edit dialog.    
     void editingGroup(int id_) {
         this.error = null;
         this.newGroupName = this.groups[id_]['name'];

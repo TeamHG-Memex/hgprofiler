@@ -2,7 +2,11 @@
 
 
 <div class='alert alert-danger' role='alert' ng-show='error != null'>
-  {{error}}
+  <button ng-click="error = null" class="close" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+  <p>{{error}}</p>
+  <div class='clear'></div>
 </div>
 
 <div class='alert alert-success' role='alert' ng-repeat='msg in successMsgs'>
@@ -22,12 +26,12 @@
         <form class='form-horizontal add-site-form'>
 
           <div class='form-group'>
-            <label class="col-sm-1" for='siteName'>Name*</label>
+            <label class="col-sm-1" for='group-name'>Name*</label>
             <div class="col-sm-3">
               <input type='text'
                      class='form-control'
                      ng-model='newGroupName'
-                     id='siteName'
+                     id='group-name'
                      placeholder='Enter a group name.'>
             </div>
           </div>
@@ -192,7 +196,7 @@
         Are you sure you want to delete this group?
       </div>
       <div class='modal-footer'>
-        <busy-button id='confirmDeleteButton'
+        <busy-button id='confirm-delete-button'
                      type='danger'
                      class='pull-left'
                      click='deleteGroup'>
