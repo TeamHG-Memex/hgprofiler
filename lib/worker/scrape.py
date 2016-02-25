@@ -42,13 +42,13 @@ def response_contains_username(site, response):
     return False
 
 
-@gen.coroutine
-def save_image(image_name, bytestring):
-    data_dir = get_path("data")
-    screenshot_dir = os.path.join(data_dir, 'screenshot')
-    image_path = os.path.join(screenshot_dir, image_name)
-    with open(image_path, 'wb') as f:
-        f.write(base64.decodestring(bytestring.encode('utf8')))
+#@gen.coroutine
+#def save_image(image_name, bytestring):
+#    data_dir = get_path("data")
+#    screenshot_dir = os.path.join(data_dir, 'screenshot')
+#    image_path = os.path.join(screenshot_dir, image_name)
+#    with open(image_path, 'wb') as f:
+#        f.write(base64.decodestring(bytestring.encode('utf8')))
 
 
 @gen.coroutine
@@ -114,7 +114,10 @@ def parse_result(scrape_result, total, job_id):
             db_session.rollback()
             raise ScrapeException('Could not save image')
 
-        result.image_file_id = image_file.id
+    else:
+        image_file = db_session.query(File).filter(File.name=='hgprofiler_error.png').one()
+
+    result.image_file_id = image_file.id
 
     raise gen.Return(result)
 

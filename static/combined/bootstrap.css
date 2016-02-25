@@ -7101,6 +7101,9 @@ username .panel-body p {
   font-weight: bold;
   text-align: center;
 }
+username .result.panel {
+  margin-bottom: 0;
+}
 username .panel-footer {
   border-style: solid;
   border-width: 1px;
