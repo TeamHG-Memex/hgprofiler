@@ -24,7 +24,7 @@ import 'package:hgprofiler/sse.dart';
 class SiteComponent extends Object
                     implements ShadowRootAware {
 
-    String addSiteError;
+    String siteError;
     List<Breadcrumb> crumbs = [
         new Breadcrumb('HGProfiler', '/'),
         new Breadcrumb('Sites', '/site'),
@@ -32,11 +32,11 @@ class SiteComponent extends Object
     int deleteSiteId;
     String dialogTitle;
     String dialogClass;
-    int editingSiteId;
+    int editSiteId;
     final Element _element;
-    String error;
     List<String> keys;
     int loading = 0;
+    List<Map> messages = new List<Map>();
     String newSiteName;
     String newSiteCategory;
     String newSiteCategoryDescription = 'Select a category';
@@ -49,7 +49,6 @@ class SiteComponent extends Object
     List<String> siteIds;
     bool showAdd = false;
     bool submittingSite = false;
-    List<String> successMsgs = []; 
 
     InputElement _inputEl;
     Router _router;
@@ -65,7 +64,6 @@ class SiteComponent extends Object
     SiteComponent(this._auth, this._api, this._element, this._router, this._rp, this._sse, this._ts) {
         this._ts.title = 'Sites';
 
-        // Add event listeners...
         RouteHandle rh = this._rp.route.newHandle();
         this._queryWatcher = new QueryWatcher(
             rh,
@@ -73,13 +71,11 @@ class SiteComponent extends Object
             this._fetchCurrentPage
         );
 
-        List<StreamSubscription> listeners = [
-            this._sse.onSite.listen(this._siteListener),
-        ];
-        // ...and remove event listeners when we leave this route.
+        // Add event listeners...
         UnsubOnRouteLeave(rh, [
             this._sse.onSite.listen(this._siteListener),
         ]);
+
         this._fetchCategories();
         this._fetchCurrentPage();
     }
@@ -87,17 +83,23 @@ class SiteComponent extends Object
     /// Show the "add profile" dialog.
     void showAddDialog(string mode) {
         if(mode == 'edit') {
-            this.dialogTitle = 'Edit Group';
+            this.dialogTitle = 'Edit Site';
             this.dialogClass = 'panel-info';
         } else {
-            this.dialogTitle = 'Add Group';
+            this.dialogTitle = 'Add Site';
             this.dialogClass = 'panel-success';
+            this.newSiteName = null;
+            this.newSiteCategory = null;
+            this.newSiteStatusCode = null;
+            this.newSiteSearchText = null;
+            this.newSiteCategoryDescription = 'Select a category';
+            this.newSiteUrl = null;
+            this.editSiteId = null;
         }
         this.showAdd = true;
-        this.addSiteError = null;
-        this.error = null;
+        this.siteError = null;
 
-        this._inputEl = this._element.querySelector('#siteName');
+        this._inputEl = this._element.querySelector('#site-name');
         if (this._inputEl != null) {
             // Allow Angular to digest showAdd before trying to focus. (Can't
             // focus a hidden element.)
@@ -107,20 +109,12 @@ class SiteComponent extends Object
 
     /// Get a reference to this element.
     void onShadowRoot(ShadowRoot shadowRoot) {
-        this._inputEl = this._element.querySelector('.add-site-form input');
+        this._inputEl = this._element.querySelector('#site-name');
     }
 
-    /// Show the "add sites" dialog.
+    /// Hide the add/edit sites dialog.
     void hideAddDialog() {
         this.showAdd = false;
-        this.newSiteName = null;
-        this.newSiteCategory = null;
-        this.newSiteStatusCode = null;
-        this.newSiteSearchText = null;
-        this.newSiteCategoryDescription = 'Select a category';
-        this.newSiteUrl = null;
-        this.editingSiteId = null;
-        this.error = null;
     }
 
     /// Select a category in the "Add Site" form.
@@ -139,20 +133,18 @@ class SiteComponent extends Object
     }
 
     /// Set site to be edited and show add/edit dialog.    
-    void editingSite(int id_) {
-        this.error = null;
-        this.newSiteName = this.sites[id_]['name'];
-        this.setSiteCategory(this.sites[id_]['category']);
-        this.newSiteSearchText = this.sites[id_]['searchText'];
-        this.newSiteStatusCode = this.sites[id_]['statusCode'];
-        this.newSiteUrl = this.sites[id_]['url'];
-        this.editingSiteId = id_;
+    void editSite(int id_) {
+        this.newSiteName = this.sites[id_].name;
+        this.setSiteCategory(this.sites[id_].category);
+        this.newSiteSearchText = this.sites[id_].searchText;
+        this.newSiteStatusCode = this.sites[id_].statusCode;
+        this.newSiteUrl = this.sites[id_].url;
+        this.editSiteId = id_;
         this.showAddDialog('edit');
     }
 
     /// Fetch a page of profiler sites. 
     void _fetchCurrentPage() {
-        this.error = null;
         this.loading++;
         String pageUrl = '/api/site/';
         Map urlArgs = {
@@ -168,44 +160,18 @@ class SiteComponent extends Object
                 this.sites = new Map<String>();
 
                 response.data['sites'].forEach((site) {
-                    window.console.debug(site);
-                    this.sites[site['id']] = {
-                        'name': site['name'],
-                        'url': site['url'],
-                        'category': site['category'],
-                        'statusCode': site['status_code'],
-                        'searchText': site['search_text'],
-                    };
-
+                    this.sites[site['id']] = new Site.fromJson(site);
                 });
-                // Deleting sites affects paging of results, redirect to the final page
-                // if the page no longer exists.
-                int lastPage = (response.data['total_count']/int.parse(this._queryWatcher['rpp'] ?? '10')).ceil();
-
-                if (int.parse(this._queryWatcher['page'] ?? '1') > lastPage) {
-                    Uri uri = Uri.parse(window.location.toString());
-                    Map queryParameters = new Map.from(uri.queryParameters);
-
-                    if (lastPage == 0) {
-                        queryParameters.remove('page');
-                    } else {
-                        queryParameters['page'] = lastPage.toString();
-                    }
-
-                    this._router.go('site', {}, queryParameters: queryParameters);
-
-                }
+                this.siteIds = new List<String>.from(this.sites.keys);
 
                 this.pager = new Pager(response.data['total_count'],
                                        int.parse(this._queryWatcher['page'] ?? '1'),
                                        resultsPerPage:int.parse(this._queryWatcher['rpp'] ?? '10'));
 
-                new Future(() {
-                    this.siteIds = new List<String>.from(this.sites.keys);
-                });
             })
             .catchError((response) {
-                this.error = response.data['message'];
+                String msg = response.data['message'];
+                this._showMessage(msg, 'danger');
             })
             .whenComplete(() {this.loading--;});
     }
@@ -227,54 +193,60 @@ class SiteComponent extends Object
                 this.siteCategories.sort();
             })
             .catchError((response) {
-                this.error = response.data['message'];
+                String msg = response.data['message'];
+                this._showMessage(msg, 'danger');
             })
             .whenComplete(() {
                 this.loading--;
             });
     }
 
-    /// Submit a new site.
-    void addSite(Event e, dynamic data, Function resetButton) {
-        String pageUrl = '/api/site/';
-        this.addSiteError = null;
-        this.submittingSite = true;
-        this.loading++;
-
-        // Validate input
-        bool valid = true;
+    /// Validate site input form
+    bool _validateSiteInput() {
+        bool result = true;
 
         if (this.newSiteCategory == '' || this.newSiteCategory == null) {
-            this.addSiteError = 'You must select a site category.';
-            valid = false;
+            this.siteError = 'You must select a site category.';
+            result = false;
         }
 
         if (this.newSiteSearchText == '' || this.newSiteSearchText == null) {
-            this.addSiteError = 'You must enter search text for the site.';
-            valid = false;
+            this.siteError = 'You must enter search text for the site.';
+            result = false;
         }
 
         try {
             int code = int.parse(this.newSiteStatusCode);
         } on FormatException {
-            this.addSiteError = 'Status code must be a number.';
-            valid = false;
+            this.siteError = 'Status code must be a number.';
+            result = false;
         } on ArgumentError {
-            this.addSiteError = 'Status code must be a number.';
-            valid = false;
+            this.siteError = 'Status code must be a number.';
+            result = false;
         }
 
         if (this.newSiteUrl == '' || this.newSiteUrl == null) {
-            this.addSiteError = 'You must enter a URL for the site.';
-            valid = false;
+            this.siteError = 'You must enter a URL for the site.';
+            result = false;
         }
 
         if (this.newSiteName == '' || this.newSiteName == null) {
-            this.addSiteError = 'You must enter a name for the site.';
-            valid = false;
+            this.siteError = 'You must enter a name for the site.';
+            result = false;
         }
 
+        return result;
+    }
 
+    /// Submit a new site.
+    void addSite(Event e, dynamic data, Function resetButton) {
+        String pageUrl = '/api/site/';
+        this.siteError = null;
+        this.submittingSite = true;
+        this.loading++;
+
+        // Validate input
+        bool valid = this._validateSiteInput();
         if(!valid) {
             this.submittingSite = false;
             resetButton();
@@ -286,15 +258,9 @@ class SiteComponent extends Object
             'name': this.newSiteName,
             'url': this.newSiteUrl,
             'category': this.newSiteCategory,
+            'search_text': this.newSiteSearchText,
+            'status_code': this.newSiteStatusCode,
         }; 
-
-        if (this.newSiteSearchText != null) {
-            site['search_text'] = this.newSiteSearchText;
-        }
-
-        if (this.newSiteStatusCode != null) {
-            site['status_code'] = this.newSiteStatusCode;
-        }
 
         Map body = {
             'sites': [site]
@@ -303,27 +269,18 @@ class SiteComponent extends Object
         this._api
             .post(pageUrl, body, needsAuth: true)
             .then((response) {
+                String msg = 'Added site ${this.newSiteName}';
+                this._showMessage(msg, 'success', 3, true);
+                this._fetchCurrentPage();
+                this.showAdd = false;
             })
             .catchError((response) {
-                this.addSiteError = response.data['message'];
-                this.loading--;
-                resetButton();
+                this.siteError = response.data['message'];
             })
             .whenComplete(() {
-                this._inputEl.focus();
                 this.submittingSite = false;
                 this.loading--;
                 resetButton();
-                if (this.addSiteError == null) {
-                    this.newSiteName = '';
-                    this.newSiteUrl = '';
-                    this.newSiteStatusCode = '';
-                    this.newSiteSearchText = '';
-                    this.showAdd = false;
-                    String msg = 'New site added site';
-                    this.successMsgs.add(msg);
-                    new Timer(new Duration(seconds:3), () => this.successMsgs.remove(msg));
-                }
             });
     }
 
@@ -339,6 +296,15 @@ class SiteComponent extends Object
         Map json = JSON.decode(e.data);
 
         if (json['error'] == null) {
+            if (json['status'] == 'created') {
+                this._showMessage('Site "${json["name"]}" created.', 'success', 3);
+            }
+            else if (json['status'] == 'updated') {
+                this._showMessage('Site "${json["name"]}" updated.', 'info', 3);
+            }
+            else if (json['status'] == 'deleted') {
+                this._showMessage('Site "${json["name"]}" deleted.', 'danger', 3);
+            }
             this._fetchCurrentPage();
         } 
     }
@@ -358,12 +324,26 @@ class SiteComponent extends Object
         return input;
     } 
 
+    /// Show a notification to the user
+    void _showMessage(String text,
+                      String type,
+                      [int seconds = 3, bool icon]) {
+
+        Map message = {
+            'text': text,
+            'type': type,
+            'icon': icon
+        };    
+        this.messages.add(message);
+        if (seconds > 0) {
+            new Timer(new Duration(seconds:seconds), () => this.messages.remove(message));
+        }
+    }
+
     /// Save an edited site.
     void saveSite(Event e, dynamic data, Function resetButton) {
-        String pageUrl = '/api/site/${this.editingSiteId}';
-        this.error = null;
+        String pageUrl = '/api/site/${this.editSiteId}';
         this.loading++;
-
         
         Map body = {
             'name': this.newSiteName,
@@ -376,46 +356,39 @@ class SiteComponent extends Object
         this._api
             .put(pageUrl, body, needsAuth: true)
             .then((response) {
+                String name = this.sites[editSiteId].name;
                 this._fetchCurrentPage();
+                this.showAdd = false;
+                this._showMessage('Updated site ${name}', 'info', 3, true);
             })
             .catchError((response) {
-                this.error = response.data['message'];
-                resetButton();
+                String msg = response.data['message'];
+                this._showMessage(msg, 'danger');
             })
             .whenComplete(() {
                 this.loading--;
                 resetButton();
-                this.showAdd = false;
-                String msg = 'Updated group';
-                this.successMsgs.add(msg);
-                new Timer(new Duration(seconds:3), () => this.successMsgs.remove(msg));
             });
     }
 
-    /// Delete group specified by deleteGroupId.
+    /// Delete site specified by deleteSiteId.
     void deleteSite(Event e, dynamic data, Function resetButton) {
         if(this.deleteSiteId == null) {
             return;
         }
-        this.error = null;
         String pageUrl = '/api/site/${this.deleteSiteId}';
+        String name = this.sites[deleteSiteId].name;
         this.loading++;
 
         this._api
             .delete(pageUrl, needsAuth: true)
             .then((response) {
-                this.sites.remove(this.deleteSiteId);
-                this.siteIds.remove(this.deleteSiteId);
-                new Future(() {
-                    this._fetchCurrentPage();
-                });
-                String msg = 'Deleted site ID "${this.deleteSiteId}"';
-                this.successMsgs.add(msg);
-                new Timer(new Duration(seconds:3), () => this.successMsgs.remove(msg));
+                this._showMessage('Deleted site ${name}', 'danger', 3, true);
+                this._fetchCurrentPage();
             })
             .catchError((response) {
-                this.error = response.data['message'];
-                resetButton();
+                String msg = response.data['message'];
+                this._showMessage(msg, 'danger');
             })
             .whenComplete(() {
                 this.loading--;

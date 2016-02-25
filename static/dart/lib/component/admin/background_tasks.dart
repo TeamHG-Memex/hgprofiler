@@ -40,15 +40,9 @@ class BackgroundTasksComponent {
         this._ts.title = 'Background Tasks';
 
         // Add event listeners...
-        List<StreamSubscription> listeners = [
+        UnsubOnRouteLeave(rh, [
             this._sse.onWorker.listen(this._workerListener),
-        ];
-
-        // ...and remove event listeners when we leave this route.
-        RouteHandle rh = this._rp.route.newHandle();
-        rh.onLeave.take(1).listen((e) {
-            listeners.forEach((listener) => listener.cancel());
-        });
+        ]);
 
         // Fetch data.
         this._fetchWorkers()

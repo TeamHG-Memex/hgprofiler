@@ -1,6 +1,8 @@
 import 'dart:html';
 
 import 'package:angular/angular.dart';
+
+import 'package:hgprofiler/authentication.dart';
 import 'package:hgprofiler/rest_api.dart';
 
 /// Handles server-sent events.
@@ -13,12 +15,14 @@ class SseController {
     Stream<Event> onSite;
     Stream<Event> onWorker;
 
-    RestApiController _api;
+    AuthenticationController _auth;
     EventSource _eventSource;
+    RestApiController _api;
 
     /// Constructor
-    SseController(this._api) {
+    SseController(this._api, this._auth) {
         String url = this._api.authorizeUrl('/api/notification/');
+        url += '&client-id=${this._auth.clientId}';
         this._eventSource = new EventSource(url);
 
         this._eventSource.onError.listen((Event e) {

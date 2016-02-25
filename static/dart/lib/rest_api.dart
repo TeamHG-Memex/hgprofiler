@@ -146,6 +146,7 @@ class RestApiController {
 
         if (needsAuth) {
             headers['X-Auth'] = this.auth.token;
+            headers['X-Client-Id'] = this.auth.clientId;
         }
 
         return headers;

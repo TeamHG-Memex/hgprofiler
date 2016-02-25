@@ -35,8 +35,8 @@ class ArchiveComponent extends Object {
     final Element _element;
     String error;
     int loading = 0;
+    List<Map> messages = new List<Map>();
     Pager pager;
-    List<String> successMsgs = []; 
 
     Router _router;
     QueryWatcher _queryWatcher;
@@ -51,7 +51,6 @@ class ArchiveComponent extends Object {
     ArchiveComponent(this._auth, this.api, this._element, this._router, this._rp, this._sse, this._ts) {
         this._ts.title = 'Archived Results';
 
-        // Add event listeners...
         RouteHandle rh = this._rp.route.newHandle();
         this._queryWatcher = new QueryWatcher(
             rh,
@@ -59,10 +58,7 @@ class ArchiveComponent extends Object {
             this._fetchCurrentPage
         );
 
-        List<StreamSubscription> listeners = [
-            this._sse.onArchive.listen(this._archiveListener),
-        ];
-        // ...and remove event listeners when we leave this route.
+        // Add event listeners...
         UnsubOnRouteLeave(rh, [
             this._sse.onArchive.listen(this._archiveListener),
         ]);
@@ -97,7 +93,8 @@ class ArchiveComponent extends Object {
                 this.archiveIds = new List<String>.from(this.archives.keys);
             })
             .catchError((response) {
-                this.error = response.data['message'];
+                String msg = response.data['message'];
+                this._showMessage(msg, 'danger');
             })
             .whenComplete(() {this.loading--;});
     }
@@ -108,6 +105,15 @@ class ArchiveComponent extends Object {
         Map json = JSON.decode(e.data);
 
         if (json['error'] == null) {
+            if (json['status'] == 'created') {
+                this._showMessage('Archive for username ${json["name"]} created.', 'success', 3);
+            }
+            else if (json['status'] == 'updated') {
+                this._showMessage('Archive for "${json["name"]}" updated.', 'info', 3);
+            }
+            else if (json['status'] == 'deleted') {
+                this._showMessage('Archive for "${json["name"]}" deleted.', 'danger', 3);
+            }
             this._fetchCurrentPage();
         } 
     }
@@ -123,22 +129,17 @@ class ArchiveComponent extends Object {
     /// Delete archive specified by deleteArchiveId. 
     void deleteArchive(Event e, dynamic data, Function resetButton) {
         String pageUrl = '/api/archive/${this.deleteArchiveId}';
-        this.error = null;
         this.loading++;
+        String name = this.archives[deleteArchiveId].username;
 
         this.api
             .delete(pageUrl, needsAuth: true)
             .then((response) {
-                String msg = 'Deleted archive ID "${this.deleteArchiveId}"';
-                this.successMsgs.add(msg);
-                new Timer(new Duration(seconds:3), () => this.successMsgs.remove(msg));
-                new Future(() {
-                    this._fetchCurrentPage();
-                });
+                this._showMessage('Deleted archive ${name}', 'danger', 3, true);
+                this._fetchCurrentPage();
             })
             .catchError((response) {
                 this.error = response.data['message'];
-                resetButton();
             })
             .whenComplete(() {
                 this.loading--;
@@ -146,4 +147,21 @@ class ArchiveComponent extends Object {
                 Modal.wire($("#confirm-delete-modal")).hide();
             });
     }
+
+    /// Show a notification to the user
+    void _showMessage(String text,
+                      String type,
+                      [int seconds = 3, bool icon]) {
+
+        Map message = {
+            'text': text,
+            'type': type,
+            'icon': icon
+        };    
+        this.messages.add(message);
+        if (seconds > 0) {
+            new Timer(new Duration(seconds:seconds), () => this.messages.remove(message));
+        }
+    }
+
 }

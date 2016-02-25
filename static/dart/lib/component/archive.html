@@ -1,16 +1,14 @@
 <breadcrumbs crumbs=crumbs></breadcrumbs>
 
-<div class='alert alert-danger' role='alert' ng-show='error != null'>
-  <button ng-click="error = null" class="close" aria-label="Close">
-    <span aria-hidden="true">&times;</span>
-  </button>
-  <p>{{error}}</p>
+<div ng-repeat='message in messages'>
+  <div class='alert alert-{{message["type"]}}' role='alert'>
+    <button ng-click="messages.remove(message)" class="close" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+    <i class='fa fa-check-circle fa-2x pull-left' ng-show="message['icon']"></i>
+    {{message["text"]}}
+  </div>
   <div class='clear'></div>
-</div>
-
-<div class='alert alert-success' role='alert' ng-repeat='msg in successMsgs'>
-  <i class='fa fa-check-circle fa-2x pull-left'></i>
-  {{msg}}
 </div>
 
 <div class="panel panel-default">

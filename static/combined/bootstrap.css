@@ -7033,9 +7033,20 @@ username .search-username-form input[type=search] {
   width: 100%;
   text-align: center;
   color: #555555;
-  margin-bottom: 10px;
+}
+username .search-username-form [class*="col-"] {
+  background-clip: padding-box;
+  border: 5px solid transparent;
 }
 username .search-username-form .btn-group {
+  width: 100%;
+}
+username .search-username-form .form-group.button {
+  padding: 0;
+  margin: 0;
+  min-width: 100px;
+}
+username .search-username-form .btn {
   width: 100%;
 }
 username .search-username-form .dropdown-toggle {
