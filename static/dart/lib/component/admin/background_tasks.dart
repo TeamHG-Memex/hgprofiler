@@ -40,6 +40,7 @@ class BackgroundTasksComponent {
         this._ts.title = 'Background Tasks';
 
         // Add event listeners...
+        RouteHandle rh = this._rp.route.newHandle();
         UnsubOnRouteLeave(rh, [
             this._sse.onWorker.listen(this._workerListener),
         ]);
