@@ -8,6 +8,7 @@ import worker
 import app.config
 import app.queue
 from app.authorization import login_required
+from app.notify import notify_mask_client
 from app.rest import (get_int_arg,
                       url_for,
                       get_paging_arguments,
@@ -21,6 +22,7 @@ GROUP_ATTRS = {
     'name': {'type': str, 'required': True},
     'sites': {'type': list, 'required': True},
 }
+
 
 class GroupView(FlaskView):
     '''
@@ -120,7 +122,6 @@ class GroupView(FlaskView):
         '''
 
         request_json = request.get_json()
-        redis = worker.get_redis()
         groups = list()
 
         # Validate input
@@ -134,7 +135,6 @@ class GroupView(FlaskView):
 
             if len(request_site_ids) == 0:
                 raise BadRequest('At least one site is required.')
-
 
             sites = g.db.query(Site)\
                         .filter(Site.id.in_(request_site_ids))\
@@ -157,7 +157,11 @@ class GroupView(FlaskView):
                 )
                 g.db.add(group)
                 g.db.flush()
-                groups.append(group.as_dict())
+                # Create dict for API JSON response
+                group_dict = group.as_dict()
+                # Add a link to the created group
+                group_dict['url-for'] = url_for('GroupView:get', id_=group.id)
+                groups.append(group_dict)
             except IntegrityError:
                 g.db.rollback()
                 raise BadRequest(
@@ -169,9 +173,15 @@ class GroupView(FlaskView):
 
         # Send redis notifications
         for group in groups:
-            redis.publish('group', json.dumps(group))
-            # Add a link to the created group in the API json response
-            group['url-for'] = url_for('GroupView:get', id_=group['id'])
+            notify_mask_client(
+                channel='group',
+                message={
+                    'id': group['id'],
+                    'name': group['name'],
+                    'status': 'created',
+                    'resource': group['url-for']
+                }
+            )
 
         message = '{} new groups created'.format(len(request_json['groups']))
         response = jsonify(
@@ -325,7 +335,6 @@ class GroupView(FlaskView):
             raise NotFound("Group '%s' does not exist." % id_)
 
         request_json = request.get_json()
-        redis = worker.get_redis()
 
         # Validate data and set attributes
         if request_json is None:
@@ -370,7 +379,15 @@ class GroupView(FlaskView):
             raise BadRequest('Database error: {}'.format(e))
 
         # Send redis notifications
-        redis.publish('group', json.dumps(group.as_dict()))
+        notify_mask_client(
+            channel='group',
+            message={
+                'id': group.id,
+                'name': group.name,
+                'status': 'updated',
+                'resource': url_for('GroupView:get', id_=group.id)
+            }
+        )
 
         response = group.as_dict()
         response['url-for'] = url_for('GroupView:get', id_=group.id)
@@ -414,16 +431,24 @@ class GroupView(FlaskView):
 
         try:
             g.db.commit()
+        except IntegrityError:
+            g.db.rollback()
+            raise BadRequest('You must delete archived results that use group "{}" '
+                             'before it can be deleted.'.format(group.name))
         except DBAPIError as e:
+            g.db.rollback()
             raise BadRequest('Database error: {}'.format(e))
 
         # Send redis notifications
-        notification = {
-            'ids': [group.id],
-            'status': 'deleted',
-            'resource': None
-        }
-        g.redis.publish('group', json.dumps(notification))
+        notify_mask_client(
+            channel='group',
+            message={
+                'id': group.id,
+                'name': group.name,
+                'status': 'deleted',
+                'resource': None
+            }
+        )
 
         message = 'Group id "{}" deleted'.format(group.id)
         response = jsonify(message=message)

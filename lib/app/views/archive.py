@@ -1,11 +1,12 @@
 import json
 from flask import g, jsonify, request
-from flask.ext.classy import FlaskView, route
+from flask.ext.classy import FlaskView
 from werkzeug.exceptions import BadRequest, NotFound
-from sqlalchemy.exc import IntegrityError, DBAPIError
+from sqlalchemy.exc import IntegrityError
 
 import app.config
 from app.authorization import login_required
+from app.notify import notify_mask_client
 from app.rest import (get_int_arg,
                       get_paging_arguments,
                       validate_request_json,
@@ -97,7 +98,6 @@ class ArchiveView(FlaskView):
         '''
         raise BadRequest('Endpoint not configured')
 
-
     def delete(self, id_):
         '''
         Delete archive identified by `id_`.
@@ -116,6 +116,17 @@ class ArchiveView(FlaskView):
         except IntegrityError:
             g.db.rollback()
             raise BadRequest('Could not delete archive.')
+
+        # Send redis notifications
+        notify_mask_client(
+            channel='archive',
+            message={
+                'id': archive.id,
+                'name': archive.username,
+                'status': 'deleted',
+                'resource': None
+            }
+        )
 
         message = 'Archive id "{}" deleted'.format(id_)
         response = jsonify(message=message)

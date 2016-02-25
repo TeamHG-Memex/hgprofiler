@@ -70,19 +70,15 @@ class UsernameComponent implements ShadowRootAware {
         // Add event listeners...
         RouteHandle rh = route.newHandle();
 
-        List<StreamSubscription> listeners = [
+        // Add event listeners...
+        UnsubOnRouteLeave(rh, [
             this._sse.onResult.listen(this._resultListener),
             this._sse.onArchive.listen(this._archiveListener),
             rh.onEnter.listen((e) {
                 this._parseQueryParameters(e.queryParameters);
                 this._fetchCurrentPage();
             }),
-        ];
-
-        // ...and remove event listeners when we leave this route.
-        rh.onLeave.take(1).listen((e) {
-            listeners.forEach((listener) => listener.cancel());
-        });
+        ]);
 
         this._fetchGroups();
     }
@@ -208,7 +204,6 @@ class UsernameComponent implements ShadowRootAware {
                     this._fetchPageOfGroups(page);
                     page++;
                 }
-                window.console.debug(this.groups);
                 completer.complete();
 
             });

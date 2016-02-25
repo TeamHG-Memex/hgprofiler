@@ -1,11 +1,10 @@
-import os
 import re
 import io
 import csv
 import json
 
 import worker
-from app.config import get_path
+from app.rest import url_for
 from model.archive import Archive
 from model.file import File
 
@@ -46,34 +45,6 @@ def results_csv_string(results):
     return output.getvalue()
 
 
-#def create_zip(username, job_id, results):
-#    """ Generate a zipped archive containing results.csv and all images for a username search."""
-#
-#    zip_name = '{}-{}.zip'.format(username, job_id)
-#    data_dir = get_path("data")
-#    screenshot_dir = os.path.join(data_dir, 'screenshot')
-#    archive_dir = os.path.join(data_dir, 'archive')
-#    zip_path = os.path.join(archive_dir, zip_name)
-#    zip_file = zipfile.ZipFile(zip_path, 'w')
-#
-#    # Add images
-#    for result in results:
-#        if result['image_file_path'] is not None:
-#            image_path = os.path.join(data_dir, result['image_file_path'])
-#            # Strip job ID to make the file name more readable.
-#            #replace_chars = '-{}'.format(job_id)
-#            #image_name = result['image'].replace(replace_chars, '')
-#            zip_file.write(image_path, arcname=result['image_file_name'], compress_type=zipfile.ZIP_DEFLATED)
-#
-#    # Add results csv
-#    csv_string = results_csv_string(results)
-#    csv_name = '{}.csv'.format(username)
-#    info = zipfile.ZipInfo(csv_name)
-#    info.date_time = time.localtime(time.time())[:6]
-#    info.compress_type = zipfile.ZIP_DEFLATED
-#    zip_file.writestr(info, csv_string)
-#    zip_file.close()
-
 def create_zip(filename, results):
     '''
     Generate zip archive of results and return the file id.
@@ -108,10 +79,9 @@ def create_zip(filename, results):
     try:
         db_session.commit()
     except Exception as e:
-        raise ScrapeException(e)
+        raise ArchiveException(e)
 
     return zip_file.id
-
 
 
 def create_archive(job_id, username, group_id, results):
@@ -126,11 +96,9 @@ def create_archive(job_id, username, group_id, results):
     found_count = 0
     not_found_count = 0
     error_count = 0
-    name = '{}-{}'.format(re.sub('[\W_]+', '', username), job_id)  # Strip non-alphanumeric char
-    zip_name = '{}.zip'.format(name)
 
     # Generate zip file
-    filename = re.sub('[\W_]+', '', username) # Strip non-alphanumeric char
+    filename = re.sub('[\W_]+', '', username)  # Strip non-alphanumeric char
     zip_file_id = create_zip(filename, results)
 
     # Generate found/not found counts
@@ -145,7 +113,7 @@ def create_archive(job_id, username, group_id, results):
 
     archive = Archive(job_id=job_id,
                       username=username,
-                      group_id = group_id,
+                      group_id=group_id,
                       site_count=site_count,
                       found_count=found_count,
                       not_found_count=not_found_count,
@@ -157,4 +125,11 @@ def create_archive(job_id, username, group_id, results):
     db_session.commit()
 
     # Publish
-    redis.publish('archive', json.dumps(archive.as_dict()))
+    message = {
+        'id': archive.id,
+        'name': archive.username,
+        'job_id': archive.job_id,
+        'status': 'created',
+        # 'resource': url_for('ArchiveView:get', id_=archive.id)
+    }
+    redis.publish('archive', json.dumps(message))

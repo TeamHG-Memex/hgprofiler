@@ -1,18 +1,15 @@
 <breadcrumbs crumbs=crumbs></breadcrumbs>
-
-
-<div class='alert alert-danger' role='alert' ng-show='error != null'>
-  <button ng-click="error = null" class="close" aria-label="Close">
-    <span aria-hidden="true">&times;</span>
-  </button>
-  <p>{{error}}</p>
+<div ng-repeat='message in messages'>
+  <div class='alert alert-{{message["type"]}}' role='alert'>
+    <button ng-click="messages.remove(message)" class="close" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+    <i class='fa fa-check-circle fa-2x pull-left' ng-show="message['icon']"></i>
+    {{message["text"]}}
+  </div>
   <div class='clear'></div>
 </div>
 
-<div class='alert alert-success' role='alert' ng-repeat='msg in successMsgs'>
-  <i class='fa fa-check-circle fa-2x pull-left'></i>
-  {{msg}}
-</div>
 
 <div ng-show="showAdd" class="row">
   <div class="col-sm-12">
@@ -85,13 +82,13 @@
                 </button>
                 <busy-button id='add-group-button' 
                              type='primary' 
-                             ng-show='editingGroupId != null'
+                             ng-show='editGroupId != null'
                              click='saveGroup'>
                  <i class="fa fa-check"></i> Save 
                 </busy-button>
                 <busy-button id='add-group-button' 
                              type='success' 
-                             ng-show='editingGroupId == null'
+                             ng-show='editGroupId == null'
                              click='addGroup'>
                  <i class="fa fa-check"></i> Add 
                 </busy-button>
@@ -102,8 +99,8 @@
 
         </form>
 
-        <div ng-show='addGroupError != null' class='alert alert-danger' role='alert'>
-          <p>{{addGroupError}}</p>
+        <div ng-show='groupError != null' class='alert alert-danger' role='alert'>
+          <p>{{groupError}}</p>
         </div>
 
       </div>
@@ -124,8 +121,7 @@
     <div class="row">
       <div class="col-sm-12">
         Showing {{pager.startingAt | number}}-{{pager.endingAt | number}}
-        of {{pager.totalResults | number}} groups.
-        <button ng-click='showAddDialog("add")'
+        of {{pager.totalResults | number}} groups.  <button ng-click='showAddDialog("add")'
                 ng-disabled='showAdd'
                 class='btn btn-success btn-sm pull-right btn-add'>
                 <i class='fa fa-plus'></i>
@@ -156,7 +152,7 @@
                 </td>
                 <td class="text-center">
                   <button type='button'
-                          ng-click='editingGroup(id)'
+                          ng-click='editGroup(id)'
                           ng-disabled='showAdd'
                           class='btn btn-sm btn-primary'>
                           <i class="fa fa-pencil"></i>

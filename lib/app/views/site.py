@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError, DBAPIError
 
 import app.config
 from app.authorization import login_required
+from app.notify import notify_mask_client
 from app.rest import (get_int_arg,
                       get_paging_arguments,
                       validate_request_json,
@@ -97,9 +98,7 @@ class SiteView(FlaskView):
         )
 
     def get(self, id_):
-        '''
-        '''
-        pass
+        raise BadRequest('End point not configured')
 
     def post(self):
         '''
@@ -140,7 +139,6 @@ class SiteView(FlaskView):
         :status 401: authentication required
         '''
         request_json = request.get_json()
-        redis = worker.get_redis()
         sites = []
 
         # Ensure all data is valid before db operations
@@ -175,7 +173,15 @@ class SiteView(FlaskView):
 
         # Send redis notifications
         for site in sites:
-            redis.publish('site', json.dumps(site.as_dict()))
+            notify_mask_client(
+                channel='site',
+                message={
+                    'id': site.id,
+                    'name': site.name,
+                    'status': 'created',
+                    'resource': None
+                }
+            )
 
         message = '{} new sites created'.format(len(request_json['sites']))
         response = jsonify(message=message)
@@ -260,8 +266,19 @@ class SiteView(FlaskView):
             g.db.rollback()
             raise BadRequest('Database error: {}'.format(e))
 
+        # Send redis notifications
+        notify_mask_client(
+            channel='site',
+            message={
+                'id': site.id,
+                'name': site.name,
+                'status': 'updated',
+                'resource': None
+            }
+        )
+
         response = jsonify(site.as_dict())
-        response.status_code = 202
+        response.status_code = 200
 
         # Send response.
         return response
@@ -285,6 +302,17 @@ class SiteView(FlaskView):
             g.db.rollback()
             raise BadRequest('"{}" must be removed from all groups before deleting.'
                              .format(site.name))
+
+        # Send redis notifications
+        notify_mask_client(
+            channel='site',
+            message={
+                'id': site.id,
+                'name': site.name,
+                'status': 'deleted',
+                'resource': None
+            }
+        )
 
         message = 'Site id "{}" deleted'.format(id_)
         response = jsonify(message=message)
