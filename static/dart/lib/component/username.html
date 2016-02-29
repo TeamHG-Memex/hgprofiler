@@ -80,7 +80,7 @@
           </div>
           <div class="col-sm-6">
             <p class="text-right">
-              {{results[results.length -1].siteName}}: <span ng-hide="results[results.length-1].found">not</span> found
+              {{results[results.length -1].siteName}}: <span ng-hide="results[results.length-1].status == 'f'">not</span> found
             </p>
           </div>
         </div>
@@ -156,22 +156,24 @@
       <div class="panel-body">
         <img class="thumbnail"
             data-toggle="modal"
-            ng-show="!result.error"
             data-target="#screenshot"
-            ng-click="setScreenshot(result.siteName, result.imageFileUrl)"
+            ng-click="setScreenshotResult(result)"
             ng-src='{{api.authorizeUrl(result.imageFileUrl)}}'>
             <span ng-show="result.error">N/A</span>
         </div>
-        <div ng-show="result.error" class="panel-footer error">
-          <i class="fa fa-exclamation-triangle pull-left"></i> 
+        <div ng-show="result.status == 'e'" class="panel-footer error">
+          <div class="pull-left">
+            <i class="fa fa-exclamation-triangle pull-left"></i> 
+            {{result.error}}
+          </div>
           <a href="{{result.siteUrl}}">{{result.siteName}}</a>
         </div>
-        <div ng-show="!result.error && result.found" class="panel-footer found">
+        <div ng-show="result.status == 'f'" class="panel-footer found">
           <i class="fa fa-check pull-left"></i> 
           <a href="{{result.siteUrl}}">{{result.siteName}}</a>
         </div>
       </div>
-      <div ng-show="!result.error && !result.found" class="panel-footer not-found">
+      <div ng-show="result.status == 'n'" class="panel-footer not-found">
         <i class="fa fa-times pull-left"></i> 
         <a href="{{result.siteUrl}}">{{result.siteName}}</a>
       </div>
@@ -184,13 +186,16 @@
   <div class='modal-dialog'>
     <div class='modal-content'>
       <div class='modal-header'>
-        <h4 class='modal-title'>{{screenshotTitle}}</h4>
+        <h4 class='modal-title'>{{screenshotResult.siteName}}</h4>
       </div>
       <div class='modal-body'>
-        <img ng-src='{{api.authorizeUrl(screenshotImage)}}' class="screenshot" />
+        <img ng-src='{{api.authorizeUrl(screenshotResult.imageFileUrl)}}' class="screenshot" />
       </div>
-      <div class='modal-footer'>
-        <button type='button' class='btn btn-link pull-right' data-dismiss='modal'>
+      <div class='modal-footer {{screenshotClass}}'>
+        <span class="pull-left" ng-show="screenshotResult.status == 'e'">
+          {{screenshotResult.error}}
+        </span>
+        <button type='button' class='btn btn-default pull-right' data-dismiss='modal'>
           Close
         </button>
       </div>

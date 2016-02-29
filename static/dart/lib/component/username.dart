@@ -42,8 +42,8 @@ class UsernameComponent implements ShadowRootAware {
     Pager pager;
     String query;
     int resultsPerPage = 10;
-    String screenshotImage;
-    String screenshotTitle;
+    Result screenshotResult;
+    String screenshotClass;
     int totalResults;
     int totalGroups;
     String username;
@@ -139,22 +139,30 @@ class UsernameComponent implements ShadowRootAware {
         }
     }
 
-    void setScreenshot(String siteName, String image) {
-        this.screenshotImage = image;
-        this.screenshotTitle = siteName;
+    void setScreenshotResult(Result result) {
+        this.screenshotResult = result;
+        if (result.status == 'f') {
+            this.screenshotClass = 'found'; 
+        }
+        else if (result.status == 'n') {
+            this.screenshotClass = 'not-found'; 
+        }
+        else if (result.status == 'e') {
+            this.screenshotClass = 'error'; 
+        }
     }
 
     void showResult(Result result) {
         if (this.filter == null) {
             return true;
         }
-        if (this.filter == 'Found' && result.found) {
+        if (this.filter == 'Found' && result.status == 'f') {
             return true;
         }
-        if (this.filter == 'Not Found' && !result.found) {
+        if (this.filter == 'Not Found' && result.status == 'n') {
             return true;
         }
-        if (this.filter == 'Error' && result.error) {
+        if (this.filter == 'Error' && result.status == 'e') {
             return true;
         }
         return false;
@@ -217,7 +225,7 @@ class UsernameComponent implements ShadowRootAware {
         if (result.jobId == this.jobId) {
             this.results.add(result);
             this.totalResults = result.total;
-            if(result.found == true) {
+            if(result.status == 'f') {
                 this.found++;
             }
             if(this.totalResults == this.results.length) {
@@ -229,7 +237,7 @@ class UsernameComponent implements ShadowRootAware {
     /// Listen for job results.
     void _archiveListener(Event e) {
         Map json = JSON.decode(e.data);
-        Archive archive = new Archive.fromJson(json);
+        Archive archive = new Archive.fromJson(json['archive']);
         if (archive.jobId == this.jobId) {
             this.archive = archive;
         }

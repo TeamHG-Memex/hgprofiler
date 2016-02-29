@@ -5,4 +5,5 @@ Flask-Failsafe
 progressbar2
 rq
 SQLAlchemy
+sqlalchemy_utils
 tornado

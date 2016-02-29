@@ -8,9 +8,6 @@ from app.authorization import login_required
 import app.config
 import app.database
 
-import logging
-logging.basicConfig(filename="/var/log/hgprofiler.log", level=logging.DEBUG)
-
 
 class NotificationView(FlaskView):
     '''

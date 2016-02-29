@@ -14,7 +14,7 @@ from sqlalchemy.schema import (DropConstraint,
 from app.config import get_path
 import app.database
 import cli
-from model import Base, Configuration, User, Site
+from model import Base, Configuration, User, Site, File
 import model.user
 
 
@@ -95,7 +95,7 @@ class DatabaseCli(cli.BaseCli):
         ''' Create file fixtures. '''
         # Save error png as database file object.
         session = app.database.get_session(self._db)
-        static_dir = os.path.join(os.path.dirname(__file__), 'static')
+        static_dir = get_path('static')
         img_dir = os.path.join(static_dir, 'img')
         file_path = os.path.join(img_dir, 'hgprofiler_error.png')
 

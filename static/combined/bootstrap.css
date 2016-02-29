@@ -6290,6 +6290,9 @@ textarea {
 .progress-bar-success {
   background-color: #a3c86d;
 }
+.progress-bar-danger {
+  background-color: #ff7857;
+}
 .tbl-action {
   margin-right: 5px;
 }
@@ -7003,6 +7006,9 @@ username .jumbotron p {
   font-size: 1.6em;
   text-align: right;
   margin-bottom: 1px;
+}
+username .modal-footer {
+  color: white;
 }
 username .screenshot img {
   width: 100%;

@@ -7,14 +7,13 @@ class Result {
     String siteUrl;
     int imageFileId;
     String imageFileUrl;
-    bool found;
     int number;
+    String status;
     int total;
-
     String error;
 
-    Result(String jobId, String siteName, siteUrl, bool found, int number, int total) {
-        this.found = found;
+    Result(String jobId, String siteName, siteUrl, String status, int number, int total) {
+        this.status = status; 
         this.jobId = jobId; 
         this.siteName = siteName; 
         this.siteUrl = siteUrl; 
@@ -23,7 +22,7 @@ class Result {
     }
 
     Result.fromJson(Map json) {
-        this.found = json['found'];
+        this.status = json['status'];
         this.id = json['id'];
         this.jobId = json['job_id'];
         this.siteName = json['site_name'];

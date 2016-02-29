@@ -1,13 +1,11 @@
 import json
 import base64
-import os
 from datetime import timedelta
 from tornado import httpclient, gen, ioloop, queues, escape
 from urllib.parse import quote_plus
 
 import app.database
 import app.queue
-from app.config import get_path
 from model.site import Site
 from model.result import Result
 from model.group import Group
@@ -19,6 +17,9 @@ USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) '\
              'Gecko/20100101 Firefox/40.1'
 
 httpclient.AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
+
+import logging
+logging.basicConfig(filename="/var/log/hgprofiler.log", level=logging.DEBUG)
 
 
 class ScrapeException(Exception):
@@ -36,19 +37,10 @@ def response_contains_username(site, response):
     if response.code == site.status_code:
         data = escape.json_decode(response.body)
         html = data['html'] if isinstance(data['html'], str) else data['html'].decode()
-        if(site.search_text in html or
+        if(site.search_text in html.lower() or
            site.search_text in response.headers):
             return True
     return False
-
-
-#@gen.coroutine
-#def save_image(image_name, bytestring):
-#    data_dir = get_path("data")
-#    screenshot_dir = os.path.join(data_dir, 'screenshot')
-#    image_path = os.path.join(screenshot_dir, image_name)
-#    with open(image_path, 'wb') as f:
-#        f.write(base64.decodestring(bytestring.encode('utf8')))
 
 
 @gen.coroutine
@@ -57,30 +49,52 @@ def scrape_site_for_username(site, username, splash_url, request_timeout=10):
     Download the page at `site.url` using Splash and parse for the username (asynchronous).
     """
     page_url = site.url.replace('%s', username)
-    url = '{}/render.json?url={}&html=1&frame=1&jpeg=1'.format(splash_url, quote_plus(page_url))
+    url = '{}/render.json?url={}&html=1&frame=1&jpeg=1&timeout={}&resource_timeout=5'.format(
+        splash_url, quote_plus(page_url), request_timeout)
     headers = {
         'User-Agent': USER_AGENT,
     }
     result = {
         'site': site,
-        'found': True,
         'error': None,
-        'url': page_url
+        'url': page_url,
+        'image': None
     }
-
     try:
         response = yield httpclient.AsyncHTTPClient().fetch(url,
                                                             headers=headers,
                                                             connect_timeout=5,
                                                             validate_cert=False)
+    except httpclient.HTTPError as e:
+        error = '{}'.format(e)
 
-    except Exception as e:
-        result['error'] = e
-        result['found'] = False
+        if '599' in error:
+            error = 'Splash connection failed'
+        else:
+            try:
+                data = escape.json_decode(e.response.body)
+                if 'error' in data:
+                    if data['error'] == 504:
+                        error = 'Timeout'
+                    else:
+                        error = data['description']
+                else:
+                    error = 'Splash failed to retrieve page'
+            except:
+                pass
+
+        result['error'] = error
+        result['status'] = 'e'
+
         raise gen.Return(result)
 
     data = escape.json_decode(response.body)
-    result['found'] = response_contains_username(site, response)
+
+    if response_contains_username(site, response):
+        result['status'] = 'f'
+    else:
+        result['status'] = 'n'
+
     result['image'] = data['jpeg']
     result['code'] = response.code
 
@@ -94,7 +108,7 @@ def parse_result(scrape_result, total, job_id):
         job_id=job_id,
         site_name=scrape_result['site'].name,
         site_url=scrape_result['url'],
-        found=scrape_result['found'],
+        status=scrape_result['status'],
         total=total,
         number=1
     )
@@ -115,7 +129,8 @@ def parse_result(scrape_result, total, job_id):
             raise ScrapeException('Could not save image')
 
     else:
-        image_file = db_session.query(File).filter(File.name=='hgprofiler_error.png').one()
+        image_file = db_session.query(File).filter(File.name == 'hgprofiler_error.png').one()
+        result.error = scrape_result['error']
 
     result.image_file_id = image_file.id
 
