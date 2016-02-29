@@ -5,6 +5,7 @@ from sqlalchemy import (Boolean,
                         String,
                         UniqueConstraint)
 from sqlalchemy.orm import relationship
+from sqlalchemy_utils import ChoiceType
 
 from model import Base
 from model.file import File
@@ -18,11 +19,18 @@ class Result(Base):
         UniqueConstraint('job_id', 'site_url',  name='job_id_site_url'),
     )
 
+    STATUS_TYPES = [
+        (u'f', u'Found'),
+        (u'n', u'Not Found'),
+        (u'e', u'Error')
+    ]
+
+
     id = Column(Integer, primary_key=True)
     job_id = Column(String(255), nullable=False)
     site_name = Column(String(255), nullable=False)
     site_url = Column(String(255), nullable=False)
-    found = Column(Boolean, default=False)
+    status = Column(ChoiceType(STATUS_TYPES), nullable=False)
     number = Column(Integer, nullable=False)
     total = Column(Integer, nullable=False)
     image_file_id = Column(Integer, ForeignKey('file.id', name='fk_image_file'), nullable=True)
@@ -33,7 +41,7 @@ class Result(Base):
                  job_id,
                  site_name,
                  site_url,
-                 found,
+                 status,
                  number,
                  total,
                  image_file_id=None,
@@ -44,7 +52,7 @@ class Result(Base):
         self.job_id = job_id
         self.site_name = site_name
         self.site_url = site_url
-        self.found = found
+        self.status = status
         self.number = number
         self.total = total
         self.image_file_id = image_file_id
@@ -68,7 +76,7 @@ class Result(Base):
             'image_file_id': self.image_file_id,
             'image_file_name': image_file_name,
             'image_file_url': image_file_url,
-            'found': self.found,
+            'status': self.status,
             'number': self.number,
             'total': self.total,
             'error': self.error,

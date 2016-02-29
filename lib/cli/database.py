@@ -14,7 +14,7 @@ from sqlalchemy.schema import (DropConstraint,
 from app.config import get_path
 import app.database
 import cli
-from model import Base, Configuration, User, Site
+from model import Base, Configuration, User, Site, File
 import model.user
 
 
@@ -54,7 +54,8 @@ class DatabaseCli(cli.BaseCli):
 
         self._create_fixture_configurations(config)
         self._create_fixture_users(config)
-        self._create_fixture_sites()
+        self._create_fixture_sites(config)
+        self._create_fixture_files(config)
 
     def _create_fixture_configurations(self, config):
         ''' Create configurations. '''
@@ -90,7 +91,24 @@ class DatabaseCli(cli.BaseCli):
         session.add(admin)
         session.commit()
 
-    def _create_fixture_sites(self):
+    def _create_fixture_files(self, config):
+        ''' Create file fixtures. '''
+        # Save error png as database file object.
+        session = app.database.get_session(self._db)
+        static_dir = get_path('static')
+        img_dir = os.path.join(static_dir, 'img')
+        file_path = os.path.join(img_dir, 'hgprofiler_error.png')
+
+        with open(file_path, 'rb') as f:
+            data = f.read()
+            file_ = File(name='hgprofiler_error.png', mime='image/png', content=data)
+            session.add(file_)
+            session.commit()
+
+
+
+
+    def _create_fixture_sites(self, config):
         ''' Create site fixtures. '''
 
         session = app.database.get_session(self._db)

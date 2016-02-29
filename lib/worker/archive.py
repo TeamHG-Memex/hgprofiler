@@ -21,7 +21,7 @@ def results_csv_string(results):
 
     data = []
     # Column headers
-    row = ['Site Name', 'Search Url', 'Found', 'Screenshot']
+    row = ['Site Name', 'Search Url', 'Status', 'Screenshot']
     data.append(row)
 
     # In-memory csv
@@ -30,14 +30,22 @@ def results_csv_string(results):
 
     # Add results
     for result in results:
-        # Strip job ID to match the name of the zipped file (archives in /data directory include
-        # the job id).
+        # Clean fields for user-friendly output
         if result['image_file_name'] is not None:
             image_name = result['image_file_name']
         else:
             image_name = None
 
-        row = [result['site_name'], result['site_url'], result['found'], image_name]
+        if result['status'] == 'e':
+            status = 'Error'
+        elif result['status'] == 'f':
+            status = 'Found'
+        elif result['status'] == 'n':
+            status = 'Not Found'
+        else:
+            status = 'Unknown'
+
+        row = [result['site_name'], result['site_url'], status, image_name]
         data.append(row)
 
     writer.writerows(data)
@@ -101,14 +109,12 @@ def create_archive(job_id, username, group_id, results):
     filename = re.sub('[\W_]+', '', username)  # Strip non-alphanumeric char
     zip_file_id = create_zip(filename, results)
 
-    # Generate found/not found counts
-    # Results that have errors increment the not_found_count
     for result in results:
-        if result['error'] is not None:
+        if result['status'] == 'e':
             error_count += 1
-        elif result['found']:
+        elif result['status'] == 'f':
             found_count += 1
-        else:
+        elif result['status'] == 'n':
             not_found_count += 1
 
     archive = Archive(job_id=job_id,
@@ -128,8 +134,8 @@ def create_archive(job_id, username, group_id, results):
     message = {
         'id': archive.id,
         'name': archive.username,
-        'job_id': archive.job_id,
         'status': 'created',
+        'archive': archive.as_dict(),
         # 'resource': url_for('ArchiveView:get', id_=archive.id)
     }
     redis.publish('archive', json.dumps(message))
