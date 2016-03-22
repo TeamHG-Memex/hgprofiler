@@ -29,8 +29,16 @@ def get_engine(config, super_user=False):
             connect_string = 'postgresql+psycopg2://%(username)s:%(password)s' \
                              '@%(host)s/%(database)s?client_encoding=utf8'
 
+        pool_size = config.get('pool_size', 20)
+        try:
+            pool_size = int(pool_size)
+        except:
+            raise ValueError('Configuration value pool_size must be an '
+                             'integer: {}'.format(pool_size))
+
         _engine = sqlalchemy.create_engine(
             connect_string % config,
+            pool_size=pool_size,
             pool_recycle=3600
         )
 

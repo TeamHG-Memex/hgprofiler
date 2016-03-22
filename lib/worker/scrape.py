@@ -18,9 +18,6 @@ USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) '\
 
 httpclient.AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
 
-import logging
-logging.basicConfig(filename="/var/log/hgprofiler.log", level=logging.DEBUG)
-
 
 class ScrapeException(Exception):
     ''' Represents a user-facing exception. '''
@@ -64,6 +61,7 @@ def scrape_site_for_username(site, username, splash_url, request_timeout=10):
         response = yield httpclient.AsyncHTTPClient().fetch(url,
                                                             headers=headers,
                                                             connect_timeout=5,
+                                                            request_timeout=request_timeout+3,
                                                             validate_cert=False)
     except httpclient.HTTPError as e:
         error = '{}'.format(e)
@@ -82,7 +80,6 @@ def scrape_site_for_username(site, username, splash_url, request_timeout=10):
                     error = 'Splash failed to retrieve page'
             except:
                 pass
-
         result['error'] = error
         result['status'] = 'e'
 
