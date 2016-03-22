@@ -1,5 +1,5 @@
 import sys
-
+from redis import Redis
 from rq import Queue, Connection, Worker
 
 import cli
@@ -29,7 +29,11 @@ class RunWorkerCli(cli.BaseCli):
         Adapted from http://python-rq.org/docs/workers/.
         '''
 
-        with Connection():
+        redis_config = dict(config.items('redis'))
+        port = redis_config.get('port', 6379)
+        host = redis_config.get('host', 'localhost')
+
+        with Connection(Redis(host, port)):
             queues = map(Queue, args.queues)
             w = Worker(queues, exc_handler=worker.handle_exception)
             w.work()
