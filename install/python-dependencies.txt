@@ -8,3 +8,4 @@ SQLAlchemy
 sqlalchemy_utils
 tornado
 pycurl
+pillow
