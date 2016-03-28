@@ -7,3 +7,4 @@ rq
 SQLAlchemy
 sqlalchemy_utils
 tornado
+pycurl
