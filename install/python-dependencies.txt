@@ -10,3 +10,4 @@ tornado
 pycurl
 pillow
 phonenumbers
+gunicorn
