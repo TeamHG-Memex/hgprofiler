@@ -1,5 +1,6 @@
 [database]
 
+
 ; Regular credentials: these are used by the application for all front-end
 ; queries and should have limited privileges.
 
@@ -12,6 +13,8 @@ password = ##DATABASE_PASSWORD##
 
 super_username = ##DATABASE_SUPER_USERNAME##
 super_password = ##DATABASE_SUPER_PASSWORD##
+
+
 
 [flask]
 
