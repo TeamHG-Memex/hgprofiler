@@ -1,3 +1,4 @@
+import os
 import redis
 import sqlalchemy
 from sqlalchemy import case, func
@@ -47,7 +48,8 @@ def get_engine(config, super_user=False):
 
 def get_redis(config):
     ''' Get a Redis connection handle. '''
-
+    config['host'] =  os.environ.get("REDIS_PORT_6379_TCP_ADDR")
+    config['port'] = os.environ.get("REDIS_PORT_6379_TCP_PORT")
     return redis.Redis(connection_pool=redis.ConnectionPool(**config))
 
 
