@@ -1,5 +1,6 @@
 [database]
-
+# If not using docker, localhost is a good bet
+host = ##DB_HOST##
 
 ; Regular credentials: these are used by the application for all front-end
 ; queries and should have limited privileges.
@@ -21,6 +22,10 @@ super_password = ##DATABASE_SUPER_PASSWORD##
 ; Generate a random string for Flask to sign cookies.
 
 SECRET_KEY = ##FLASK_SECRET_KEY##
+
+[redis]
+# If not using docker, localhost is a good bet
+host = ##REDIS_HOST##
 
 ; Uncomment the below to adjust Redis worker timeout limits (in seconds)
 ; [redis_worker]
