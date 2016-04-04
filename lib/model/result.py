@@ -8,7 +8,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy_utils import ChoiceType
 
 from model import Base
-from model.file import File
+#from model import File
 
 
 class Result(Base):
@@ -34,7 +34,7 @@ class Result(Base):
     number = Column(Integer, nullable=False)
     total = Column(Integer, nullable=False)
     image_file_id = Column(Integer, ForeignKey('file.id', name='fk_image_file'), nullable=True)
-    image_file = relationship('File', primaryjoin='Result.image_file_id == File.id')
+    #image_file = relationship('File', primaryjoin='Result.image_file_id == File.id')
     error = Column(String(255), nullable=True)
 
     def __init__(self,
@@ -61,12 +61,12 @@ class Result(Base):
 
     def as_dict(self):
         ''' Return dictionary representation of this result. '''
-        if self.image_file is not None:
-            image_file_url = '/api/file/{}'.format(self.image_file_id)
-            image_file_name = self.image_file.name
-        else:
-            image_file_url = None
-            image_file_name = None
+        #if self.image_file is not None:
+        #    image_file_url = '/api/file/{}'.format(self.image_file_id)
+        #    image_file_name = self.image_file.name
+        #else:
+        #    image_file_url = None
+        #    image_file_name = None
 
         return {
             'id': self.id,
@@ -74,8 +74,8 @@ class Result(Base):
             'site_name': self.site_name,
             'site_url': self.site_url,
             'image_file_id': self.image_file_id,
-            'image_file_name': image_file_name,
-            'image_file_url': image_file_url,
+            #'image_file_name': image_file_name,
+            #'image_file_url': image_file_url,
             'status': self.status,
             'number': self.number,
             'total': self.total,
