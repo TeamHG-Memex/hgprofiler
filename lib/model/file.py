@@ -118,6 +118,13 @@ class File(Base):
 
         return os.path.join(hash_[0], hash_[1], hash_[2:])
 
+    def url(self):
+        '''
+        Return API relative URL for file.
+        '''
+        return '/api/file/{}'.format(self.id)
+
+
     def as_dict(self):
         ''' Return dictionary representation of this file. '''
 

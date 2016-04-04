@@ -55,16 +55,17 @@ class Archive(Base):
 
     def as_dict(self):
         ''' Return dictionary representation of this archive. '''
-        if self.group is not None:
-            group = self.group.as_dict()
-        else:
-            group = None
+        #if self.group is not None:
+        #    group = self.group.as_dict()
+        #else:
+        #    group = None
 
         return {
             'id': self.id,
             'job_id': self.job_id,
             'username': self.username,
-            'group': group,
+            #'group': group,
+            'group_id': self.group_id,
             'date': self.date.isoformat(),
             'site_count': self.site_count,
             'found_count': self.found_count,
