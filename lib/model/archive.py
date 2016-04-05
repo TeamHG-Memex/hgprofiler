@@ -62,6 +62,6 @@ class Archive(Base):
             'found_count': self.found_count,
             'not_found_count': self.not_found_count,
             'error_count': self.error_count,
-            'zip_file_url': '/api/file/{}'.format(self.zip_file.id)
+            'zip_file_url': '/api/file/{}'.format(self.zip_file.id),
             'zip_file_id': self.zip_file_id
         }
