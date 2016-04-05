@@ -18,6 +18,9 @@ USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) '\
 
 httpclient.AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
 
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
 
 class ScrapeException(Exception):
     ''' Represents a user-facing exception. '''
@@ -61,7 +64,7 @@ def scrape_site_for_username(site, username, splash_url, request_timeout=10):
     try:
         response = yield async_http.fetch(url,
 			                  headers=headers,
-					  connect_timeout=5,
+					  connect_timeout=10,
 					  request_timeout=request_timeout+3,
 					  validate_cert=False)
     except httpclient.HTTPError as e:
