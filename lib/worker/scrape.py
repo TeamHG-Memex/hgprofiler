@@ -6,10 +6,10 @@ from urllib.parse import quote_plus
 
 import app.database
 import app.queue
-from model.site import Site
-from model.result import Result
-from model.group import Group
-from model.file import File
+from model import Site
+from model import Result
+from model import Group
+from model import File
 from model.configuration import get_config
 import worker
 
@@ -52,23 +52,25 @@ def scrape_site_for_username(site, username, splash_url, request_timeout=10):
         'User-Agent': USER_AGENT,
     }
     result = {
-        'site': site,
+        'site': site.as_dict(),
         'error': None,
         'url': page_url,
         'image': None
     }
+    async_http = httpclient.AsyncHTTPClient()
     try:
-        response = yield httpclient.AsyncHTTPClient().fetch(url,
-                                                            headers=headers,
-                                                            connect_timeout=5,
-                                                            request_timeout=request_timeout+3,
-                                                            validate_cert=False)
+        response = yield async_http.fetch(url,
+			                  headers=headers,
+					  connect_timeout=5,
+					  request_timeout=request_timeout+3,
+					  validate_cert=False)
     except httpclient.HTTPError as e:
         error = '{}'.format(e)
-
+        # Catch Splash timeout
         if '599' in error:
             error = 'Splash connection failed'
         else:
+            # Errors returned by Splash
             try:
                 data = escape.json_decode(e.response.body)
                 if 'error' in data:
@@ -99,20 +101,12 @@ def scrape_site_for_username(site, username, splash_url, request_timeout=10):
 
 
 @gen.coroutine
-def parse_result(scrape_result, total, job_id):
+def save_image(scrape_result):
     db_session = worker.get_session()
-    result = Result(
-        job_id=job_id,
-        site_name=scrape_result['site'].name,
-        site_url=scrape_result['url'],
-        status=scrape_result['status'],
-        total=total,
-        number=1
-    )
 
     # Save image
     if scrape_result['error'] is None:
-        image_name = '{}.jpg'.format(result.site_name)
+        image_name = '{}.jpg'.format(scrape_result['site']['name'])
         content = base64.decodestring(scrape_result['image'].encode('utf8'))
         image_file = File(name=image_name,
                           mime='image/jpeg',
@@ -127,11 +121,25 @@ def parse_result(scrape_result, total, job_id):
 
     else:
         image_file = db_session.query(File).filter(File.name == 'hgprofiler_error.png').one()
-        result.error = scrape_result['error']
 
-    result.image_file_id = image_file.id
+    raise gen.Return(image_file)
 
-    raise gen.Return(result)
+def parse_result(scrape_result, image_file, total, job_id):
+    ''' 
+    Map variables to a Result model.
+    '''
+    result = Result(
+        job_id=job_id,
+        site_name=scrape_result['site']['name'],
+        site_url=scrape_result['url'],
+        status=scrape_result['status'],
+        image_file_id=image_file.id,
+        total=total,
+        number=1
+    )
+    return result
+
+
 
 
 @gen.coroutine
@@ -181,22 +189,23 @@ def scrape_sites(username, group_id=None):
             # Scrape the page, get the result
             scrape_result = yield scrape_site_for_username(
                 current_site, username, splash_url, request_timeout)
+
             # Parse result
-            result = yield parse_result(scrape_result, total, job.id)
+            image_file = yield save_image(scrape_result)
+            result = parse_result(scrape_result, image_file, total, job.id)
             db_session.add(result)
             db_session.flush()
-            result_dict = result.as_dict()
             fetched.add(current_site)
+            
+            # Add image data for redis
+            result_dict = result.as_dict()
+            result_dict['image_file_url'] = image_file.url()
+            result_dict['image_name'] = image_file.name
             # Notify clients of the result
             redis.publish('result', json.dumps(result_dict))
-            # Add image path for zip archive creation
-            if result.image_file is not None:
-                result_dict['image_file_path'] = result.image_file.relpath()
-            else:
-                result_dict['image_file_path'] = None
-
+            # Add image file path for archive creation  - don't want to publish on Redis.
+            result_dict['image_file_path'] = result.image_file.relpath()
             results.append(result_dict)
-
         finally:
             q.task_done()
 
