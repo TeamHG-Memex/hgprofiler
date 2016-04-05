@@ -91,22 +91,6 @@ class DatabaseCli(cli.BaseCli):
         session.add(admin)
         session.commit()
 
-    def _create_fixture_files(self, config):
-        ''' Create file fixtures. '''
-        # Save error png as database file object.
-        session = app.database.get_session(self._db)
-        static_dir = get_path('static')
-        img_dir = os.path.join(static_dir, 'img')
-        file_path = os.path.join(img_dir, 'hgprofiler_error.png')
-
-        with open(file_path, 'rb') as f:
-            data = f.read()
-            file_ = File(name='hgprofiler_error.png', mime='image/png', content=data)
-            session.add(file_)
-            session.commit()
-
-
-
 
     def _create_fixture_sites(self, config):
         ''' Create site fixtures. '''
