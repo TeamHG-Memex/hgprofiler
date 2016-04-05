@@ -204,7 +204,7 @@ def scrape_sites(username, group_id=None):
             # Notify clients of the result
             redis.publish('result', json.dumps(result_dict))
             # Add image file path for archive creation  - don't want to publish on Redis.
-            result_dict['image_file_path'] = result.image_file.relpath()
+            result_dict['image_file_path'] = image_file.relpath()
             results.append(result_dict)
         finally:
             q.task_done()
