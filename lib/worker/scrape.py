@@ -1,3 +1,4 @@
+import os
 import json
 import base64
 from datetime import timedelta
@@ -11,6 +12,7 @@ from model import Result
 from model import Group
 from model import File
 from model.configuration import get_config
+from helper.functions import get_path
 import worker
 
 USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) '\
