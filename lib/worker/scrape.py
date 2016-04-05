@@ -18,7 +18,7 @@ import worker
 USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) '\
              'Gecko/20100101 Firefox/40.1'
 
-httpclient.AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
+#httpclient.AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
 
 import logging
 logging.basicConfig(level=logging.DEBUG)
@@ -30,6 +30,9 @@ class ScrapeException(Exception):
     def __init__(self, message):
         self.message = message
 
+
+def ensure_utf8(text):
+    text = text if isinstance(text, str) else text.decode()
 
 def response_contains_username(site, response):
     """
