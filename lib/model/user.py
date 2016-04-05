@@ -7,7 +7,7 @@ import bcrypt
 from sqlalchemy import Boolean, Column, DateTime, Integer, String
 from sqlalchemy.dialects.postgresql import BYTEA
 
-import app.config
+from helper.functions import get_path
 from model import Base
 
 
@@ -44,7 +44,7 @@ class User(Base):
 
         if self.thumb is None:
             if User.DEFAULT_THUMB is None:
-                dir_ = app.config.get_path('static/img')
+                dir_ = get_path('static/img')
                 file_ = 'default_user_thumb.png'
 
                 with open(os.path.join(dir_, file_), 'rb') as fh:

@@ -9,7 +9,7 @@ import string
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.dialects.postgresql import BYTEA
 
-import app.config
+from helper.functions import get_path
 from model import Base
 
 
@@ -71,7 +71,7 @@ class File(Base):
         self.hash = hash_.digest()
 
         # Write content to file.
-        data_dir = app.config.get_path('data')
+        data_dir = get_path('data')
         hash_hex = binascii.hexlify(self.hash).decode('ascii')
         dir1 = os.path.join(data_dir, hash_hex[0])
         dir2 = os.path.join(dir1, hash_hex[1])
@@ -95,7 +95,7 @@ class File(Base):
         ''' Create a zip archive of files and string files.'''
 
         zip_file = zipfile.ZipFile(path, 'w')
-        data_dir = app.config.get_path('data')
+        data_dir = get_path('data')
 
         # Add files
         for f in files:
