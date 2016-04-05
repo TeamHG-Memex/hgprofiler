@@ -55,7 +55,6 @@ class DatabaseCli(cli.BaseCli):
         self._create_fixture_configurations(config)
         self._create_fixture_users(config)
         self._create_fixture_sites(config)
-        self._create_fixture_files(config)
 
     def _create_fixture_configurations(self, config):
         ''' Create configurations. '''
