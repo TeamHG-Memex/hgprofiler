@@ -135,7 +135,7 @@ def save_image(scrape_result):
             img_dir = os.path.join(static_dir, 'img')
             file_path = os.path.join(img_dir, image_name)
 
-            with open(os.path.join(dir_, file_path), 'rb') as f:
+            with open(os.path.join(image_dir, file_path), 'rb') as f:
                 content = f.read()
                 image_file = File(name=image_name, mime='image/png', content=content)
                 db_session.add(image_file)
