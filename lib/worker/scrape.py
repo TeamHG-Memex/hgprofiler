@@ -19,7 +19,6 @@ USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) '\
              'Gecko/20100101 Firefox/40.1'
 
 #httpclient.AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
-httpclient.AsyncHTTPClient.configure(None, max_clients=100)
 
 import logging
 logging.basicConfig(level=logging.DEBUG)
@@ -182,6 +181,7 @@ def scrape_sites(username, group_id=None):
     except:
         raise ScrapeException('Value of scrape_concurrency must be an integer')
 
+    httpclient.AsyncHTTPClient.configure(None, max_clients=concurrency)
     request_timeout = get_config(db_session, 'scrape_request_timeout', required=True).value
     try:
         request_timeout = int(request_timeout)
