@@ -11,4 +11,5 @@ pycurl
 pillow
 phonenumbers
 gunicorn
+gevent
 agnostic[postgres]
