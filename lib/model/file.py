@@ -107,6 +107,8 @@ class File(Base):
             info = zipfile.ZipInfo(str_file[0])
             info.date_time = time.localtime(time.time())[:6]
             info.compress_type = zipfile.ZIP_DEFLATED
+            # http://stackoverflow.com/questions/434641/how-do-i-set-permissions-attributes-on-a-file-in-a-zip-file-using-pythons-zip/6297838#6297838
+            info.external_attr = 0o644 << 16 # rw-r-r 
             zip_file.writestr(info, str_file[1])
 
         zip_file.close()
