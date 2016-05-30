@@ -31,11 +31,6 @@ def results_csv_string(results):
     # Add results
     for result in results:
         # Clean fields for user-friendly output
-        if result['image_file_name'] is not None:
-            image_name = result['image_file_name']
-        else:
-            image_name = None
-
         if result['status'] == 'e':
             status = 'Error'
         elif result['status'] == 'f':
@@ -45,7 +40,12 @@ def results_csv_string(results):
         else:
             status = 'Unknown'
 
-        row = [result['site_name'], result['site_url'], status, image_name]
+        row = [
+            result['site_name'],
+            result['site_url'],
+            status,
+            result['image_name']
+        ]
         data.append(row)
 
     writer.writerows(data)
@@ -64,12 +64,19 @@ def create_zip(filename, results):
     db_session = worker.get_session()
     files = []
     str_files = []
+    # Get images records for the results
+    #file_ids = [r['image_file_id'] for r in results]
+    #image_files = db_session.query(File).filter(File.id.in_(file_ids)).all()
+    #file_dict = {}
+    #for image_file in image_files:
+    #    file_dict[image_file.id] = image_file
 
-    # Get list of images
+    # Create list of images
     for result in results:
-        if result['image_file_path'] is not None:
-            image = (result['image_file_name'], result['image_file_path'])
-            files.append(image)
+        #image_file = file_dict[result['image_file_id']]
+        # Add the name to results for the csv output
+        image_tuple = (result['image_name'], result['image_file_path'])
+        files.append(image_tuple)
 
     # Generate in-memory results csv
     csv_string = results_csv_string(results)

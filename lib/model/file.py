@@ -9,7 +9,7 @@ import string
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.dialects.postgresql import BYTEA
 
-import app.config
+from helper.functions import get_path
 from model import Base
 
 
@@ -71,7 +71,7 @@ class File(Base):
         self.hash = hash_.digest()
 
         # Write content to file.
-        data_dir = app.config.get_path('data')
+        data_dir = get_path('data')
         hash_hex = binascii.hexlify(self.hash).decode('ascii')
         dir1 = os.path.join(data_dir, hash_hex[0])
         dir2 = os.path.join(dir1, hash_hex[1])
@@ -95,7 +95,7 @@ class File(Base):
         ''' Create a zip archive of files and string files.'''
 
         zip_file = zipfile.ZipFile(path, 'w')
-        data_dir = app.config.get_path('data')
+        data_dir = get_path('data')
 
         # Add files
         for f in files:
@@ -107,6 +107,8 @@ class File(Base):
             info = zipfile.ZipInfo(str_file[0])
             info.date_time = time.localtime(time.time())[:6]
             info.compress_type = zipfile.ZIP_DEFLATED
+            # http://stackoverflow.com/questions/434641/how-do-i-set-permissions-attributes-on-a-file-in-a-zip-file-using-pythons-zip/6297838#6297838
+            info.external_attr = 0o644 << 16 # rw-r-r 
             zip_file.writestr(info, str_file[1])
 
         zip_file.close()
@@ -117,6 +119,13 @@ class File(Base):
         hash_ = binascii.hexlify(self.hash).decode('ascii')
 
         return os.path.join(hash_[0], hash_[1], hash_[2:])
+
+    def url(self):
+        '''
+        Return API relative URL for file.
+        '''
+        return '/api/file/{}'.format(self.id)
+
 
     def as_dict(self):
         ''' Return dictionary representation of this file. '''

@@ -10,4 +10,4 @@ tornado
 pycurl
 pillow
 phonenumbers
-gunicorn
+agnostic[postgres]

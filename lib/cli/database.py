@@ -29,7 +29,7 @@ class DatabaseCli(cli.BaseCli):
             'AGNOSTIC_HOST': config.get('database', 'host'),
             'AGNOSTIC_USER': config.get('database', 'super_username'),
             'AGNOSTIC_PASSWORD': config.get('database', 'super_password'),
-            'AGNOSTIC_SCHEMA': config.get('database', 'database'),
+            'AGNOSTIC_DATABASE': config.get('database', 'database'),
             'AGNOSTIC_MIGRATIONS_DIR': get_path('migrations'),
             'LANG': os.environ['LANG'],  # http://click.pocoo.org/4/python3/
             'PATH': os.environ['PATH'],
@@ -55,7 +55,6 @@ class DatabaseCli(cli.BaseCli):
         self._create_fixture_configurations(config)
         self._create_fixture_users(config)
         self._create_fixture_sites(config)
-        self._create_fixture_files(config)
 
     def _create_fixture_configurations(self, config):
         ''' Create configurations. '''
@@ -90,22 +89,6 @@ class DatabaseCli(cli.BaseCli):
         )
         session.add(admin)
         session.commit()
-
-    def _create_fixture_files(self, config):
-        ''' Create file fixtures. '''
-        # Save error png as database file object.
-        session = app.database.get_session(self._db)
-        static_dir = get_path('static')
-        img_dir = os.path.join(static_dir, 'img')
-        file_path = os.path.join(img_dir, 'hgprofiler_error.png')
-
-        with open(file_path, 'rb') as f:
-            data = f.read()
-            file_ = File(name='hgprofiler_error.png', mime='image/png', content=data)
-            session.add(file_)
-            session.commit()
-
-
 
 
     def _create_fixture_sites(self, config):
