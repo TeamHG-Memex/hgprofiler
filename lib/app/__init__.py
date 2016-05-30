@@ -5,7 +5,7 @@ import sys
 import time
 
 from flask import Flask, g, jsonify, make_response, request
-from flask.ext.assets import Environment, Bundle
+from flask_assets import Environment, Bundle
 from flask_failsafe import failsafe
 from itsdangerous import Signer
 from werkzeug.exceptions import HTTPException
