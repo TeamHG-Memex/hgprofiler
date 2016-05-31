@@ -117,12 +117,6 @@ def get_token(config, username, password):
     click.secho(token, fg='green')
 
 
-#def submit_usernames(
-#with open('target_list.csv') as f:
-#    reader = csv.reader(f)
-#    usernames = [item[0] for item in list(reader)]
-#    pprint(usernames)
-
 @cli.command()
 @click.argument('input-file', 
                 type=click.File(),
@@ -153,7 +147,7 @@ def submit_usernames(config,
     :param interval (int): interval in seconds between API requests.
     """
     if not config.token:
-                raise ProfilerError('Token is required for this function.')
+        raise ProfilerError('Token is required for this function.')
 
     reader = csv.reader(input_file)
     usernames = [item[0] for item in list(reader)]
@@ -184,7 +178,7 @@ def submit_usernames(config,
             time.sleep(interval)
 
     click.secho('Submitted {} usernames.'.format(len(usernames)), fg='green')
-    pprint(Responses)
+    pprint(responses)
 
 
 @cli.command()
@@ -192,18 +186,27 @@ def submit_usernames(config,
 @click.argument('resource',
               type=click.STRING,
               required=True)
-def get(config, resource):
+@click.option('--pretty',
+              is_flag=True,
+              help='Pretty print output.')
+def get(config, resource, pretty):
     """
     Fetch JSON from resource.
 
     Example: /api/workers/
     """
+    if not config.token:
+        raise ProfilerError('"--token" is required for this function.')
+
     url = urllib.parse.urljoin(config.app_host, resource)
     response = requests.get(url, headers=config.headers, verify=False)
     response.raise_for_status()
 
     try:
-        return pprint(response.json())
+        if pretty:
+            return pprint(response.json())
+        else:
+            return click.echo(response.json())
     except Exception as e:
         raise
 
