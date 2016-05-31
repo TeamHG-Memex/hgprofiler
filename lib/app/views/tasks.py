@@ -103,14 +103,14 @@ class TasksView(FlaskView):
 
                     exception_info = failed_task.exc_info
                     if exception_info is not None:
-                        exception_info = exception_info.decode()
+                        exception_info = exception_info
                     else:
                         exception_info = 'Unknown error'
 
                     failed_tasks.append({
                         'description': desc,
                         'function': failed_task.get_call_string(),
-                        'exception': failed_task.exc_info.decode(),
+                        'exception': failed_task.exc_info,
                         'id': failed_task.id,
                         'type': type_,
                         'original_queue': failed_task.origin,
@@ -119,7 +119,7 @@ class TasksView(FlaskView):
                     failed_tasks.append({
                         'description': 'Error: this job cannot be unpickled.',
                         'function': None,
-                        'exception': failed_task.exc_info.decode(),
+                        'exception': failed_task.exc_info,
                         'id': failed_task.id,
                         'type': type_,
                         'original_queue': failed_task.origin,
@@ -305,7 +305,7 @@ class TasksView(FlaskView):
         with rq.Connection(g.redis):
 
             for worker in rq.Worker.all():
-                state = worker.get_state().decode()
+                state = worker.get_state()
                 job_json = None
 
                 if state == 'busy':
@@ -344,7 +344,7 @@ class TasksView(FlaskView):
                 workers.append({
                     'current_job': job_json,
                     'name': worker.name,
-                    'state': worker.get_state().decode(),
+                    'state': worker.get_state(),
                     'queues': worker.queue_names(),
                 })
 
