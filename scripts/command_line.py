@@ -66,6 +66,11 @@ def cli(config, verbose, app_host, token, log_file, log_level):
     ----------------------------
 
     Command line client for interacting with the HGProfiler API.
+
+    The following environment variables can be used: 
+
+        PROFILER_APP_HOST = host (protocol://address:port).
+        PROFILER_API_TOKEN = API token (use get_token to obtain one).
     """
     config.verbose = verbose
 
