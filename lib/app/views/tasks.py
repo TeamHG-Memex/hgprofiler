@@ -59,7 +59,6 @@ class TasksView(FlaskView):
                         "exception": "Traceback (most recent call...",
                         "function": "worker.index.reindex_site(1)",
                         "id": "dea6bd20-4f8e-44d2-bee1-b5db78eb4cc8",
-                        "profile_id": "1",
                         "type": "posts",
                         "original_queue": "index"
                     },
@@ -97,11 +96,6 @@ class TasksView(FlaskView):
                     else:
                         desc = None
 
-                    if 'profile_id' in failed_task.meta:
-                        profile_id = failed_task.meta['profile_id']
-                    else:
-                        profile_id = None
-
                     if 'type' in failed_task.meta:
                         type_ = failed_task.meta['type']
                     else:
@@ -118,7 +112,6 @@ class TasksView(FlaskView):
                         'function': failed_task.get_call_string(),
                         'exception': failed_task.exc_info.decode(),
                         'id': failed_task.id,
-                        'profile_id': profile_id,
                         'type': type_,
                         'original_queue': failed_task.origin,
                     })
@@ -128,7 +121,6 @@ class TasksView(FlaskView):
                         'function': None,
                         'exception': failed_task.exc_info.decode(),
                         'id': failed_task.id,
-                        'profile_id': profile_id,
                         'type': type_,
                         'original_queue': failed_task.origin,
                     })
@@ -269,7 +261,6 @@ class TasksView(FlaskView):
                             "id": "cc4618c1-22ed-4b5d-a9b8-5186c0259b46",
                             "progress": 0.4520876112251882,
                             "total": 2922,
-                            'profile_id': 1,
                             "type": "index"
                         },
                         "name": "ubuntu.49330",
@@ -296,7 +287,6 @@ class TasksView(FlaskView):
             records processed by this job, expressed as a decimal
         :>json int workers[n]["current_job"]["total"]: the total number of
             records expected to be processed by this job
-        :>json str workers[n]["current_job"]["profile_id"]: the ID of the
            profile for which the job is being performed (optional)
         :>json str workers[n]["current_job"]["type"]: the type of this job,
             indicating what subsystem it belongs to (optional)
@@ -327,11 +317,6 @@ class TasksView(FlaskView):
                         else:
                             description = None
 
-                        if 'profile_id' in job.meta:
-                            profile_id = job.meta['profile_id']
-                        else:
-                            profile_id = None
-
                         if  'current' in job.meta:
                             current = job.meta['current']
                         else:
@@ -353,7 +338,6 @@ class TasksView(FlaskView):
                             'id': job.id,
                             'progress': progress,
                             'total': total,
-                            'profile_id': profile_id,
                             'type': job.meta['type'] if 'type' in job.meta else None
                         }
 

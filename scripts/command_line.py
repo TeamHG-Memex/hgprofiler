@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import logging
+import urllib
 import time
 import click
 import requests
@@ -30,7 +31,7 @@ class Config(object):
             'critical': logging.CRITICAL
         }
         self.log_level = self.log_levels['warning']
-        self.app_url = 'https://localhost:5083'
+        self.app_host = None 
         self.token = None
         self.headers = {}
 
@@ -39,10 +40,11 @@ class Config(object):
 pass_config = click.make_pass_decorator(Config, ensure=True)
 @click.group()
 @click.option('--verbose', is_flag=True, help='Show debug.')
-@click.option('--app-url',
-              default="",
+@click.option('--app-host',
+              prompt=True,
+              envvar='PROFILER_APP_HOST',
               type=click.STRING,
-              help="App url: 'protocol://address:port'")
+              help="App host: 'protocol://address:port'")
 @click.option('--token',
               default="",
               envvar='PROFILER_API_TOKEN',
@@ -57,7 +59,7 @@ pass_config = click.make_pass_decorator(Config, ensure=True)
               default='warning',
               help='Log level.')
 @pass_config
-def cli(config, verbose, app_url, token, log_file, log_level):
+def cli(config, verbose, app_host, token, log_file, log_level):
     """
     \b
     HGProfiler API Client 
@@ -79,8 +81,8 @@ def cli(config, verbose, app_url, token, log_file, log_level):
         click.secho('You are authenticated. X-Auth headers set.', fg='green')
         config.headers['X-Auth'] = config.token
 
-    if app_url:
-        config.app_url = app_url
+    if app_host:
+        config.app_host = app_host
 
     config.log_file = log_file
     config.log_level = config.log_levels[log_level]
@@ -102,7 +104,7 @@ def get_token(config, username, password):
     """
     Obtain an API token.
     """
-    auth_url = config.app_url + '/api/authentication/'
+    auth_url = config.app_host + '/api/authentication/'
     payload = {'email': username, 'password': password}
     response = requests.post(auth_url, json=payload, verify=False)
     response.raise_for_status()
@@ -161,7 +163,7 @@ def submit_usernames(config,
     else:
         click.echo('[*] Extracted {} usernames.'.format(len(usernames)))
 
-    username_url = config.app_url + '/api/username/'
+    username_url = config.app_host + '/api/username/'
     responses = []
     
     with click.progressbar(length=len(usernames),
@@ -183,6 +185,27 @@ def submit_usernames(config,
 
     click.secho('Submitted {} usernames.'.format(len(usernames)), fg='green')
     pprint(Responses)
+
+
+@cli.command()
+@pass_config
+@click.argument('resource',
+              type=click.STRING,
+              required=True)
+def get(config, resource):
+    """
+    Fetch JSON from resource.
+
+    Example: /api/workers/
+    """
+    url = urllib.parse.urljoin(config.app_host, resource)
+    response = requests.get(url, headers=config.headers, verify=False)
+    response.raise_for_status()
+
+    try:
+        return pprint(response.json())
+    except Exception as e:
+        raise
 
 
 if __name__ == '__main__':
