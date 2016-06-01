@@ -1,11 +1,13 @@
 #!/usr/bin/env python
-import logging
-import json
-import urllib
-import time
 import click
-import requests
 import csv
+import json
+import logging
+import math
+import requests
+import time
+import urllib
+
 from pprint import pprint
 
 
@@ -196,14 +198,31 @@ def submit_usernames(config,
 @click.option('--interval', 
               type=click.INT,
               required=False,
-              default=1)
+              default=0.25)
+@click.option('--ignore-missing', 
+              is_flag=True,
+              help='Ignore missing results.')
 @pass_config
 def get_results(config,
                 input_file,
                 output_file,
-                interval):
+                interval, 
+                ignore_missing):
     """
+    \b
     Return results for list of usernames.
+
+    Each username requires minimum 2 API calls:
+
+        1. Fetch archive for the username
+        2. Fetch the results for the archive job ID 
+
+    Further API calls are required to fetch more than one page 
+    of results, e.g. if there are 160 results for a username, this
+    rquires 3 request in total.
+
+    Updates to HGProfiler should allow querying of the result
+    endpoint by username.
 
     :param input_file (file): csv file containing 1 username per line.
     :param output_file (file): output file csv or jsonlines.
@@ -228,6 +247,7 @@ def get_results(config,
         raise TypeError('"output_file" must be .csv or .jsonlines')
 
     responses = []
+   
     with click.progressbar(usernames,
                            label='Getting username results: ') as bar:
         for username in bar:
@@ -236,15 +256,40 @@ def get_results(config,
             response = requests.get(archive_url,
                                     headers=config.headers,
                                     verify=False)
-            response.raise_for_status()
+            time.sleep(interval)
+            
+            if ignore_missing:
+                if response.status_code != 200:
+                    continue
+            else:
+                response.raise_for_status()
+
             # Parse results
-            try:
-                data =  response.json()['archives']
-            except KeyError:
-                raise ProfilerError('Could not parse results for {}'.format(username))
-            # Write to output file 
-            with open(output_file, 'a+') as f:
-                json.dump(data, f)
+            archives =  response.json().get('archives', [])
+            
+            for archive in archives:
+                try:
+                    job_id = archive['job_id']
+                except KeyError:
+                    raise ProfilerError('`job_id` not in archive keys: {}'.format(','.join(archive.keys())))
+
+                results = get_job_results(config.app_host, config.headers, job_id, interval)
+                data = []
+
+                for result in results:
+                    row = [username,
+                           result['site_name'],
+                           result['site_url'],
+                           result['status'],
+                           result['error']
+                           ]
+                    data.append(row)
+
+                # Write to output file 
+                print('DATA LENGTH: {}'.format(len(data)))
+                with open(output_file, 'a+') as f:
+                    writer = csv.writer(f)
+                    writer.writerows(data)
 
             time.sleep(interval)
 
@@ -279,6 +324,39 @@ def get(config, resource, pretty):
             return click.echo(response.json())
     except Exception as e:
         raise
+
+
+def get_job_results(app_host, headers, job_id, interval):
+    """
+    Fetch all results for job_id.
+    """
+    result_url = '{}/api/result/job/{}'.format(app_host, job_id)
+    done = False 
+    page = 1
+    pages = 1
+    results = []
+
+    while page <= pages:
+        params = {'rpp': 100, 'page': page}
+        response = requests.get(result_url,
+                                headers=headers,
+                                params=params,
+                                verify=False)
+
+        if response.status_code != 200:
+            return results
+        else:
+            data = response.json()
+            total = int(data['total_count'])
+            if total > 0: 
+                pages = math.ceil(total/100)
+
+            results += data['results']
+            page += 1
+            time.sleep(interval)
+
+    click.echo('{} results for {}'.format(len(results), job_id))
+    return results
 
 
 if __name__ == '__main__':
