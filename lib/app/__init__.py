@@ -264,6 +264,9 @@ def init_views(flask_app, config):
     from app.views.archive import ArchiveView
     ArchiveView.register(flask_app, route_base='/api/archive/')
 
+    from app.views.result import ResultView
+    ResultView.register(flask_app, route_base='/api/result/')
+
     # Make sure to import the Angular view last so that it will match
     # all remaining routes.
     import app.views.angular

@@ -25,7 +25,6 @@ class Result(Base):
         (u'e', u'Error')
     ]
 
-
     id = Column(Integer, primary_key=True)
     job_id = Column(String(255), nullable=False)
     site_name = Column(String(255), nullable=False)
@@ -34,7 +33,6 @@ class Result(Base):
     number = Column(Integer, nullable=False)
     total = Column(Integer, nullable=False)
     image_file_id = Column(Integer, ForeignKey('file.id', name='fk_image_file'), nullable=True)
-    #image_file = relationship('File', primaryjoin='Result.image_file_id == File.id')
     error = Column(String(255), nullable=True)
 
     def __init__(self,

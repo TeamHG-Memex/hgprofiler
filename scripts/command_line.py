@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import logging
+import json
 import urllib
 import time
 import click
@@ -146,7 +147,7 @@ def submit_usernames(config,
     """
     Submit list of usernames to search for.
 
-    :param usernames (list): list of usernames to search for.
+    :param input_file (file): csv file containing 1 username per line.
     :param group_id (int): id of site group to use.
     :param chunk_size (int): usernames to sumbit per API requests.
     :param interval (int): interval in seconds between API requests.
@@ -184,6 +185,70 @@ def submit_usernames(config,
 
     click.secho('Submitted {} usernames.'.format(len(usernames)), fg='green')
     pprint(responses)
+
+@cli.command()
+@click.argument('input-file', 
+                type=click.File(),
+                required=True)
+@click.argument('output-file', 
+              type=click.Path(writable=True),
+              required=True)
+@click.option('--interval', 
+              type=click.INT,
+              required=False,
+              default=1)
+@pass_config
+def get_results(config,
+                input_file,
+                output_file,
+                interval):
+    """
+    Return results for list of usernames.
+
+    :param input_file (file): csv file containing 1 username per line.
+    :param output_file (file): output file csv or jsonlines.
+    :param interval (int): interval in seconds between API requests.
+    """
+    if not config.token:
+        raise ProfilerError('Token is required for this function.')
+
+    reader = csv.reader(input_file)
+    usernames = [item[0] for item in list(reader)]
+
+    if not usernames:
+        raise ProfilerError('No usernames found.')
+    else:
+        click.echo('[*] Extracted {} usernames.'.format(len(usernames)))
+
+    if output_file.endswith('.csv'):
+        output_format = 'csv'
+    elif output_file.endswith('.jsonlines'):
+        output_format = 'jsonlines'
+    else:
+        raise TypeError('"output_file" must be .csv or .jsonlines')
+
+    responses = []
+    with click.progressbar(usernames,
+                           label='Getting username results: ') as bar:
+        for username in bar:
+            # Get results for username
+            archive_url = config.app_host + '/api/archive/?username={}'.format(username)
+            response = requests.get(archive_url,
+                                    headers=config.headers,
+                                    verify=False)
+            response.raise_for_status()
+            # Parse results
+            try:
+                data =  response.json()['archives']
+            except KeyError:
+                raise ProfilerError('Could not parse results for {}'.format(username))
+            # Write to output file 
+            with open(output_file, 'a+') as f:
+                json.dump(data, f)
+
+            time.sleep(interval)
+
+    click.secho('{} username results complete.'.format(len(usernames)), fg='green')
 
 
 @cli.command()
