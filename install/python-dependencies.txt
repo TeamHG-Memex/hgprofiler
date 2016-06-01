@@ -11,3 +11,4 @@ pycurl
 pillow
 phonenumbers
 agnostic[postgres]
+bcrypt==2.0.0
