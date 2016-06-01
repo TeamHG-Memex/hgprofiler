@@ -52,6 +52,7 @@ class ArchiveView(FlaskView):
         :<header X-Auth: the client's auth token
         :query page: the page number to display (default: 1)
         :query rpp: the number of results per page (default: 10)
+        :query username: filter by matching usernames
 
         :>header Content-Type: application/json
         :>json list archives: a list of result archive objects
@@ -73,8 +74,12 @@ class ArchiveView(FlaskView):
         '''
 
         page, results_per_page = get_paging_arguments(request.args)
+        username = request.args.get('username', '')
 
         query = g.db.query(Archive)
+
+        if username:
+            query = query.filter(Archive.username==username)
 
         total_count = query.count()
 
