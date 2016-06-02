@@ -127,35 +127,35 @@ def save_image(scrape_result):
         except:
             db_session.rollback()
             raise ScrapeException('Could not save image')
-     else:
-        image_name = 'hgprofiler_error.png'
-        # Add error image
-        create_image = False
-        image_file = None
+    else:
+       image_name = 'hgprofiler_error.png'
+       # Add error image
+       create_image = False
+       image_file = None
 
-        try:
-            image_file = db_session.query(File).filter(File.name == image_name).one()
-        except NoResultFound:
-            create_image = True
+       try:
+           image_file = db_session.query(File).filter(File.name == image_name).one()
+       except NoResultFound:
+           create_image = True
 
-        if image_file:
-           if not os.path.isfile(image_file.relpath()):
-               db_session.delete(image_file)
+       if image_file:
+          if not os.path.isfile(image_file.relpath()):
+              db_session.delete(image_file)
+              db_session.commit()
+              create_image = True
+
+       if create_image:
+           static_dir = get_path('static')
+           img_dir = os.path.join(static_dir, 'img')
+           file_path = os.path.join(img_dir, image_name)
+
+           with open(os.path.join(img_dir, file_path), 'rb') as f:
+               content = f.read()
+               image_file = File(name=image_name, mime='image/png', content=content)
+               db_session.add(image_file)
                db_session.commit()
-               create_image = True
 
-        if create_image:
-            static_dir = get_path('static')
-            img_dir = os.path.join(static_dir, 'img')
-            file_path = os.path.join(img_dir, image_name)
-
-            with open(os.path.join(img_dir, file_path), 'rb') as f:
-                content = f.read()
-                image_file = File(name=image_name, mime='image/png', content=content)
-                db_session.add(image_file)
-                db_session.commit()
-
-    raise gen.Return(image_file)
+        raise gen.Return(image_file)
 
 def parse_result(scrape_result, image_file, total, job_id):
     ''' 
