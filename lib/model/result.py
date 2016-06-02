@@ -74,7 +74,7 @@ class Result(Base):
             'image_file_id': self.image_file_id,
             #'image_file_name': image_file_name,
             #'image_file_url': image_file_url,
-            'status': self.status.value,
+            'status': self.status,
             'number': self.number,
             'total': self.total,
             'error': self.error,

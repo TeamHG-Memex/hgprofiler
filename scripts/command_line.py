@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import click
+import datetime
 import csv
 import json
 import logging
@@ -193,10 +194,10 @@ def submit_usernames(config,
                 type=click.File(),
                 required=True)
 @click.argument('output-file', 
-              type=click.Path(writable=True),
+              type=click.File(mode='a+'),
               required=True)
 @click.option('--interval', 
-              type=click.INT,
+              type=click.FLOAT,
               required=False,
               default=0.25)
 @click.option('--ignore-missing', 
@@ -239,17 +240,12 @@ def get_results(config,
     else:
         click.echo('[*] Extracted {} usernames.'.format(len(usernames)))
 
-    if output_file.endswith('.csv'):
-        output_format = 'csv'
-    elif output_file.endswith('.jsonlines'):
-        output_format = 'jsonlines'
-    else:
-        raise TypeError('"output_file" must be .csv or .jsonlines')
-
     responses = []
+    writer = csv.writer(output_file)
    
     with click.progressbar(usernames,
                            label='Getting username results: ') as bar:
+        start = datetime.datetime.now()
         for username in bar:
             # Get results for username
             archive_url = config.app_host + '/api/archive/?username={}'.format(username)
@@ -268,14 +264,11 @@ def get_results(config,
             archives =  response.json().get('archives', [])
             
             for archive in archives:
-                try:
-                    job_id = archive['job_id']
-                except KeyError:
-                    raise ProfilerError('`job_id` not in archive keys: {}'.format(','.join(archive.keys())))
-
-                results = get_job_results(config.app_host, config.headers, job_id, interval)
                 data = []
-
+                results = get_job_results(config.app_host,
+                                          config.headers,
+                                          archive['job_id'],
+                                          interval)
                 for result in results:
                     row = [username,
                            result['site_name'],
@@ -284,16 +277,18 @@ def get_results(config,
                            result['error']
                            ]
                     data.append(row)
-
                 # Write to output file 
-                print('DATA LENGTH: {}'.format(len(data)))
-                with open(output_file, 'a+') as f:
-                    writer = csv.writer(f)
-                    writer.writerows(data)
-
-            time.sleep(interval)
-
-    click.secho('{} username results complete.'.format(len(usernames)), fg='green')
+                writer.writerows(data)
+                time.sleep(interval)
+    end = datetime.datetime.now()
+    elapsed = end - start
+    hours, remainder = divmod(elapsed.total_seconds(), 3600)
+    minutes, seconds = divmod(remainder, 60)
+    msg = '{} username results completed in {} hours, {} minutes, and {} seconds.'.format(len(usernames),
+                                                                                          hours,
+                                                                                          minutes,
+                                                                                          seconds)
+    click.secho(msg, fg='green')
 
 
 @cli.command()
@@ -355,7 +350,6 @@ def get_job_results(app_host, headers, job_id, interval):
             page += 1
             time.sleep(interval)
 
-    click.echo('{} results for {}'.format(len(results), job_id))
     return results
 
 
