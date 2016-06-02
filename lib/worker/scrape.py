@@ -155,7 +155,7 @@ def save_image(scrape_result):
                db_session.add(image_file)
                db_session.commit()
 
-        raise gen.Return(image_file)
+    raise gen.Return(image_file)
 
 def parse_result(scrape_result, image_file, total, job_id):
     ''' 
