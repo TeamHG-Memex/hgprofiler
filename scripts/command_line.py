@@ -12,6 +12,12 @@ import urllib
 from pprint import pprint
 
 
+def download_zip(url, output_dir):
+    """
+    Download zip file from url.
+    """
+
+
 class ProfilerError(Exception):
     """
     Represents a human-facing exception.
@@ -289,6 +295,93 @@ def get_results(config,
                                                                                           minutes,
                                                                                           seconds)
     click.secho(msg, fg='green')
+
+
+@cli.command()
+@click.argument('input-file', 
+                type=click.File(),
+                required=True)
+@click.argument('output-dir', 
+              type=click.Path(dir_ok=True, writable=True),
+              required=True)
+@click.option('--interval', 
+              type=click.FLOAT,
+              required=False,
+              default=0.25)
+@click.option('--ignore-missing', 
+              is_flag=True,
+              help='Ignore missing results.')
+@pass_config
+def get_zip_results(config,
+                input_file,
+                output_dir,
+                interval, 
+                ignore_missing):
+    """
+    \b
+    Return zip results for list of usernames.
+
+
+    :param input_file (file): csv file containing 1 username per line.
+    :param output_dir (dir): output directory for zip archives.
+    :param interval (int): interval in seconds between API requests.
+    """
+    if not config.token:
+        raise ProfilerError('Token is required for this function.')
+
+    reader = csv.reader(input_file)
+    usernames = [item[0] for item in list(reader)]
+
+    if not usernames:
+        raise ProfilerError('No usernames found.')
+    else:
+        click.echo('[*] Extracted {} usernames.'.format(len(usernames)))
+
+    responses = []
+    writer = csv.writer(output_file)
+   
+    with click.progressbar(usernames,
+                           label='Getting username results: ') as bar:
+        start = datetime.datetime.now()
+        for username in bar:
+            # Get results for username
+            archive_url = config.app_host + '/api/archive/?username={}'.format(username)
+            response = requests.get(archive_url,
+                                    headers=config.headers,
+                                    verify=False)
+            time.sleep(interval)
+            
+            if ignore_missing:
+                if response.status_code != 200:
+                    continue
+            else:
+                response.raise_for_status()
+
+            # Parse results
+            archives =  response.json().get('archives', [])
+            
+            for archive in archives:
+                response = requests.get(archive_url,
+                                        headers=config.headers,
+                                        verify=False)
+
+                response.raise_for_status()
+
+                with open(os.join(output_dir, a), 'wb') as f:
+                    f.write(response.content)
+
+                time.sleep(interval)
+
+    end = datetime.datetime.now()
+    elapsed = end - start
+    hours, remainder = divmod(elapsed.total_seconds(), 3600)
+    minutes, seconds = divmod(remainder, 60)
+    msg = '{} username results completed in {} hours, {} minutes, and {} seconds.'.format(len(usernames),
+                                                                                          hours,
+                                                                                          minutes,
+                                                                                          seconds)
+    click.secho(msg, fg='green')
+
 
 
 @cli.command()
