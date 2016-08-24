@@ -301,9 +301,10 @@ def get_results(config,
 @click.argument('input-file', 
                 type=click.File(),
                 required=True)
-@click.argument('output-dir', 
-              type=click.Path(dir_ok=True, writable=True),
-              required=True)
+@click.argument('output-dir',
+                type=click.Path(dir_okay=True, allow_dash=True),
+                #type=click.Path(dir_ok=True, writable=True),
+                required=True)
 @click.option('--interval', 
               type=click.FLOAT,
               required=False,
