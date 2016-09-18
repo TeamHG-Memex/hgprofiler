@@ -88,7 +88,6 @@ class HGProfilerApplication extends Module {
         bind(SortComponent);
         bind(SparklineComponent);
         bind(SseController);
-        bind(TitleComponent);
         bind(TitleService);
         bind(UserComponent);
         bind(UserListComponent);
