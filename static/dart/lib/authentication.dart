@@ -129,7 +129,7 @@ class AuthenticationController {
         Map json = JSON.decode(request.response);
 
         if (json['email'] != null) {
-            this.currentUser = new User(json['id'], json['email'], json['is_admin']);
+            this.currentUser = new User(json['id'], json['email'], json['is_admin'], json['thumb']);
             tokenCompleter.complete(true);
 
             // Try to load a complete user profile.

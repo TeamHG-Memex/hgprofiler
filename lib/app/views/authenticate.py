@@ -31,6 +31,7 @@ class AuthenticationView(FlaskView):
                 "email": "john.doe@corporation.com",
                 "id": 201,
                 "is_admin": false,
+                "thumb": "iVBORw0KGgoAAAANS...",
                 "url": "https://quickpin/api/user/201"
             }
 
@@ -40,6 +41,7 @@ class AuthenticationView(FlaskView):
         :>json str email: the current user's e-mail address
         :>json int id: user's unique identifier
         :>json bool is_admin: true if current user is an administrator
+        :>json str thumb: PNG thumbnail for this user, base64 encoded
         :>json str url: API endpoint for data about this user
         :>header Content-Type: application/json
 
@@ -51,6 +53,7 @@ class AuthenticationView(FlaskView):
             email=g.user.email,
             id=g.user.id,
             is_admin=g.user.is_admin,
+            thumb=g.user.thumb_data(),
             url=url_for('UserView:get', id_=g.user.id)
         )
 
@@ -105,7 +108,8 @@ class AuthenticationView(FlaskView):
                 token=g.sign('%d|%s' % (user.id, expires))
             )
 
-        except KeyError:
+        except KeyError as ke:
+            print(ke)
             raise BadRequest('Email and password are required.')
 
         except (AuthenticationFailure, NoResultFound) as e:

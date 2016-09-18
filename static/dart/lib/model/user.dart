@@ -12,7 +12,7 @@ class User {
     String phone, phoneE164;
     String thumb;
 
-    User(this.id, this.email, this.isAdmin);
+    User(this.id, this.email, this.isAdmin, this.thumb);
 
     User.fromJson(Map json) {
         this.id = json['id'];

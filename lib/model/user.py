@@ -62,31 +62,40 @@ class User(Base):
         return 'data:image/png;base64,%s' % self.thumb_data()
 
 
-def check_password(password, hash_):
+def check_password(password, stored_hash):
     ''' Check a plaintext password against a crypt-style hash. '''
 
     crypt_types = {
         '2a': 'bcrypt',
+        '2b': 'bcrypt',
     }
 
     try:
-        crypt_type = hash_.split('$')[1]
+        crypt_type = stored_hash.split('$')[1]
     except IndexError:
-        raise ValueError("Hash is not in proper 'crypt' format: %s" % hash_)
+        err = "Hash is not in proper 'crypt' format: {}".format(stored_hash)
+        raise ValueError(err)
 
     if crypt_types[crypt_type] == 'bcrypt':
-        return bcrypt.hashpw(password, hash_) == hash_
+        new_hash = bcrypt.hashpw(
+            password.encode('utf8'),
+            stored_hash.encode('utf8')
+        ).decode('utf8')
+        return  new_hash == stored_hash
     else:
-        raise NotImplementedError("Hash algorithm is unsupported: %s" % algorithm)
+        err = "Hash algorithm is unsupported: {}".format(algorithm)
+        raise NotImplementedError(err)
 
 
 def hash_password(password, algorithm, rounds):
     ''' Hash a password with a chosen algorithm and number of rounds. '''
 
     if algorithm == 'bcrypt':
-        return bcrypt.hashpw(password, bcrypt.gensalt(rounds))
+        hash_ = bcrypt.hashpw(password.encode('utf8'), bcrypt.gensalt(rounds))
+        return hash_.decode('utf8')
     else:
-        raise NotImplementedError("Hash algorithm is unsupported: %s" % algorithm)
+        err = "Hash algorithm is unsupported: {}".format(algorithm)
+        raise NotImplementedError(err)
 
 
 _LOWER_ALPHA = r'[a-z]'
