@@ -40,7 +40,7 @@ class UserComponent {
         this.canEdit = this.auth.isAdmin() || this.id == this.auth.currentUser.id;
 
         this.crumbs = [
-            new Breadcrumb('HGProfiler', '/'),
+            new Breadcrumb('Profiler', '/'),
             new Breadcrumb('User Directory', '/user'),
             new Breadcrumb(this.id.toString()),
         ];

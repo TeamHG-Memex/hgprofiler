@@ -24,7 +24,7 @@ class UsernameComponent implements ShadowRootAware {
     String archiveFile;
     Map backgroundTask;
     List<Breadcrumb> crumbs = [
-        new Breadcrumb('HGProfiler', '/'),
+        new Breadcrumb('Profiler', '/'),
     ];
     int currentPage;
     String error;
@@ -323,13 +323,13 @@ class UsernameComponent implements ShadowRootAware {
         // Set up breadcrumbs.
         if (this.query == null) {
             this.crumbs = [
-                new Breadcrumb('HGProfiler', '/'),
+                new Breadcrumb('Profiler', '/'),
                 new Breadcrumb('Usernames'),
             ];
             this._ts.title = 'Username';
         } else {
             this.crumbs = [
-                new Breadcrumb('HGProfiler', '/'),
+                new Breadcrumb('Profiler', '/'),
                 new Breadcrumb('Usernames', '/username'),
                 new Breadcrumb('"' + this.query + '"'),
             ];

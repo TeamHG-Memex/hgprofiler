@@ -27,7 +27,7 @@ class GroupListComponent extends Object
 
     bool allSites;
     List<Breadcrumb> crumbs = [
-        new Breadcrumb('HGProfiler', '/'),
+        new Breadcrumb('Profiler', '/'),
         new Breadcrumb('Groups', '/group'),
     ];
     int deleteGroupId;
@@ -51,7 +51,7 @@ class GroupListComponent extends Object
     int totalSites;
 
     InputElement _inputEl;
-    Router _router; QueryWatcher _queryWatcher; 
+    Router _router; QueryWatcher _queryWatcher;
     final AuthenticationController _auth;
     final RestApiController _api;
     final RouteProvider _rp;
@@ -59,7 +59,7 @@ class GroupListComponent extends Object
     final TitleService _ts;
 
     /// Constructor.
-    GroupListComponent(this._auth, this._api, this._element, 
+    GroupListComponent(this._auth, this._api, this._element,
                        this._router, this._rp, this._sse, this._ts) {
 
         this._ts.title = 'Groups';
@@ -75,7 +75,7 @@ class GroupListComponent extends Object
         UnsubOnRouteLeave(rh, [
             this._sse.onGroup.listen(this._groupListener),
         ]);
-    
+
         this._fetchSites();
         this._fetchCurrentPage();
     }
@@ -88,7 +88,7 @@ class GroupListComponent extends Object
         } else {
             this.dialogTitle = 'Add Group';
             this.dialogClass = 'panel-success';
-            this.newGroupName = ''; 
+            this.newGroupName = '';
             String selector = 'input[name="add-site-checkbox"][type="checkbox"]';
             List<CheckboxInputElement> siteCheckboxes = this._element.querySelectorAll(selector);
             siteCheckboxes.forEach((checkbox) {
@@ -101,7 +101,7 @@ class GroupListComponent extends Object
 
         this.showAdd = true;
         this.groupError = null;
- 
+
         this._inputEl = this._element.querySelector('#group-name');
         if (this._inputEl != null) {
             // Allow Angular to digest showAdd before trying to focus. (Can't
@@ -121,7 +121,7 @@ class GroupListComponent extends Object
         this.editGroupId = null;
     }
 
-    /// Fetch a page of profiler groups. 
+    /// Fetch a page of profiler groups.
     Future _fetchCurrentPage() {
         Completer completer = new Completer();
         this.loading++;
@@ -246,7 +246,7 @@ class GroupListComponent extends Object
             });
     }
 
-    /// Set group to be edited and show add/edit dialog.    
+    /// Set group to be edited and show add/edit dialog.
     void editGroup(int id_) {
         this.newGroupName = this.groups[id_]['name'];
         this.siteSearch = '';
@@ -310,13 +310,13 @@ class GroupListComponent extends Object
         var query  = $('input[name="add-site-checkbox"]:checked');
         query.forEach((checkbox) {
             sites.add(checkbox.value);
-        }); 
+        });
 
         Map group  = {
             'name': this.newGroupName,
             'sites': sites
         };
-      
+
         Map body = {
             'groups': [group]
         };
@@ -419,7 +419,7 @@ class GroupListComponent extends Object
                 this._showMessage('Group "${json["name"]}" deleted.', 'danger', 3);
             }
             this._fetchCurrentPage();
-        } 
+        }
     }
 
     /// Show a notification to the user
@@ -431,7 +431,7 @@ class GroupListComponent extends Object
             'text': text,
             'type': type,
             'icon': icon
-        };    
+        };
         this.messages.add(message);
         if (seconds > 0) {
             new Timer(new Duration(seconds:seconds), () => this.messages.remove(message));

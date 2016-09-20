@@ -2,9 +2,9 @@
 
 <div class="jumbotron">
   <h1>
-    <i class='fa fa-lg fa-users'></i>  HGProfiler</h1>
+    <i class='fa fa-lg fa-users'></i>  Profiler</h1>
   <p>
-    Username search 
+    Username search
   </p>
 </div>
 
@@ -49,8 +49,8 @@
                       {{group.name}}
                     </a>
                   </li>
-                </ul> 
-              </div> 
+                </ul>
+              </div>
         </div>
     </form>
   </div>
@@ -74,7 +74,7 @@
       <div ng-show="results.length > 0">
         <div class="row">
           <div class="col-sm-6">
-            Searched {{results.length}} sites 
+            Searched {{results.length}} sites
             ({{(results.length/totalResults) * 100 | number:0}}%)
             for "{{username}}"
           </div>
@@ -118,7 +118,7 @@
             <li><a ng-click='setFilter("Found")'>Found</a></li>
             <li><a ng-click='setFilter("Not Found")'>Not Found</a></li>
             <li><a ng-click='setFilter("Error")'>Error</a></li>
-          </ul> 
+          </ul>
         </div>
       </div>
       <div class="form-group pull-right" ng-show="!awaitingResults">
@@ -140,7 +140,7 @@
                 <img src='/static/img/spinner-black-snake.gif'>
               </a>
             </li>
-          </ul> 
+          </ul>
         </div>
       </div>
     </form>
@@ -163,22 +163,22 @@
         </div>
         <div ng-show="result.status == 'e'" class="panel-footer error">
           <div class="pull-left">
-            <i class="fa fa-exclamation-triangle pull-left"></i> 
+            <i class="fa fa-exclamation-triangle pull-left"></i>
             {{result.error}}
           </div>
           <a href="{{result.siteUrl}}">{{result.siteName}}</a>
         </div>
         <div ng-show="result.status == 'f'" class="panel-footer found">
-          <i class="fa fa-check pull-left"></i> 
+          <i class="fa fa-check pull-left"></i>
           <a href="{{result.siteUrl}}">{{result.siteName}}</a>
         </div>
       </div>
       <div ng-show="result.status == 'n'" class="panel-footer not-found">
-        <i class="fa fa-times pull-left"></i> 
+        <i class="fa fa-times pull-left"></i>
         <a href="{{result.siteUrl}}">{{result.siteName}}</a>
       </div>
     </div>
-    
+
   </div>
 </div>
 

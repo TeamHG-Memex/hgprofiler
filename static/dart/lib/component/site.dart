@@ -26,7 +26,7 @@ class SiteComponent extends Object
 
     String siteError;
     List<Breadcrumb> crumbs = [
-        new Breadcrumb('HGProfiler', '/'),
+        new Breadcrumb('Profiler', '/'),
         new Breadcrumb('Sites', '/site'),
     ];
     int deleteSiteId;
@@ -132,7 +132,7 @@ class SiteComponent extends Object
         Modal.wire(modalDiv).show();
     }
 
-    /// Set site to be edited and show add/edit dialog.    
+    /// Set site to be edited and show add/edit dialog.
     void editSite(int id_) {
         this.newSiteName = this.sites[id_].name;
         this.setSiteCategory(this.sites[id_].category);
@@ -143,7 +143,7 @@ class SiteComponent extends Object
         this.showAddDialog('edit');
     }
 
-    /// Fetch a page of profiler sites. 
+    /// Fetch a page of profiler sites.
     void _fetchCurrentPage() {
         this.loading++;
         String pageUrl = '/api/site/';
@@ -260,7 +260,7 @@ class SiteComponent extends Object
             'category': this.newSiteCategory,
             'search_text': this.newSiteSearchText,
             'status_code': this.newSiteStatusCode,
-        }; 
+        };
 
         Map body = {
             'sites': [site]
@@ -306,7 +306,7 @@ class SiteComponent extends Object
                 this._showMessage('Site "${json["name"]}" deleted.', 'danger', 3);
             }
             this._fetchCurrentPage();
-        } 
+        }
     }
 
    /// Convert string to camel case.
@@ -317,12 +317,12 @@ class SiteComponent extends Object
             for(var i=1; i < components.length; i++) {
                 String initial = components[i].substring(0, 1).toUpperCase();
                 String word = initial + components[i].substring(1);
-                camelCase += word; 
+                camelCase += word;
             }
             return camelCase;
         }
         return input;
-    } 
+    }
 
     /// Show a notification to the user
     void _showMessage(String text,
@@ -333,7 +333,7 @@ class SiteComponent extends Object
             'text': text,
             'type': type,
             'icon': icon
-        };    
+        };
         this.messages.add(message);
         if (seconds > 0) {
             new Timer(new Duration(seconds:seconds), () => this.messages.remove(message));
@@ -344,7 +344,7 @@ class SiteComponent extends Object
     void saveSite(Event e, dynamic data, Function resetButton) {
         String pageUrl = '/api/site/${this.editSiteId}';
         this.loading++;
-        
+
         Map body = {
             'name': this.newSiteName,
             'url': this.newSiteUrl,

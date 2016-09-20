@@ -15,7 +15,7 @@ import 'package:hgprofiler/rest_api.dart';
 )
 class ConfigurationListComponent {
     List<Breadcrumb> crumbs = [
-        new Breadcrumb('HGProfiler', '/'),
+        new Breadcrumb('Profiler', '/'),
         new Breadcrumb('Administration', '/admin'),
         new Breadcrumb('Configuration'),
     ];

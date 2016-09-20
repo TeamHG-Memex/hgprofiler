@@ -20,7 +20,7 @@ import 'package:dquery/dquery.dart';
 )
 class UserListComponent extends Object{
     List<Breadcrumb> crumbs = [
-        new Breadcrumb('HGProfiler', '/'),
+        new Breadcrumb('Profiler', '/'),
         new Breadcrumb('User Directory'),
     ];
 

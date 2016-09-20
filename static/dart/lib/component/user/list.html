@@ -3,7 +3,7 @@
 <div class="panel panel-default">
   <div class="panel-heading">
       <i class="fa fa-bars"></i>
-      Users 
+      Users
       <img ng-show='loading' src='/static/img/spinner-black-snake.gif'>
   </div>
   <div class="panel-body">
@@ -41,7 +41,7 @@
           <td><img ng-src='data:image/png;base64,{{user.thumb}}'></td>
           <td>{{user.name}}</td>
           <td>{{user.agency}}</td>
-          <td><a href='mailto:{{user.email}}?subject=HGProfiler' target="_top">{{user.email}}</a></td>
+          <td><a href='mailto:{{user.email}}?subject=Profiler' target="_top">{{user.email}}</a></td>
           <td>{{user.phone}}</td>
           <td>{{user.isAdmin ? 'Administrator' : 'User'}}</td>
           <td><a class='btn btn-primary btn-sm' href='/user/{{user.id}}'>View</a></td>

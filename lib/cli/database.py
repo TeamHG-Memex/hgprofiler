@@ -79,7 +79,7 @@ class DatabaseCli(cli.BaseCli):
                              ' be an integer: %s' % hash_rounds)
 
         admin = User('admin')
-        admin.agency = 'HGProfiler'
+        admin.agency = 'Profiler'
         admin.name = 'Administrator'
         admin.is_admin = True
         admin.password_hash = model.user.hash_password(

@@ -41,7 +41,7 @@ class Config(object):
             'critical': logging.CRITICAL
         }
         self.log_level = self.log_levels['warning']
-        self.app_host = None 
+        self.app_host = None
         self.token = None
         self.headers = {}
 
@@ -72,12 +72,12 @@ pass_config = click.make_pass_decorator(Config, ensure=True)
 def cli(config, verbose, app_host, token, log_file, log_level):
     """
     \b
-    HGProfiler API Client 
+    Profiler API Client
     ----------------------------
 
-    Command line client for interacting with the HGProfiler API.
+    Command line client for interacting with the Profiler API.
 
-    The following environment variables can be used: 
+    The following environment variables can be used:
 
         PROFILER_APP_HOST = host (protocol://address:port).
         PROFILER_API_TOKEN = API token (use get_token to obtain one).
@@ -133,17 +133,17 @@ def get_token(config, username, password):
 
 
 @cli.command()
-@click.argument('input-file', 
+@click.argument('input-file',
                 type=click.File(),
                 required=True)
-@click.option('--group-id', 
+@click.option('--group-id',
                 type=click.INT,
                 required=False)
-@click.option('--chunk-size', 
+@click.option('--chunk-size',
                 type=click.INT,
                 required=False,
                 default=100)
-@click.option('--interval', 
+@click.option('--interval',
                 type=click.INT,
                 required=False,
                 default=60)
@@ -174,7 +174,7 @@ def submit_usernames(config,
 
     username_url = config.app_host + '/api/username/'
     responses = []
-    
+
     with click.progressbar(length=len(usernames),
                            label='Submitting usernames: ') as bar:
         for chunk_start in range(0, len(usernames), chunk_size):
@@ -196,24 +196,24 @@ def submit_usernames(config,
     pprint(responses)
 
 @cli.command()
-@click.argument('input-file', 
+@click.argument('input-file',
                 type=click.File(),
                 required=True)
-@click.argument('output-file', 
+@click.argument('output-file',
               type=click.File(mode='a+'),
               required=True)
-@click.option('--interval', 
+@click.option('--interval',
               type=click.FLOAT,
               required=False,
               default=0.25)
-@click.option('--ignore-missing', 
+@click.option('--ignore-missing',
               is_flag=True,
               help='Ignore missing results.')
 @pass_config
 def get_results(config,
                 input_file,
                 output_file,
-                interval, 
+                interval,
                 ignore_missing):
     """
     \b
@@ -222,13 +222,13 @@ def get_results(config,
     Each username requires minimum 2 API calls:
 
         1. Fetch archive for the username
-        2. Fetch the results for the archive job ID 
+        2. Fetch the results for the archive job ID
 
-    Further API calls are required to fetch more than one page 
+    Further API calls are required to fetch more than one page
     of results, e.g. if there are 160 results for a username, this
     rquires 3 request in total.
 
-    Updates to HGProfiler should allow querying of the result
+    Updates to Profiler should allow querying of the result
     endpoint by username.
 
     :param input_file (file): csv file containing 1 username per line.
@@ -248,7 +248,7 @@ def get_results(config,
 
     responses = []
     writer = csv.writer(output_file)
-   
+
     with click.progressbar(usernames,
                            label='Getting username results: ') as bar:
         start = datetime.datetime.now()
@@ -259,7 +259,7 @@ def get_results(config,
                                     headers=config.headers,
                                     verify=False)
             time.sleep(interval)
-            
+
             if ignore_missing:
                 if response.status_code != 200:
                     continue
@@ -268,7 +268,7 @@ def get_results(config,
 
             # Parse results
             archives =  response.json().get('archives', [])
-            
+
             for archive in archives:
                 data = []
                 results = get_job_results(config.app_host,
@@ -283,7 +283,7 @@ def get_results(config,
                            result['error']
                            ]
                     data.append(row)
-                # Write to output file 
+                # Write to output file
                 writer.writerows(data)
                 time.sleep(interval)
     end = datetime.datetime.now()
@@ -298,25 +298,25 @@ def get_results(config,
 
 
 @cli.command()
-@click.argument('input-file', 
+@click.argument('input-file',
                 type=click.File(),
                 required=True)
 @click.argument('output-dir',
                 type=click.Path(dir_okay=True, allow_dash=True),
                 #type=click.Path(dir_ok=True, writable=True),
                 required=True)
-@click.option('--interval', 
+@click.option('--interval',
               type=click.FLOAT,
               required=False,
               default=0.25)
-@click.option('--ignore-missing', 
+@click.option('--ignore-missing',
               is_flag=True,
               help='Ignore missing results.')
 @pass_config
 def get_zip_results(config,
                 input_file,
                 output_dir,
-                interval, 
+                interval,
                 ignore_missing):
     """
     \b
@@ -340,7 +340,7 @@ def get_zip_results(config,
 
     responses = []
     writer = csv.writer(output_file)
-   
+
     with click.progressbar(usernames,
                            label='Getting username results: ') as bar:
         start = datetime.datetime.now()
@@ -351,7 +351,7 @@ def get_zip_results(config,
                                     headers=config.headers,
                                     verify=False)
             time.sleep(interval)
-            
+
             if ignore_missing:
                 if response.status_code != 200:
                     continue
@@ -360,7 +360,7 @@ def get_zip_results(config,
 
             # Parse results
             archives =  response.json().get('archives', [])
-            
+
             for archive in archives:
                 response = requests.get(archive_url,
                                         headers=config.headers,
@@ -420,7 +420,7 @@ def get_job_results(app_host, headers, job_id, interval):
     Fetch all results for job_id.
     """
     result_url = '{}/api/result/job/{}'.format(app_host, job_id)
-    done = False 
+    done = False
     page = 1
     pages = 1
     results = []
@@ -437,7 +437,7 @@ def get_job_results(app_host, headers, job_id, interval):
         else:
             data = response.json()
             total = int(data['total_count'])
-            if total > 0: 
+            if total > 0:
                 pages = math.ceil(total/100)
 
             results += data['results']
@@ -449,4 +449,3 @@ def get_job_results(app_host, headers, job_id, interval):
 
 if __name__ == '__main__':
    cli()
-

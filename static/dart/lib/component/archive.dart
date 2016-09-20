@@ -24,7 +24,7 @@ import 'package:hgprofiler/sse.dart';
 class ArchiveComponent extends Object {
 
     List<Breadcrumb> crumbs = [
-        new Breadcrumb('HGProfiler', '/'),
+        new Breadcrumb('Profiler', '/'),
         new Breadcrumb('Archive', '/archive'),
     ];
 
@@ -66,7 +66,7 @@ class ArchiveComponent extends Object {
     }
 
 
-    /// Fetch a page of profiler result archives. 
+    /// Fetch a page of profiler result archives.
     void _fetchCurrentPage() {
         this.error = null;
         this.loading++;
@@ -115,7 +115,7 @@ class ArchiveComponent extends Object {
                 this._showMessage('Archive for "${json["name"]}" deleted.', 'danger', 3);
             }
             this._fetchCurrentPage();
-        } 
+        }
     }
 
     /// Set archive for deletion and show confirmation modal.
@@ -126,7 +126,7 @@ class ArchiveComponent extends Object {
         Modal.wire(modalDiv).show();
     }
 
-    /// Delete archive specified by deleteArchiveId. 
+    /// Delete archive specified by deleteArchiveId.
     void deleteArchive(Event e, dynamic data, Function resetButton) {
         String pageUrl = '/api/archive/${this.deleteArchiveId}';
         this.loading++;
@@ -157,7 +157,7 @@ class ArchiveComponent extends Object {
             'text': text,
             'type': type,
             'icon': icon
-        };    
+        };
         this.messages.add(message);
         if (seconds > 0) {
             new Timer(new Duration(seconds:seconds), () => this.messages.remove(message));

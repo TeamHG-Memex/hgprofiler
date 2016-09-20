@@ -21,7 +21,7 @@ void redirect(RoutePreEnterEvent e) {
         }
     }
 
-    String body = '<p>You have clicked on an external link. HGProfiler has no'
+    String body = '<p>You have clicked on an external link. Profiler has no'
                   ' control over the contents of this remote site.</p>'
                   ' <p>If you understand what you\'re doing and you wish to'
                   ' proceed, copy and paste this URL into a new tab or'

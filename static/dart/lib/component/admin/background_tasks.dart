@@ -16,7 +16,7 @@ import 'package:hgprofiler/sse.dart';
 )
 class BackgroundTasksComponent {
     List<Breadcrumb> crumbs = [
-        new Breadcrumb('HGProfiler', '/'),
+        new Breadcrumb('Profiler', '/'),
         new Breadcrumb('Administration', '/admin'),
         new Breadcrumb('Background Tasks'),
     ];
