@@ -15,11 +15,11 @@ class Archive(Base):
 
     __tablename__ = 'archive'
     __table_args__ = (
-        UniqueConstraint('job_id', 'zip_file_id',  name='job_id_zip_file_id'),
+        UniqueConstraint('tracker_id', 'zip_file_id',  name='tracker_id_zip_file_id'),
     )
 
     id = Column(Integer, primary_key=True)
-    job_id = Column(String(255), nullable=False)
+    tracker_id = Column(String(255), nullable=False)
     username = Column(String(255), nullable=False)
     group_id = Column(Integer, ForeignKey('group.id'), nullable=True)
     date = Column(DateTime, default=func.current_timestamp())
@@ -30,7 +30,7 @@ class Archive(Base):
     zip_file_id = Column(Integer, ForeignKey('file.id', name='fk_zip_file'))
 
     def __init__(self,
-                 job_id,
+                 tracker_id,
                  username,
                  group_id,
                  site_count,
@@ -40,7 +40,7 @@ class Archive(Base):
                  zip_file_id):
         ''' Constructor. '''
 
-        self.job_id = job_id
+        self.tracker_id = tracker_id
         self.username = username
         self.group_id = group_id
         self.site_count = site_count
@@ -54,7 +54,7 @@ class Archive(Base):
 
         return {
             'id': self.id,
-            'job_id': self.job_id,
+            'tracker_id': self.tracker_id,
             'username': self.username,
             'group_id': self.group_id,
             'date': self.date.isoformat(),

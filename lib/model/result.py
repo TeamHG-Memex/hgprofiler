@@ -16,7 +16,7 @@ class Result(Base):
 
     __tablename__ = 'result'
     __table_args__ = (
-        UniqueConstraint('job_id', 'site_url',  name='job_id_site_url'),
+        UniqueConstraint('tracker_id', 'site_url',  name='tracker_id_site_url'),
     )
 
     STATUS_TYPES = [
@@ -26,56 +26,48 @@ class Result(Base):
     ]
 
     id = Column(Integer, primary_key=True)
-    job_id = Column(String(255), nullable=False)
+    tracker_id = Column(String(255), nullable=False)
     site_name = Column(String(255), nullable=False)
     site_url = Column(String(255), nullable=False)
     status = Column(ChoiceType(STATUS_TYPES), nullable=False)
-    number = Column(Integer, nullable=False)
-    total = Column(Integer, nullable=False)
     image_file_id = Column(Integer, ForeignKey('file.id', name='fk_image_file'), nullable=True)
+
+    image_file = relationship(
+        'File',
+        backref='result',
+        uselist=False,
+        cascade='all'
+    )
+
     error = Column(String(255), nullable=True)
 
     def __init__(self,
-                 job_id,
+                 tracker_id,
                  site_name,
                  site_url,
                  status,
-                 number,
-                 total,
                  image_file_id=None,
                  thumb=None,
                  error=None):
         ''' Constructor. '''
 
-        self.job_id = job_id
+        self.tracker_id = tracker_id
         self.site_name = site_name
         self.site_url = site_url
         self.status = status
-        self.number = number
-        self.total = total
         self.image_file_id = image_file_id
         self.thumb = thumb
         self.error = error
 
     def as_dict(self):
         ''' Return dictionary representation of this result. '''
-        #if self.image_file is not None:
-        #    image_file_url = '/api/file/{}'.format(self.image_file_id)
-        #    image_file_name = self.image_file.name
-        #else:
-        #    image_file_url = None
-        #    image_file_name = None
 
         return {
+            'error': self.error,
             'id': self.id,
-            'job_id': self.job_id,
+            'image_file_id': self.image_file_id,
             'site_name': self.site_name,
             'site_url': self.site_url,
-            'image_file_id': self.image_file_id,
-            #'image_file_name': image_file_name,
-            #'image_file_url': image_file_url,
-            'status': self.status,
-            'number': self.number,
-            'total': self.total,
-            'error': self.error,
+            'status': self.status.code,
+            'tracker_id': self.tracker_id,
         }

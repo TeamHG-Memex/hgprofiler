@@ -11,7 +11,7 @@ from app.rest import (get_int_arg,
                       get_paging_arguments,
                       validate_request_json,
                       validate_json_attr)
-from model import Result 
+from model import Result
 import worker
 
 
@@ -55,15 +55,13 @@ class ResultView(FlaskView):
 
         :>header Content-Type: application/json
         :>json list results: a list of result objects
-        :>json int results[n].id: the unique id of this result 
-        :>json str results[n].job_id: the job_id of this result 
-        :>json str results[n].site_name: the site name of this result 
-        :>json str results[n].site_url: the site URL of this result 
-        :>json str results[n].status: result status (Found, Not Found, Error) 
-        :>json str results[n].number: result number
-        :>json str results[n].total: result total
+        :>json int results[n].id: the unique id of this result
+        :>json str results[n].job_id: the job_id of this result
+        :>json str results[n].site_name: the site name of this result
+        :>json str results[n].site_url: the site URL of this result
+        :>json str results[n].status: result status (Found, Not Found, Error)
         :>json str results[n].image_file_id: the file ID of the result screenshot
-        :>json str results[n].error: result error message 
+        :>json str results[n].error: result error message
 
         :status 200: ok
         :status 400: invalid argument[s]
@@ -123,15 +121,13 @@ class ResultView(FlaskView):
 
         :>header Content-Type: application/json
         :>json list results: a list of result objects
-        :>json int results[n].id: the unique id of this result 
-        :>json str results[n].job_id: the job_id of this result 
-        :>json str results[n].site_name: the site name of this result 
-        :>json str results[n].site_url: the site URL of this result 
-        :>json str results[n].status: result status (Found, Not Found, Error) 
-        :>json str results[n].number: result number
-        :>json str results[n].total: result total
+        :>json int results[n].id: the unique id of this result
+        :>json str results[n].job_id: the job_id of this result
+        :>json str results[n].site_name: the site name of this result
+        :>json str results[n].site_url: the site URL of this result
+        :>json str results[n].status: result status (Found, Not Found, Error)
         :>json str results[n].image_file_id: the file ID of the result screenshot
-        :>json str results[n].error: result error message 
+        :>json str results[n].error: result error message
 
         :status 200: ok
         :status 400: invalid argument[s]

@@ -3,10 +3,11 @@ import io
 import csv
 import json
 
+from sqlalchemy.orm import subqueryload
+
 import worker
 from app.rest import url_for
-from model.archive import Archive
-from model.file import File
+from model import Archive, File, Result
 
 
 class ArchiveException(Exception):
@@ -30,23 +31,12 @@ def results_csv_string(results):
 
     # Add results
     for result in results:
-        # Clean fields for user-friendly output
-        if result['status'] == 'e':
-            status = 'Error'
-        elif result['status'] == 'f':
-            status = 'Found'
-        elif result['status'] == 'n':
-            status = 'Not Found'
-        else:
-            status = 'Unknown'
-
-        row = [
-            result['site_name'],
-            result['site_url'],
-            status,
-            result['image_name']
-        ]
-        data.append(row)
+        data.append([
+            result.site_name,
+            result.site_url,
+            result.status.value,
+            result.image_file.name,
+        ])
 
     writer.writerows(data)
 
@@ -64,19 +54,11 @@ def create_zip(filename, results):
     db_session = worker.get_session()
     files = []
     str_files = []
-    # Get images records for the results
-    #file_ids = [r['image_file_id'] for r in results]
-    #image_files = db_session.query(File).filter(File.id.in_(file_ids)).all()
-    #file_dict = {}
-    #for image_file in image_files:
-    #    file_dict[image_file.id] = image_file
 
     # Create list of images
     for result in results:
-        #image_file = file_dict[result['image_file_id']]
         # Add the name to results for the csv output
-        image_tuple = (result['image_name'], result['image_file_path'])
-        files.append(image_tuple)
+        files.append((result.image_file.name, result.image_file.relpath()))
 
     # Generate in-memory results csv
     csv_string = results_csv_string(results)
@@ -99,7 +81,7 @@ def create_zip(filename, results):
     return zip_file.id
 
 
-def create_archive(job_id, username, group_id, results):
+def create_archive(username, group_id, tracker_id):
     """
     Archive summary of results in the database and store a zip archive in the data
     directory.
@@ -107,24 +89,32 @@ def create_archive(job_id, username, group_id, results):
 
     redis = worker.get_redis()
     db_session = worker.get_session()
-    site_count = len(results)
     found_count = 0
     not_found_count = 0
     error_count = 0
+
+    results = (
+        db_session
+        .query(Result)
+        .options(subqueryload(Result.image_file))
+        .filter(Result.tracker_id == tracker_id)
+        .all()
+    )
+    site_count = len(results)
 
     # Generate zip file
     filename = re.sub('[\W_]+', '', username)  # Strip non-alphanumeric char
     zip_file_id = create_zip(filename, results)
 
     for result in results:
-        if result['status'] == 'e':
+        if result.status == 'e':
             error_count += 1
-        elif result['status'] == 'f':
+        elif result.status == 'f':
             found_count += 1
-        elif result['status'] == 'n':
+        elif result.status == 'n':
             not_found_count += 1
 
-    archive = Archive(job_id=job_id,
+    archive = Archive(tracker_id=tracker_id,
                       username=username,
                       group_id=group_id,
                       site_count=site_count,
@@ -143,6 +133,5 @@ def create_archive(job_id, username, group_id, results):
         'name': archive.username,
         'status': 'created',
         'archive': archive.as_dict(),
-        # 'resource': url_for('ArchiveView:get', id_=archive.id)
     }
     redis.publish('archive', json.dumps(message))

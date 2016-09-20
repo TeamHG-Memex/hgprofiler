@@ -1,5 +1,4 @@
 import time
-import random
 import binascii
 import hashlib
 import os
@@ -9,7 +8,7 @@ import string
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.dialects.postgresql import BYTEA
 
-from helper.functions import get_path
+from helper.functions import get_path, random_string
 from model import Base
 
 
@@ -60,11 +59,7 @@ class File(Base):
 
         # Create dummy content to use in hash if there is no content (zip archives)
         if content is None:
-            content = 'DUMMY DATA - '
-            content += ''.join(random.SystemRandom()
-                               .choice(string.ascii_uppercase + string.digits)
-                               for _ in range(1000))
-            content = content.encode('utf-8')
+            content = ('DUMMY DATA - {}' + random_string(1000)).encode('utf8')
 
         hash_ = hashlib.sha256()
         hash_.update(content)
@@ -108,7 +103,7 @@ class File(Base):
             info.date_time = time.localtime(time.time())[:6]
             info.compress_type = zipfile.ZIP_DEFLATED
             # http://stackoverflow.com/questions/434641/how-do-i-set-permissions-attributes-on-a-file-in-a-zip-file-using-pythons-zip/6297838#6297838
-            info.external_attr = 0o644 << 16 # rw-r-r 
+            info.external_attr = 0o644 << 16 # rw-r-r
             zip_file.writestr(info, str_file[1])
 
         zip_file.close()

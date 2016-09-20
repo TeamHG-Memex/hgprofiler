@@ -2,7 +2,7 @@
 class Archive {
 
     int id;
-    String jobId;
+    String trackerId;
     DateTime date;
     String username;
     Map group;
@@ -15,8 +15,10 @@ class Archive {
     // Errors related to creating or loading this profile.
     String error;
 
-    Archive(String jobId, DateTime date, String username, Map group, int siteCount, int foundCount, int notFoundCount, int errorCount, int zipFileUrl) {
-        this.jobId = jobId; 
+    Archive(String trackerId, DateTime date, String username, Map group,
+            int siteCount, int foundCount, int notFoundCount, int errorCount,
+            int zipFileUrl) {
+        this.trackerId = trackerId;
         this.date = date;
         this.username = username;
         this.group = group;
@@ -28,7 +30,7 @@ class Archive {
     }
 
    Archive.fromJson(Map json) {
-        this.jobId = json['job_id'];
+        this.trackerId = json['tracker_id'];
         this.id = json['id'];
         this.date = json['date'];
         this.username = json['username'];

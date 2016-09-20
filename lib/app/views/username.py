@@ -6,7 +6,8 @@ import app.config
 import app.queue
 from app.authorization import login_required
 from app.rest import validate_request_json, validate_json_attr
-from model.group import Group
+from helper.functions import random_string
+from model import Group, Site
 
 
 USERNAME_ATTRS = {
@@ -67,6 +68,9 @@ class UsernameView(FlaskView):
         :status 401: authentication required
         '''
         request_json = request.get_json()
+        tracker_ids = dict()
+        redis = g.redis
+        group = None
         group_id = None
         jobs = []
 
@@ -87,11 +91,32 @@ class UsernameView(FlaskView):
             else:
                 group_id = group.id
 
-        for username in request_json['usernames']:
-            job_id = app.queue.schedule_username(username, group_id)
-            jobs.append({'id': job_id, 'username': username, 'group': group_id})
+        if group is None:
+            sites = g.db.query(Site).all()
+        else:
+            sites = group.sites
 
-        response = jsonify(jobs=jobs)
+        for username in request_json['usernames']:
+            # Create an object in redis to track the number of sites completed
+            # in this search.
+            tracker_id = 'tracker.{}'.format(random_string(10))
+            tracker_ids[username] = tracker_id
+            redis.set(tracker_id, 0)
+            redis.expire(tracker_id, 600)
+            total = len(sites)
+
+            # Queue a job for each site.
+            for site in sites:
+                job_id = app.queue.schedule_username(
+                    username, site, group_id, total, tracker_id
+                )
+                jobs.append({
+                    'id': job_id,
+                    'username': username,
+                    'group': group_id
+                })
+
+        response = jsonify(tracker_ids=tracker_ids)
         response.status_code = 202
 
         return response

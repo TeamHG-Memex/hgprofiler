@@ -35,7 +35,7 @@ class UsernameComponent implements ShadowRootAware {
     List<Group> groups;
     String groupDescription = 'All Sites';
     int loading = 0;
-    String jobId;
+    String trackerId;
     List<Result> results;
     bool submittingUsername = false;
     bool awaitingResults = false;
@@ -52,7 +52,7 @@ class UsernameComponent implements ShadowRootAware {
 
     InputElement _inputEl;
 
-    final AuthenticationController _auth; 
+    final AuthenticationController _auth;
     final Element _element;
     final RestApiController api;
     final RouteProvider _rp;
@@ -111,8 +111,8 @@ class UsernameComponent implements ShadowRootAware {
         this.api
             .post(pageUrl, urlArgs, needsAuth: true)
             .then((response) {
+                this.trackerId = response.data['tracker_ids'][this.query];
                 this.query = '';
-                this.jobId = response.data['jobs'][0]['id'];
                 new Timer(new Duration(seconds:0.1), () => this._inputEl.focus());
             })
             .catchError((response) {
@@ -142,13 +142,13 @@ class UsernameComponent implements ShadowRootAware {
     void setScreenshotResult(Result result) {
         this.screenshotResult = result;
         if (result.status == 'f') {
-            this.screenshotClass = 'found'; 
+            this.screenshotClass = 'found';
         }
         else if (result.status == 'n') {
-            this.screenshotClass = 'not-found'; 
+            this.screenshotClass = 'not-found';
         }
         else if (result.status == 'e') {
-            this.screenshotClass = 'error'; 
+            this.screenshotClass = 'error';
         }
     }
 
@@ -222,14 +222,16 @@ class UsernameComponent implements ShadowRootAware {
     void _resultListener(Event e) {
         Map json = JSON.decode(e.data);
         Result result = new Result.fromJson(json);
-        if (result.jobId == this.jobId) {
+        if (result.trackerId == this.trackerId) {
             this.results.add(result);
             this.totalResults = result.total;
             if(result.status == 'f') {
                 this.found++;
             }
             if(this.totalResults == this.results.length) {
-                this.awaitingResults = false;
+                new Timer(new Duration(seconds:1), () {
+                    this.awaitingResults = false;
+                });
             }
         }
     }
@@ -238,7 +240,7 @@ class UsernameComponent implements ShadowRootAware {
     void _archiveListener(Event e) {
         Map json = JSON.decode(e.data);
         Archive archive = new Archive.fromJson(json['archive']);
-        if (archive.jobId == this.jobId) {
+        if (archive.trackerId == this.trackerId) {
             this.archive = archive;
         }
     }

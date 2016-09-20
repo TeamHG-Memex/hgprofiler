@@ -1,28 +1,22 @@
-import os
-import json
-import base64
 from datetime import timedelta
-from tornado import httpclient, gen, ioloop, queues, escape
-from urllib.parse import quote_plus
+import base64
+import json
+import os
+import sys
+from urllib.parse import urljoin
+
+import requests
 from sqlalchemy.orm.exc import NoResultFound
 
 import app.database
 import app.queue
-from model import Site
-from model import Result
-from model import Group
-from model import File
-from model.configuration import get_config
 from helper.functions import get_path
+from model import File, Group, Result, Site
+from model.configuration import get_config
 import worker
 
 USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) '\
              'Gecko/20100101 Firefox/40.1'
-
-#httpclient.AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
-
-import logging
-logging.basicConfig(level=logging.DEBUG)
 
 
 class ScrapeException(Exception):
@@ -32,88 +26,63 @@ class ScrapeException(Exception):
         self.message = message
 
 
-def ensure_utf8(text):
-    text = text if isinstance(text, str) else text.decode()
+def check_username(username, site_id, group_id, total, tracker_id, request_timeout=10):
+    """
+    Check if `username` exists on the specified site.
+    """
 
-def response_contains_username(site, response):
+    worker.start_job()
+    job = worker.get_job()
+    redis = worker.get_redis()
+    db_session = worker.get_session()
+
+    # Make a splash request.
+    site = db_session.query(Site).get(site_id)
+    splash_result = _splash_request(db_session, username, site, request_timeout)
+    image_file = _save_image(db_session, splash_result)
+
+    # Save result to DB.
+    result = Result(
+        tracker_id=tracker_id,
+        site_name=splash_result['site']['name'],
+        site_url=splash_result['url'],
+        status=splash_result['status'],
+        image_file_id=image_file.id
+    )
+    db_session.add(result)
+    db_session.commit()
+
+    # Notify clients of the result.
+    current = redis.incr(tracker_id)
+    result_dict = result.as_dict()
+    result_dict['current'] = current
+    result_dict['image_file_url'] = image_file.url()
+    result_dict['image_name'] = image_file.name
+    result_dict['total'] = total
+    redis.publish('result', json.dumps(result_dict))
+
+    # If this username search is complete, then queue up an archive job.
+    if current == total:
+        app.queue.schedule_archive(username, group_id, tracker_id)
+
+    worker.finish_job()
+
+
+def _check_splash_response(site, splash_response, splash_data):
     """
     Parse response and test against site criteria to determine whether username exists. Used with
     tornado httpclient response object.
     """
-    if response.code == site.status_code:
-        data = escape.json_decode(response.body)
-        html = data['html'] if isinstance(data['html'], str) else data['html'].decode()
-        if(site.search_text in html.lower() or
-           site.search_text in response.headers):
+    if splash_response.status_code == site.status_code:
+        html = splash_data['html']
+        if(site.search_text in html or
+           site.search_text in splash_response.headers):
             return True
     return False
 
 
-@gen.coroutine
-def scrape_site_for_username(site, username, splash_url, request_timeout=10):
-    """
-    Download the page at `site.url` using Splash and parse for the username (asynchronous).
-    """
-    page_url = site.url.replace('%s', username)
-    url = '{}/render.json?url={}&html=1&frame=1&jpeg=1&timeout={}&resource_timeout=5'.format(
-        splash_url, quote_plus(page_url), request_timeout)
-    headers = {
-        'User-Agent': USER_AGENT,
-    }
-    result = {
-        'site': site.as_dict(),
-        'error': None,
-        'url': page_url,
-        'image': None
-    }
-    async_http = httpclient.AsyncHTTPClient()
-    try:
-        response = yield async_http.fetch(url,
-			                  headers=headers,
-					  connect_timeout=10,
-					  request_timeout=request_timeout+3,
-					  validate_cert=False)
-    except httpclient.HTTPError as e:
-        error = '{}'.format(e)
-        # Catch Splash timeout
-        if '599' in error:
-            error = 'Splash connection failed'
-        else:
-            # Errors returned by Splash
-            try:
-                data = escape.json_decode(e.response.body)
-                if 'error' in data:
-                    if data['error'] == 504:
-                        error = 'Timeout'
-                    else:
-                        error = data['description']
-                else:
-                    error = 'Splash failed to retrieve page'
-            except:
-                pass
-        result['error'] = error
-        result['status'] = 'e'
-
-        raise gen.Return(result)
-
-    data = escape.json_decode(response.body)
-
-    if response_contains_username(site, response):
-        result['status'] = 'f'
-    else:
-        result['status'] = 'n'
-
-    result['image'] = data['jpeg']
-    result['code'] = response.code
-
-    raise gen.Return(result)
-
-
-@gen.coroutine
-def save_image(scrape_result):
-    db_session = worker.get_session()
-
-    # Save image
+def _save_image(db_session, scrape_result):
+    """ Save the image returned by Splash to a local file. """
     if scrape_result['error'] is None:
         image_name = '{}.jpg'.format(scrape_result['site']['name'])
         content = base64.decodestring(scrape_result['image'].encode('utf8'))
@@ -134,7 +103,7 @@ def save_image(scrape_result):
        image_file = None
 
        try:
-           image_file = db_session.query(File).filter(File.name == image_name).one()
+           image_file = db_session.query(File).filter(File.name == image_name).first()
        except NoResultFound:
            create_image = True
 
@@ -155,121 +124,49 @@ def save_image(scrape_result):
                db_session.add(image_file)
                db_session.commit()
 
-    raise gen.Return(image_file)
-
-def parse_result(scrape_result, image_file, total, job_id):
-    ''' 
-    Map variables to a Result model.
-    '''
-    result = Result(
-        job_id=job_id,
-        site_name=scrape_result['site']['name'],
-        site_url=scrape_result['url'],
-        status=scrape_result['status'],
-        image_file_id=image_file.id,
-        total=total,
-        number=1
-    )
-    return result
+    return image_file
 
 
-
-
-@gen.coroutine
-def scrape_sites(username, group_id=None):
-    """
-    Scrape all sites for username (asynchronous).
-    """
-    worker.start_job()
-    job = worker.get_job()
-    redis = worker.get_redis()
-    db_session = worker.get_session()
-    concurrency = get_config(db_session, 'scrape_concurrency', required=True).value
-
-    try:
-        concurrency = int(concurrency)
-    except:
-        raise ScrapeException('Value of scrape_concurrency must be an integer')
-
-    httpclient.AsyncHTTPClient.configure(None, max_clients=concurrency)
-    request_timeout = get_config(db_session, 'scrape_request_timeout', required=True).value
-    try:
-        request_timeout = int(request_timeout)
-    except:
-        raise ScrapeException('Value of scrape_request_timeout must be an integer')
-
+def _splash_request(db_session, username, site, request_timeout):
+    ''' Ask splash to render a page for us. '''
+    target_url = site.url.replace('%s', username)
     splash_url = get_config(db_session, 'splash_url', required=True).value
+    splash_headers = {
+        'User-Agent': USER_AGENT,
+    }
+    splash_params = {
+        'url': target_url,
+        'html': 1,
+        'jpeg': 1,
+        'timeout': request_timeout,
+        'resource_timeout': 5,
+    }
+    splash_response = requests.get(
+        urljoin(splash_url, 'render.json'),
+        headers=splash_headers,
+        params=splash_params
+    )
+    result = {
+        'code': splash_response.status_code,
+        'error': None,
+        'image': None,
+        'site': site.as_dict(),
+        'url': target_url,
+    }
 
-    if group_id is not None:
-        group = db_session.query(Group).get(group_id)
-        sites = group.sites
+    splash_data = splash_response.json()
+    if result['code'] == 200:
+        if _check_splash_response(site, splash_response, splash_data):
+            result['status'] = 'f'
+        else:
+            result['status'] = 'n'
+
+        result['image'] = splash_data['jpeg']
     else:
-        sites = db_session.query(Site).all()
-
-    total = len(sites)
-    q = queues.Queue()
-    fetching, fetched = set(), set()
-    results = list()
-
-    @gen.coroutine
-    def scrape_site():
-        ''' Worker functions for performing scraping tasks asynchronously. '''
-        current_site = yield q.get()
+        result['status'] = 'e'
         try:
-            if current_site in fetching:
-                return
+            result['error'] = splash_data['html']
+        except:
+            result['error'] = 'Unknown error.'
 
-            fetching.add(current_site)
-            # Scrape the page, get the result
-            scrape_result = yield scrape_site_for_username(
-                current_site, username, splash_url, request_timeout)
-
-            # Parse result
-            image_file = yield save_image(scrape_result)
-            result = parse_result(scrape_result, image_file, total, job.id)
-            db_session.add(result)
-            db_session.flush()
-            fetched.add(current_site)
-            
-            # Add image data for redis
-            result_dict = result.as_dict()
-            result_dict['image_file_url'] = image_file.url()
-            result_dict['image_name'] = image_file.name
-            # Notify clients of the result
-            redis.publish('result', json.dumps(result_dict))
-            # Add image file path for archive creation  - don't want to publish on Redis.
-            result_dict['image_file_path'] = image_file.relpath()
-            results.append(result_dict)
-        finally:
-            q.task_done()
-
-    @gen.coroutine
-    def async_worker():
-        while True:
-            yield scrape_site()
-
-    for site in sites:
-        q.put(site)
-
-    # Start workers, then wait for the work queue to be empty.
-    for _ in range(concurrency):
-        async_worker()
-
-    yield q.join(timeout=timedelta(seconds=300))
-    assert fetching == fetched
-
-    # Save results to db
-    db_session.commit()
-    # Queue worker to create archive db record and zip file.
-    app.queue.schedule_archive(username, group_id, job.id, results)
-
-
-def search_username(username, group=None):
-    """
-    Concurrently search username across all sites using an asyncronous loop.
-    """
-    worker.start_job()
-    io_loop = ioloop.IOLoop.current()
-    io_loop.run_sync(lambda: scrape_sites(username, group))
-    # Complete
-    worker.finish_job()
+    return result

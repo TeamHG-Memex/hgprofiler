@@ -51,28 +51,31 @@ def remove_unused_queues(redis):
                 redis.srem('rq:queues', 'rq:queue:{}'.format(queue.name))
 
 
-def schedule_username(username, group_id=None):
-    ''' Queue a job to fetch results for the specified username. '''
+def schedule_username(username, site, group_id, total, tracker_id):
+    '''
+    Queue a job to fetch results for the specified username from the specified
+    site.
+    '''
 
     job = _scrape_queue.enqueue_call(
-        func=worker.scrape.search_username,
-        args=[username, group_id],
+        func=worker.scrape.check_username,
+        args=[username, site.id, group_id, total, tracker_id],
         timeout=_redis_worker['username_timeout']
     )
 
-    description = 'Getting results for username "{}"'.format(username)
+    description = 'Checking {} for user "{}"'.format(site.name, username)
 
     worker.init_job(job=job, description=description)
 
     return job.id
 
 
-def schedule_archive(username, group_id, job_id, results):
+def schedule_archive(username, group_id, tracker_id):
     ''' Queue a job to archive results for the job id. '''
 
     job = _archive_queue.enqueue_call(
         func=worker.archive.create_archive,
-        args=[job_id, username, group_id, results],
+        args=[username, group_id, tracker_id],
         timeout=_redis_worker['archive_timeout']
     )
 
