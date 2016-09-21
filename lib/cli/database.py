@@ -53,6 +53,7 @@ class DatabaseCli(cli.BaseCli):
         ''' Create fixture data. '''
 
         self._create_fixture_configurations(config)
+        self._create_fixture_images(config)
         self._create_fixture_users(config)
         self._create_fixture_sites(config)
 
@@ -63,6 +64,28 @@ class DatabaseCli(cli.BaseCli):
 
         for key, value in config.items('config_table'):
             session.add(Configuration(key, value))
+
+        session.commit()
+
+    def _create_fixture_images(self, config):
+        '''
+        Create the generic error image.
+
+        Since this script will often run as root, it modifies the owner of the
+        new file to match the owner of the data directory.
+        '''
+
+        session = app.database.get_session(self._db)
+
+        image_name = 'hgprofiler_error.png'
+        data_stat = os.stat(get_path('data'))
+        img_path = os.path.join(get_path('static'), 'img', image_name)
+        with open(img_path, 'rb') as img:
+            img_data = img.read()
+            image_file = File(name=image_name, mime='image/png',
+                              content=img_data)
+            image_file.chown(data_stat.st_uid, data_stat.st_gid)
+            session.add(image_file)
 
         session.commit()
 

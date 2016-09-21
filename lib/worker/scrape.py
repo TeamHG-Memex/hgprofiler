@@ -97,32 +97,13 @@ def _save_image(db_session, scrape_result):
             db_session.rollback()
             raise ScrapeException('Could not save image')
     else:
-       image_name = 'hgprofiler_error.png'
-       # Add error image
-       create_image = False
-       image_file = None
-
-       try:
-           image_file = db_session.query(File).filter(File.name == image_name).first()
-       except NoResultFound:
-           create_image = True
-
-       if image_file:
-          if not os.path.isfile(image_file.relpath()):
-              db_session.delete(image_file)
-              db_session.commit()
-              create_image = True
-
-       if create_image:
-           static_dir = get_path('static')
-           img_dir = os.path.join(static_dir, 'img')
-           file_path = os.path.join(img_dir, image_name)
-
-           with open(os.path.join(img_dir, file_path), 'rb') as f:
-               content = f.read()
-               image_file = File(name=image_name, mime='image/png', content=content)
-               db_session.add(image_file)
-               db_session.commit()
+        # Get the generic error image.
+        image_file = (
+            db_session
+            .query(File)
+            .filter(File.name == 'hgprofiler_error.png')
+            .one()
+        )
 
     return image_file
 

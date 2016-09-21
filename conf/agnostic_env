@@ -1,6 +1,0 @@
-export AGNOSTIC_HOST=postgres
-export AGNOSTIC_USER=hgprofiler_su
-export AGNOSTIC_PASSWORD=hgprofiler_su
-export AGNOSTIC_TYPE=postgres
-export AGNOSTIC_DATABASE=profiler
-export AGNOSTIC_MIGRATIONS_DIR=/profiler/migrations

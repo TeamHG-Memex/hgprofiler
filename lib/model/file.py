@@ -86,6 +86,18 @@ class File(Base):
                 file_.write(content)
                 file_.close()
 
+    def chown(self, uid, gid):
+        ''' Change ownership of this file and its two immediate ancestors. '''
+
+        file_path = os.path.join(get_path('data'), self.relpath())
+        os.chown(file_path, uid, gid)
+
+        ancestor1_path = os.path.dirname(file_path)
+        os.chown(ancestor1_path, uid, gid)
+
+        ancestor2_path = os.path.dirname(ancestor1_path)
+        os.chown(ancestor2_path, uid, gid)
+
     def zip_files(self, path, files, str_files):
         ''' Create a zip archive of files and string files.'''
 
