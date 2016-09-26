@@ -135,7 +135,7 @@ class ArchiveComponent extends Object {
         this.api
             .delete(pageUrl, needsAuth: true)
             .then((response) {
-                this._showMessage('Deleted archive ${name}', 'danger', 3, true);
+                this._showMessage('Deleted archive ${name}', 'success', 3, true);
                 this._fetchCurrentPage();
             })
             .catchError((response) {

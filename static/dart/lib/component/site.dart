@@ -394,7 +394,7 @@ class SiteComponent extends Object
                 String name = this.sites[editSiteId].name;
                 this._fetchCurrentPage();
                 this.showAdd = false;
-                this._showMessage('Updated site ${name}', 'info', 3, true);
+                this._showMessage('Updated site ${name}', 'success', 3, true);
             })
             .catchError((response) {
                 String msg = response.data['message'];
@@ -456,7 +456,7 @@ class SiteComponent extends Object
         this.api
             .delete(pageUrl, needsAuth: true)
             .then((response) {
-                this._showMessage('Deleted site ${name}', 'danger', 3, true);
+                this._showMessage('Deleted site ${name}', 'success', 3, true);
                 this._fetchCurrentPage();
             })
             .catchError((response) {
