@@ -143,11 +143,20 @@ class SiteComponent extends Object
     /// Set site for deletion and show confirmation modal
     void showTestSiteDialog(String id_) {
         this.testSiteId = id_;
+	this.testing = false;
 	this.result = null;
 	this.testError = null;
         String selector = '#test-site-modal';
         DivElement modalDiv = this._element.querySelector(selector);
         Modal.wire(modalDiv).show();
+
+        this._inputEl = this._element.querySelector('#username-query');
+        if (this._inputEl != null) {
+            // Allow Angular to digest showTestDialog before trying to focus. (Can't
+            // focus a hidden element.)
+	    // Modals take around a second to render.
+            new Timer(new Duration(seconds:1.2), () => this._inputEl.focus());
+        }
     }
 
     /// Set site to be edited and show add/edit dialog.
@@ -309,6 +318,14 @@ class SiteComponent extends Object
         }
     }
 
+
+    /// Trigger test site when the user presses enter in the test site input.
+    void handleTestSiteKeypress(Event e) {
+        if (e.charCode == 13) {
+            testSite();
+        }
+    }
+
     /// Listen for site updates.
     void _siteListener(Event e) {
         Map json = JSON.decode(e.data);
@@ -391,6 +408,7 @@ class SiteComponent extends Object
 
     // Request username search for testSiteId.
     void testSite() {
+	this.result = null;
         if (this.query == null || this.query == '') {
             this.testError = 'You must enter a username query';
             return;
@@ -422,7 +440,7 @@ class SiteComponent extends Object
             .catchError((response) {
                 this.testError = response.data['message'];
             })
-            .whenComplete(() {this.testing = false;});
+            .whenComplete(() {});
     }
 
 
@@ -471,6 +489,8 @@ class SiteComponent extends Object
         Result result = new Result.fromJson(json);
         if (result.trackerId == this.trackerId) {
             this.result = result;
+	    // Turn off loading spinner
+	    this.testing = false;
         }
     }
 }

@@ -6,7 +6,6 @@ import json
 from sqlalchemy.orm import subqueryload
 
 import worker
-from app.rest import url_for
 from model import Archive, File, Result
 
 
@@ -83,8 +82,8 @@ def create_zip(filename, results):
 
 def create_archive(username, group_id, tracker_id):
     """
-    Archive summary of results in the database and store a zip archive in the data
-    directory.
+    Archive summary of results in the database and store
+    a zip archive in the data directory.
     """
 
     redis = worker.get_redis()

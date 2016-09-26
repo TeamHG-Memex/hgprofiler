@@ -40,8 +40,7 @@
             <label for="url" class='col-sm-1'>URL*</label>
             <div class="col-sm-6">
               <input type='text'
-                     class='form-control'
-                     id="url"
+                     class='form-control' id="url"
                      size='50'
                      ng-model='newSiteUrl'
                      ng-keypress='handleAddSiteKeypress($event)'
@@ -261,17 +260,17 @@
   <div class='modal-dialog'>
     <div class='modal-content'>
       <div class='modal-header info'>
-	      <h4 class='modal-title'>Test {{sites[testSiteId].name}}</h4>
+              <h4 class='modal-title'>Test {{sites[testSiteId].name}}</h4>
       </div>
       <div class="modal-body">
-	
-	<div class="alert alert-danger" role="alert" ng-show="testError != null">
-	  <button ng-click="testError = null" class="close" aria-label="Close">
-	    <span aria-hidden="true">&times;</span>
-	  </button>
-	  {{testError}}
-	</div>
-	<div class='clear'></div>
+        
+        <div class="alert alert-danger" role="alert" ng-show="testError != null">
+          <button ng-click="testError = null" class="close" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          {{testError}}
+        </div>
+        <div class='clear'></div>
 
         <div class="row">
             <div class='form-group'>
@@ -281,7 +280,7 @@
                        class='form-control'
                        id='username-query'
                        ng-model='query'
-                       ng-keypress='handleAddSiteKeypress($event)'
+                       ng-keypress='handleTestSiteKeypress($event)'
                        ng-disabled='testing'
                        placeholder='Enter a username.'>
              </div>
@@ -289,36 +288,51 @@
           </div>
 
           <div class="row" ng-show="testing">
-	    <img height="140"
-	         width="140"
-                 id="test-loader" 
-	         src="/static/img/spinner-blue-lg.gif">
-	  </div>
+	    <div class="col-sm-12">
+	      <img height="142"
+		 width="142"
+		 id="test-loader" 
+		 src="/static/img/spinner-blue-lg.gif">
+             </div>
+          </div>
 
           <div class="row" ng-show="result != null">
-            <div class="col-sm-12">
-	      <img class="thumbnail"
-	           ng-src='{{api.authorizeUrl(result.imageFileUrl)}}'>
+            <div class="col-sm-8 col-sm-offset-2">
+  	      <div class="panel panel-default result">
+                <div class="panel-body result">
+                  <img class="thumbnail"
+		       ng-src='{{api.authorizeUrl(result.imageFileUrl)}}'>
+		</div>
+		<div ng-show="result.status == 'e'" class="panel-footer result error">
+                  <i class="fa fa-exclamation-triangle pull-left"></i>
+                  Error {{result.error}}
+		</div>
+
+		<div ng-show="result.status == 'f'" class="panel-footer result found">
+                  <i class="fa fa-check pull-left"></i>
+		  Found
+		</div>
+
+		<div ng-show="result.status == 'n'" class="panel-footer result not-found">
+                  <i class="fa fa-times pull-left"></i>
+		  Not found
+		</div>
+
+               </div>
             </div>
           </div>
 
-          <div class="row" ng-show="result != null">
-	    <div class="test-result">
-	       {{result.status}}
-	    </div>
-          </div>
-
       </div>
-      <div class='modal-footer'>
-        <button type='button'
-                class='btn btn-default'
-                data-dismiss='modal'>
+      <div class="modal-footer">
+        <button type="button"
+                class="btn btn-default"
+                data-dismiss="modal">
           Cancel
         </button>
-        <button type='button'
-                class='btn btn-primary'
-		ng-click='testSite()'>
-         <i class='fa fa-check-square'></i> Test 
+        <button type="button"
+                class="btn btn-primary"
+                ng-click="testSite()">
+         <i class="fa fa-check-square"></i> Test 
         </button>
       </div>
     </div>

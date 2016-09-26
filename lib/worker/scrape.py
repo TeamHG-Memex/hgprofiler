@@ -59,7 +59,7 @@ def check_username(username, site_id, group_id, total,
     redis.publish('result', json.dumps(result_dict))
 
     # If this username search is complete, then queue up an archive job.
-    if current == total and archive:
+    if current == total and archive is True:
         app.queue.schedule_archive(username, group_id, tracker_id)
 
     worker.finish_job()

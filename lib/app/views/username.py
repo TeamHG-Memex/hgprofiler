@@ -39,7 +39,8 @@ class UsernameView(FlaskView):
                     "janedoe",
                     ...
                 ],
-                "group": 3
+                "group": 3,
+                "archive": False,
             }
 
         **Example Response**
@@ -107,6 +108,9 @@ class UsernameView(FlaskView):
             if site is None:
                 raise NotFound("Site '%s' does not exist." % site_id)
 
+        if 'archive' in request_json:
+            archive = request_json['archive']
+
         if group:
             sites = group.sites
         elif site:
@@ -126,8 +130,12 @@ class UsernameView(FlaskView):
             # Queue a job for each site.
             for site in sites:
                 job_id = app.queue.schedule_username(
-                    username, site, group_id, total,
-                    tracker_id, archive
+                    username=username,
+                    site=site,
+                    group_id=group_id,
+                    total=total,
+                    tracker_id=tracker_id,
+                    archive=archive
                 )
                 jobs.append({
                     'id': job_id,

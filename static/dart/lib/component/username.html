@@ -160,18 +160,18 @@
             ng-click="setScreenshotResult(result)"
             ng-src='{{api.authorizeUrl(result.imageFileUrl)}}'>
             <span ng-show="result.error">N/A</span>
-        </div>
-        <div ng-show="result.status == 'e'" class="panel-footer error">
+      </div>
+      <div ng-show="result.status == 'e'" class="panel-footer error">
           <div class="pull-left">
             <i class="fa fa-exclamation-triangle pull-left"></i>
             {{result.error}}
           </div>
           <a href="{{result.siteUrl}}">{{result.siteName}}</a>
-        </div>
-        <div ng-show="result.status == 'f'" class="panel-footer found">
-          <i class="fa fa-check pull-left"></i>
-          <a href="{{result.siteUrl}}">{{result.siteName}}</a>
-        </div>
+      </div>
+      <div ng-show="result.status == 'f'" class="panel-footer found">
+        <i class="fa fa-check pull-left"></i>
+        <a href="{{result.siteUrl}}">{{result.siteName}}</a>
+      </div>
       </div>
       <div ng-show="result.status == 'n'" class="panel-footer not-found">
         <i class="fa fa-times pull-left"></i>

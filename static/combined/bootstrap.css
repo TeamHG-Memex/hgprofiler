@@ -6521,6 +6521,18 @@ table.table-fixedheader > tbody tr td {
 .text-right {
   text-align: right;
 }
+.found {
+  background-color: #a3c86d;
+  border-color: #a3c86d;
+}
+.not-found {
+  background-color: #ff4f24;
+  border-color: #fdd761;
+}
+.error {
+  background-color: #ff4f24;
+  border-color: #ff7857;
+}
 home h1 {
   font-size: 3em;
 }
@@ -6808,7 +6820,7 @@ site .btn-add {
   margin-bottom: 10px;
 }
 site #test-site-modal .modal-body {
-  height: 350px;
+  height: 380px;
 }
 site #test-loader {
   display: block;
@@ -6816,21 +6828,30 @@ site #test-loader {
   margin-top: 50px;
 }
 site .thumbnail {
-  height: 200px;
-  width: 200px;
-  border: none;
-  padding: 0px;
-  padding: 10px;
-  margin-bottom: 0px;
-  border-bottom-right-radius: 0px;
-  border-bottom-left-radius: 0px;
-  border-top-left-radius: 3px;
-  border-top-right-radius: 3px;
+  height: 100%;
+  width: 100%;
   display: block;
   margin: auto;
+  padding: 0px;
+  border: 0px;
+  border-bottom-left-radius: 0px;
+  border-bottom-right-radius: 0px;
 }
-site .test-result {
-  text-align: center;
+site .panel.result {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+site .panel-body.result {
+  padding: 0px;
+  border-bottom-left-radius: 0px;
+  border-bottom-right-radius: 0px;
+}
+site .panel-footer.result {
+  color: white;
+  text-align: right;
+}
+site .panel-footer.result a {
+  color: white;
 }
 group-list .modal-dialog {
   overflow-y: initial !important;
@@ -7149,18 +7170,6 @@ username .panel-footer {
 }
 username .panel-footer a {
   color: white;
-}
-username .found {
-  background-color: #a3c86d;
-  border-color: #a3c86d;
-}
-username .not-found {
-  background-color: #fdd761;
-  border-color: #fdd761;
-}
-username .error {
-  background-color: #ff7857;
-  border-color: #ff7857;
 }
 username .tip {
   color: #555555;

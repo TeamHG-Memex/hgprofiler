@@ -5,6 +5,9 @@
 
 @fast-animation: 0.75s;
 @brand-primary: #222222;
+@success: #a3c86d;
+@info: #7acbee;
+@danger: #ff4f24;
 
 // Global styles ==============================================================
 
@@ -368,6 +371,25 @@ table.table-fixedheader>thead tr th, table.table-fixedheader>tbody tr td {
 
 .text-right {
   text-align: right;
+}
+
+// Panel stylings for results
+.found {
+    //background-color: rgb(163, 200, 109);
+    background-color: @success;
+    border-color: rgb(163, 200, 109);
+}
+
+.not-found {
+    //background-color: rgb(253, 215, 97);
+    background-color: @danger; 
+    border-color: rgb(253, 215, 97);
+}
+
+.error {
+    //background-color: rgb(255, 120, 87);
+    background-color: @danger;
+    border-color: rgb(255, 120, 87);
 }
 
 // Home ======================================================================
@@ -795,7 +817,7 @@ site {
     }
 
     #test-site-modal .modal-body {
-        height: 350px;
+        height: 380px;
     }
 
     #test-loader {
@@ -804,24 +826,37 @@ site {
         margin-top: 50px;
     }
 
+    
     .thumbnail {
-      height: 200px;
-      width: 200px;
-      border: none;
-      padding: 0px;
-      padding: 10px;
-      margin-bottom: 0px;
-      border-bottom-right-radius: 0px;
-      border-bottom-left-radius: 0px;
-      border-top-left-radius: 3px;
-      border-top-right-radius: 3px;
+      height: 100%;
+      width: 100%;
       display: block;
       margin: auto;
+      padding: 0px;
+      border: 0px;
+      border-bottom-left-radius: 0px;
+      border-bottom-right-radius: 0px;
     }
 
-   .test-result {
-      text-align: center;
-   }
+    .panel.result {
+      margin-top: 10px;
+      margin-bottom: 10px;    
+    }
+
+    .panel-body.result {
+       padding: 0px;
+       border-bottom-left-radius: 0px;
+       border-bottom-right-radius: 0px;
+    }
+
+    .panel-footer.result {
+        color: white;
+        a {
+          color: white;
+        }
+        text-align: right;
+    }
+
 }
 
 // Groups =====================================================================
@@ -1263,22 +1298,6 @@ username {
       }
       text-align: right;
   }
-
-  .found {
-      background-color: rgb(163, 200, 109);
-      border-color: rgb(163, 200, 109);
-  }
-
-  .not-found {
-      background-color: rgb(253, 215, 97);
-      border-color: rgb(253, 215, 97);
-  }
-
-  .error {
-      background-color: rgb(255, 120, 87);
-      border-color: rgb(255, 120, 87);
-  }
-
 
   .tip {
     color: @gray;
