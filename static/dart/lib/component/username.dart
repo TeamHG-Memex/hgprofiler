@@ -236,7 +236,7 @@ class UsernameComponent implements ShadowRootAware {
         }
     }
 
-    /// Listen for job results.
+    /// Listen for archive results.
     void _archiveListener(Event e) {
         Map json = JSON.decode(e.data);
         Archive archive = new Archive.fromJson(json['archive']);

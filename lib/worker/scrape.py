@@ -1,17 +1,12 @@
-from datetime import timedelta
 import base64
 import json
-import os
-import sys
 from urllib.parse import urljoin
 
 import requests
-from sqlalchemy.orm.exc import NoResultFound
 
 import app.database
 import app.queue
-from helper.functions import get_path
-from model import File, Group, Result, Site
+from model import File, Result, Site
 from model.configuration import get_config
 import worker
 
@@ -26,7 +21,8 @@ class ScrapeException(Exception):
         self.message = message
 
 
-def check_username(username, site_id, group_id, total, tracker_id, request_timeout=10):
+def check_username(username, site_id, group_id, total,
+                   tracker_id, request_timeout=10, archive=True):
     """
     Check if `username` exists on the specified site.
     """
@@ -38,7 +34,8 @@ def check_username(username, site_id, group_id, total, tracker_id, request_timeo
 
     # Make a splash request.
     site = db_session.query(Site).get(site_id)
-    splash_result = _splash_request(db_session, username, site, request_timeout)
+    splash_result = _splash_request(db_session, username,
+                                    site, request_timeout)
     image_file = _save_image(db_session, splash_result)
 
     # Save result to DB.
@@ -62,7 +59,7 @@ def check_username(username, site_id, group_id, total, tracker_id, request_timeo
     redis.publish('result', json.dumps(result_dict))
 
     # If this username search is complete, then queue up an archive job.
-    if current == total:
+    if current == total and archive:
         app.queue.schedule_archive(username, group_id, tracker_id)
 
     worker.finish_job()
@@ -70,8 +67,8 @@ def check_username(username, site_id, group_id, total, tracker_id, request_timeo
 
 def _check_splash_response(site, splash_response, splash_data):
     """
-    Parse response and test against site criteria to determine whether username exists. Used with
-    tornado httpclient response object.
+    Parse response and test against site criteria to determine
+    whether username exists. Used with requests response object.
     """
     if splash_response.status_code == site.status_code:
         html = splash_data['html']

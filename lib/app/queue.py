@@ -51,7 +51,7 @@ def remove_unused_queues(redis):
                 redis.srem('rq:queues', 'rq:queue:{}'.format(queue.name))
 
 
-def schedule_username(username, site, group_id, total, tracker_id):
+def schedule_username(username, site, group_id, total, tracker_id, archive=True):
     '''
     Queue a job to fetch results for the specified username from the specified
     site.
@@ -59,7 +59,7 @@ def schedule_username(username, site, group_id, total, tracker_id):
 
     job = _scrape_queue.enqueue_call(
         func=worker.scrape.check_username,
-        args=[username, site.id, group_id, total, tracker_id],
+        args=[username, site.id, group_id, total, tracker_id, archive],
         timeout=_redis_worker['username_timeout']
     )
 

@@ -5,7 +5,7 @@ from werkzeug.exceptions import BadRequest, NotFound
 import app.config
 import app.queue
 from app.authorization import login_required
-from app.rest import validate_request_json, validate_json_attr
+from app.rest import validate_request_json
 from helper.functions import random_string
 from model import Group, Site
 
@@ -13,6 +13,8 @@ from model import Group, Site
 USERNAME_ATTRS = {
     'usernames': {'type': list, 'required': True},
     'group': {'type': int, 'required': False},
+    'site': {'type': int, 'required': False},
+    'archive': {'type': bool, 'required': False},
 }
 
 
@@ -57,6 +59,8 @@ class UsernameView(FlaskView):
         :<header X-Auth: the client's auth token
         :>json list usernames: a list of usernames to search for
         :>json int group: ID of site group to use (optional)
+        :>json int site: ID of site to search (optional)
+        :>json bool archive: archive the results (optional, default: true)
 
         :>header Content-Type: application/json
         :>json list jobs: list of worker jobs
@@ -67,12 +71,14 @@ class UsernameView(FlaskView):
         :status 400: invalid request body
         :status 401: authentication required
         '''
-        request_json = request.get_json()
-        tracker_ids = dict()
-        redis = g.redis
+        archive = True
         group = None
         group_id = None
         jobs = []
+        tracker_ids = dict()
+        redis = g.redis
+        request_json = request.get_json()
+        site = None
 
         if 'usernames' not in request_json:
             raise BadRequest('`usernames` is required')
@@ -81,6 +87,9 @@ class UsernameView(FlaskView):
 
         if len(request_json['usernames']) == 0:
             raise BadRequest('At least one username is required')
+
+        if 'group' in request_json and 'site' in request_json:
+            raise BadRequest('Supply either `group` or `site`.')
 
         if 'group' in request_json:
             group_id = request_json['group']
@@ -91,10 +100,19 @@ class UsernameView(FlaskView):
             else:
                 group_id = group.id
 
-        if group is None:
-            sites = g.db.query(Site).all()
-        else:
+        if 'site' in request_json:
+            site_id = request_json['site']
+            site = g.db.query(Site).filter(Site.id == site_id).first()
+
+            if site is None:
+                raise NotFound("Site '%s' does not exist." % site_id)
+
+        if group:
             sites = group.sites
+        elif site:
+            sites = g.db.query(Site).filter(Site.id == site.id).all()
+        else:
+            sites = g.db.query(Site).all()
 
         for username in request_json['usernames']:
             # Create an object in redis to track the number of sites completed
@@ -108,12 +126,13 @@ class UsernameView(FlaskView):
             # Queue a job for each site.
             for site in sites:
                 job_id = app.queue.schedule_username(
-                    username, site, group_id, total, tracker_id
+                    username, site, group_id, total,
+                    tracker_id, archive
                 )
                 jobs.append({
                     'id': job_id,
                     'username': username,
-                    'group': group_id
+                    'group': group_id,
                 })
 
         response = jsonify(tracker_ids=tracker_ids)

@@ -10,6 +10,7 @@ import 'package:hgprofiler/authentication.dart';
 import 'package:hgprofiler/query_watcher.dart';
 import 'package:hgprofiler/component/breadcrumbs.dart';
 import 'package:hgprofiler/component/pager.dart';
+import 'package:hgprofiler/model/result.dart';
 import 'package:hgprofiler/component/title.dart';
 import 'package:hgprofiler/model/site.dart';
 import 'package:hgprofiler/rest_api.dart';
@@ -44,24 +45,30 @@ class SiteComponent extends Object
     String newSiteSearchText;
     int newSiteStatusCode;
     Pager pager;
+    Result result;
+    String query;
     Map<String,Function> sites;
     List<String> siteCategories;
     List<String> siteIds;
     bool showAdd = false;
     bool submittingSite = false;
+    String testError;
+    int testSiteId;
+    bool testing = false;
+    String trackerId;
 
     InputElement _inputEl;
     Router _router;
     QueryWatcher _queryWatcher;
 
     final AuthenticationController _auth;
-    final RestApiController _api;
+    final RestApiController api;
     final RouteProvider _rp;
     final SseController _sse;
     final TitleService _ts;
 
     /// Constructor.
-    SiteComponent(this._auth, this._api, this._element, this._router, this._rp, this._sse, this._ts) {
+    SiteComponent(this._auth, this.api, this._element, this._router, this._rp, this._sse, this._ts) {
         this._ts.title = 'Sites';
 
         RouteHandle rh = this._rp.route.newHandle();
@@ -74,6 +81,7 @@ class SiteComponent extends Object
         // Add event listeners...
         UnsubOnRouteLeave(rh, [
             this._sse.onSite.listen(this._siteListener),
+	    this._sse.onResult.listen(this._resultListener),
         ]);
 
         this._fetchCategories();
@@ -132,6 +140,16 @@ class SiteComponent extends Object
         Modal.wire(modalDiv).show();
     }
 
+    /// Set site for deletion and show confirmation modal
+    void showTestSiteDialog(String id_) {
+        this.testSiteId = id_;
+	this.result = null;
+	this.testError = null;
+        String selector = '#test-site-modal';
+        DivElement modalDiv = this._element.querySelector(selector);
+        Modal.wire(modalDiv).show();
+    }
+
     /// Set site to be edited and show add/edit dialog.
     void editSite(int id_) {
         this.newSiteName = this.sites[id_].name;
@@ -154,7 +172,7 @@ class SiteComponent extends Object
 
         this.sites = new Map<String>();
 
-        this._api
+        this.api
             .get(pageUrl, urlArgs: urlArgs, needsAuth: true)
             .then((response) {
                 this.sites = new Map<String>();
@@ -183,7 +201,7 @@ class SiteComponent extends Object
         this.siteCategories = new List();
         Map urlArgs = new Map();
 
-        this._api
+        this.api
             .get(categoriesUrl, urlArgs: urlArgs, needsAuth: true)
             .then((response) {
                 response.data['categories'].forEach((category) {
@@ -266,7 +284,7 @@ class SiteComponent extends Object
             'sites': [site]
         };
 
-        this._api
+        this.api
             .post(pageUrl, body, needsAuth: true)
             .then((response) {
                 String msg = 'Added site ${this.newSiteName}';
@@ -353,7 +371,7 @@ class SiteComponent extends Object
             'category': this.newSiteCategory,
         };
 
-        this._api
+        this.api
             .put(pageUrl, body, needsAuth: true)
             .then((response) {
                 String name = this.sites[editSiteId].name;
@@ -371,6 +389,43 @@ class SiteComponent extends Object
             });
     }
 
+    // Request username search for testSiteId.
+    void testSite() {
+        if (this.query == null || this.query == '') {
+            this.testError = 'You must enter a username query';
+            return;
+        } else {
+            this.testError = null;
+        }
+
+        if(this.testSiteId == null) {
+            return;
+        }
+
+	this.testing = true;
+
+        String pageUrl = '/api/username/';
+
+        Map urlArgs = {
+            'usernames': [this.query],
+	    'site': this.testSiteId,
+	    'archive': false
+        };
+
+        this.api
+            .post(pageUrl, urlArgs, needsAuth: true)
+            .then((response) {
+                this.trackerId = response.data['tracker_ids'][this.query];
+                this.query = '';
+                new Timer(new Duration(seconds:0.1), () => this._inputEl.focus());
+            })
+            .catchError((response) {
+                this.testError = response.data['message'];
+            })
+            .whenComplete(() {this.testing = false;});
+    }
+
+
     /// Delete site specified by deleteSiteId.
     void deleteSite(Event e, dynamic data, Function resetButton) {
         if(this.deleteSiteId == null) {
@@ -380,7 +435,7 @@ class SiteComponent extends Object
         String name = this.sites[deleteSiteId].name;
         this.loading++;
 
-        this._api
+        this.api
             .delete(pageUrl, needsAuth: true)
             .then((response) {
                 this._showMessage('Deleted site ${name}', 'danger', 3, true);
@@ -407,5 +462,15 @@ class SiteComponent extends Object
             }
         }
         return index;
+    }
+
+    /// Listen for job results.
+    void _resultListener(Event e) {
+        Map json = JSON.decode(e.data);
+	window.console.debug(json);
+        Result result = new Result.fromJson(json);
+        if (result.trackerId == this.trackerId) {
+            this.result = result;
+        }
     }
 }

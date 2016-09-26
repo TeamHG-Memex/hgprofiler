@@ -169,6 +169,7 @@
                 <th>Search Text</th>
                 <th class="text-center">Status Code</th>
                 <th class="text-center">Category</th>
+                <th class="text-center">Test</th>
                 <th class="text-center">Edit</th>
                 <th class="text-center">Delete</th>
               </tr>
@@ -189,6 +190,14 @@
                 </td>
                 <td class="col-sm-2 text-center">
                   {{sites[id].category}}
+                </td>
+                <td class="col-sm-1 text-center">
+                  <button type='button'
+                          ng-click='showTestSiteDialog(id)'
+                          ng-disabled='showAdd'
+                          class='btn btn-sm btn-primary'>
+                          <i class="fa fa-check-square"></i>
+                  </button>
                 </td>
                 <td class="col-sm-1 text-center">
                   <button type='button'
@@ -242,6 +251,74 @@
                 class='btn btn-default'
                 data-dismiss='modal'>
           Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class='modal fade' id='test-site-modal' role='dialog'>
+  <div class='modal-dialog'>
+    <div class='modal-content'>
+      <div class='modal-header info'>
+	      <h4 class='modal-title'>Test {{sites[testSiteId].name}}</h4>
+      </div>
+      <div class="modal-body">
+	
+	<div class="alert alert-danger" role="alert" ng-show="testError != null">
+	  <button ng-click="testError = null" class="close" aria-label="Close">
+	    <span aria-hidden="true">&times;</span>
+	  </button>
+	  {{testError}}
+	</div>
+	<div class='clear'></div>
+
+        <div class="row">
+            <div class='form-group'>
+              <label class="col-sm-3" for='site-name'>Username*</label>
+              <div class="col-sm-6">
+                <input type='text'
+                       class='form-control'
+                       id='username-query'
+                       ng-model='query'
+                       ng-keypress='handleAddSiteKeypress($event)'
+                       ng-disabled='testing'
+                       placeholder='Enter a username.'>
+             </div>
+            </div>
+          </div>
+
+          <div class="row" ng-show="testing">
+	    <img height="140"
+	         width="140"
+                 id="test-loader" 
+	         src="/static/img/spinner-blue-lg.gif">
+	  </div>
+
+          <div class="row" ng-show="result != null">
+            <div class="col-sm-12">
+	      <img class="thumbnail"
+	           ng-src='{{api.authorizeUrl(result.imageFileUrl)}}'>
+            </div>
+          </div>
+
+          <div class="row" ng-show="result != null">
+	    <div class="test-result">
+	       {{result.status}}
+	    </div>
+          </div>
+
+      </div>
+      <div class='modal-footer'>
+        <button type='button'
+                class='btn btn-default'
+                data-dismiss='modal'>
+          Cancel
+        </button>
+        <button type='button'
+                class='btn btn-primary'
+		ng-click='testSite()'>
+         <i class='fa fa-check-square'></i> Test 
         </button>
       </div>
     </div>
