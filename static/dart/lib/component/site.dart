@@ -7,7 +7,6 @@ import 'package:angular/angular.dart';
 import 'package:bootjack/bootjack.dart';
 import 'package:dquery/dquery.dart';
 
-import 'package:hgprofiler/authentication.dart';
 import 'package:hgprofiler/query_watcher.dart';
 import 'package:hgprofiler/component/breadcrumbs.dart';
 import 'package:hgprofiler/component/pager.dart';
@@ -43,17 +42,20 @@ class SiteComponent extends Object
     String newSiteCategory;
     String newSiteCategoryDescription = 'Select a category';
     String newSiteUrl;
-    String newSiteSearchText;
+    String newSiteMatchType;
+    String newSiteMatchExpr;
+    Map<String,String> matchTypes;
+    List<List<String>> matchTypesList;
     String newSiteTestUsernamePos;
     String newSiteTestUsernameNeg;
-    int newSiteStatusCode;
+    String newSiteStatusCode;
     Pager pager;
     Result result;
     String query;
     Result screenshotResult;
     String screenshotClass;
     String screenshotUsername;
-    Map<String,Function> sites;
+    Map<String,Site> sites;
     List<String> siteCategories;
     List<String> siteIds;
     bool showAdd = false;
@@ -73,17 +75,15 @@ class SiteComponent extends Object
     Map<String, int> siteTestTrackers = new Map<String, int>();
 
     InputElement _inputEl;
-    Router _router;
     QueryWatcher _queryWatcher;
 
-    final AuthenticationController _auth;
     final RestApiController api;
     final RouteProvider _rp;
     final SseController _sse;
     final TitleService _ts;
 
     /// Constructor.
-    SiteComponent(this._auth, this.api, this._element, this._router, this._rp, this._sse, this._ts) {
+    SiteComponent(this.api, this._element, this._rp, this._sse, this._ts) {
         this._ts.title = 'Sites';
 
         RouteHandle rh = this._rp.route.newHandle();
@@ -100,6 +100,7 @@ class SiteComponent extends Object
         ]);
 
         this._fetchCategories();
+        this._fetchMatchTypes();
         this.fetchCurrentPage();
     }
 
@@ -112,8 +113,8 @@ class SiteComponent extends Object
     return str;
     }
 
-    /// Show the "add profile" dialog.
-    void showAddDialog(string mode) {
+    /// Show the "add site" dialog.
+    void showAddDialog(String mode) {
         if(mode == 'edit') {
             this.dialogTitle = 'Edit Site';
             this.dialogClass = 'panel-info';
@@ -123,7 +124,8 @@ class SiteComponent extends Object
             this.newSiteName = null;
             this.newSiteCategory = null;
             this.newSiteStatusCode = null;
-            this.newSiteSearchText = null;
+            this.newSiteMatchType = 'text';
+            this.newSiteMatchExpr = '';
             this.newSiteTestUsernamePos = null;
             this.newSiteTestUsernameNeg = this.randAlphaNumeric(16);
             this.newSiteCategoryDescription = 'Select a category';
@@ -137,7 +139,7 @@ class SiteComponent extends Object
         if (this._inputEl != null) {
             // Allow Angular to digest showAdd before trying to focus. (Can't
             // focus a hidden element.)
-            new Timer(new Duration(seconds:0.1), () => this._inputEl.focus());
+            new Timer(new Duration(milliseconds: 100), () => this._inputEl.focus());
         }
     }
 
@@ -158,6 +160,11 @@ class SiteComponent extends Object
         this.newSiteCategoryDescription = categoryHuman;
     }
 
+    /// Select a match type in the "Add Site" form.
+    void setSiteMatchType(String matchType) {
+        this.newSiteMatchType = matchType;
+    }
+
     /// Set site for deletion and show confirmation modal
     void setDeleteId(String id_) {
         this.deleteSiteId = id_;
@@ -172,7 +179,7 @@ class SiteComponent extends Object
         DivElement modalDiv = this._element.querySelector(selector);
         this.fetchCurrentPage();
         Modal.wire(modalDiv).show();
-    } 
+    }
 
     /// Set site for deletion and show confirmation modal
     void showTestSiteDialog(String id_) {
@@ -197,10 +204,11 @@ class SiteComponent extends Object
     void editSite(int id_) {
         this.newSiteName = this.sites[id_].name;
         this.setSiteCategory(this.sites[id_].category);
-        this.newSiteSearchText = this.sites[id_].searchText;
+        this.newSiteMatchType = this.sites[id_].matchType;
+        this.newSiteMatchExpr = this.sites[id_].matchExpr;
+        this.newSiteStatusCode = this.sites[id_].statusCode?.toString() ?? '';
         this.newSiteTestUsernamePos = this.sites[id_].testUsernamePos;
         this.newSiteTestUsernameNeg = this.sites[id_].testUsernameNeg;
-        this.newSiteStatusCode = this.sites[id_].statusCode;
         this.newSiteUrl = this.sites[id_].url;
         this.editSiteId = id_;
         this.showAddDialog('edit');
@@ -236,12 +244,10 @@ class SiteComponent extends Object
             'rpp': this._queryWatcher['rpp'] ?? '10',
         };
 
-        this.sites = new Map<String>();
-
         this.api
             .get(pageUrl, urlArgs: urlArgs, needsAuth: true)
             .then((response) {
-                this.sites = new Map<String>();
+                this.sites = new Map<String,Site>();
 
                 response.data['sites'].forEach((site) {
                     this.sites[site['id']] = new Site.fromJson(site);
@@ -290,17 +296,40 @@ class SiteComponent extends Object
             });
     }
 
+    // Fetch list of map of match types.
+    void _fetchMatchTypes() {
+        this.loading++;
+        String url = '/api/site/match-types';
+        this.matchTypes = new Map<String,String>();
+        this.matchTypesList = new List<List<String>>();
+
+        this.api
+            .get(url, needsAuth: true)
+            .then((response) {
+                this.matchTypes = new Map.from(response.data['match_types']);
+                List<String> keys = new List.from(this.matchTypes.keys);
+                keys.sort();
+                this.matchTypesList = new List<List<String>>();
+                for (String key in keys) {
+                    matchTypesList.add([key, this.matchTypes[key]]);
+                }
+                return matchTypes;
+            })
+            .catchError((response) {
+                String msg = response.data['message'];
+                this._showMessage(msg, 'danger');
+            })
+            .whenComplete(() {
+                this.loading--;
+            });
+    }
+
     /// Validate site input form
     bool _validateSiteInput() {
         bool result = true;
 
         if (this.newSiteCategory == '' || this.newSiteCategory == null) {
             this.siteError = 'You must select a site category.';
-            result = false;
-        }
-
-        if (this.newSiteSearchText == '' || this.newSiteSearchText == null) {
-            this.siteError = 'You must enter search text for the site.';
             result = false;
         }
 
@@ -367,8 +396,9 @@ class SiteComponent extends Object
             'name': this.newSiteName,
             'url': this.newSiteUrl,
             'category': this.newSiteCategory,
-            'search_text': this.newSiteSearchText,
-            'status_code': this.newSiteStatusCode,
+            'status_code': int.parse(this.newSiteStatusCode, onError: (_) => null),
+            'match_expr': this._nullString(this.newSiteMatchExpr),
+            'match_type': this._nullString(this.newSiteMatchType),
             'test_username_pos': this.newSiteTestUsernamePos,
             'test_username_neg': this.newSiteTestUsernameNeg,
         };
@@ -378,7 +408,7 @@ class SiteComponent extends Object
         };
 
         this.api
-            .post(pageUrl, body, needsAuth: true)
+            .post(pageUrl, {'sites': [site]}, needsAuth: true)
             .then((response) {
                 String msg = 'Added site ${this.newSiteName}';
                 this._showMessage(msg, 'success', 3, true);
@@ -448,18 +478,19 @@ class SiteComponent extends Object
         String pageUrl = '/api/site/${this.editSiteId}';
         this.loading++;
 
-        Map body = {
+        Map site = {
             'name': this.newSiteName,
             'url': this.newSiteUrl,
-            'status_code': this.newSiteStatusCode,
-            'search_text': this.newSiteSearchText,
+            'status_code': int.parse(this.newSiteStatusCode, onError: (_) => null),
+            'match_expr': this._nullString(this.newSiteMatchExpr),
+            'match_type': this._nullString(this.newSiteMatchType),
             'category': this.newSiteCategory,
             'test_username_pos': this.newSiteTestUsernamePos,
             'test_username_neg': this.newSiteTestUsernameNeg,
         };
 
         this.api
-            .put(pageUrl, body, needsAuth: true)
+            .put(pageUrl, site, needsAuth: true)
             .then((response) {
                 String name = this.sites[this.editSiteId].name;
                 this.sites[this.editSiteId] = new Site.fromJson(response.data);
@@ -485,7 +516,8 @@ class SiteComponent extends Object
             'name': this.newSiteName,
             'url': this.newSiteUrl,
             'status_code': this.newSiteStatusCode,
-            'search_text': this.newSiteSearchText,
+            'match_type': this.newSiteMatchType,
+            'match_expr': this.newSiteMatchExpr,
             'category': this.newSiteCategory,
             'test_username_pos': this.newSiteTestUsernamePos,
             'test_username_neg': this.newSiteTestUsernameNeg,
@@ -634,7 +666,6 @@ class SiteComponent extends Object
                 // Don't show notifications for tested sites (this would overload the UI).
                 // Temporarily color rows to show they have been updated.
                 Site site = new Site.fromJson(json['site']);
-                window.console.debug(site);
                 if (this.sites.containsKey(site.id)) {
                     this.sites[site.id] = site;
                     String normColor = this._getSiteRowColor(site.id);
@@ -659,6 +690,16 @@ class SiteComponent extends Object
                 this._showMessage('Site "${json["name"]}" deleted.', 'danger', 3);
                 this._fetchCurrentPage();
             }
+        }
+    }
+
+    /// Coerce an empty string to null.
+    String _nullString(String s) {
+        if (s == null) {
+            return null;
+        } else {
+            String sTrim = s.trim();
+            return sTrim.isEmpty ? null : sTrim;
         }
     }
 }

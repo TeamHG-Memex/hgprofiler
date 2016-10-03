@@ -6,7 +6,8 @@ class Site {
     String category;
     int id;
     int statusCode;
-    String searchText;
+    String matchType;
+    String matchExpr;
     String name;
     String url;
     String testUsernamePos;
@@ -20,21 +21,23 @@ class Site {
     String error;
 
     Site(String name, String url, String category,
-         int statusCode, String searchText,
+         int statusCode, String matchType, String matchExpr,
          String testUsernamePos) {
 
-        this.name = name; 
+        this.name = name;
         this.url = url;
         this.category = category;
         this.statusCode = statusCode;
-        this.searchText = searchText;
+        this.matchType = matchType;
+        this.matchExpr = matchExpr;
 	    this.testUsernamePos = testUsernamePos;
     }
 
     Site.fromJson(Map json) {
         this.category = json['category'];
         this.statusCode = json['status_code'];
-        this.searchText = json['search_text'];
+        this.matchType = json['match_type'];
+        this.matchExpr = json['match_expr'];
         this.id = json['id'];
         this.name = json['name'];
         this.url = json['url'];

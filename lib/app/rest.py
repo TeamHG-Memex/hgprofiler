@@ -159,14 +159,15 @@ def validate_json_attr(attr_name, attrs, request_json):
         raise BadRequest('{} cannot be null.'.format(attr_name))
 
     # Confirm attribute is of correct type.
-    try:
-        attr_type(val)
-    except ValueError:
-        raise BadRequest('{} must be {}.'.format(attr_name,
-                                                 attr_type.__name__))
+    if val is not None:
+        try:
+            attr_type(val)
+        except ValueError:
+            msg = '{} must be {}.'
+            raise BadRequest(msg.format(attr_name, attr_type.__name__))
 
     # If attr_name is a string, confirm that it is not empty.
-    if attr_type == str and val.strip() == '':
+    if attr_type == str and val is not None and val.strip() == '':
         raise BadRequest('{} cannot be empty.'.format(attr_name))
 
 

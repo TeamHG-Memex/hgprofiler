@@ -18,8 +18,9 @@ SITE_ATTRS = {
     'name': {'type': str, 'required': True},
     'url': {'type': str, 'required': True},
     'category': {'type': str, 'required': True},
-    'search_text': {'type': str, 'required': False},
-    'status_code': {'type': int, 'required': False},
+    'match_expr': {'type': str, 'required': False, 'allow_null': True},
+    'match_type': {'type': str, 'required': False, 'allow_null': True},
+    'status_code': {'type': int, 'required': False, 'allow_null': True},
     'test_username_pos': {'type': str, 'required': True},
     'test_username_neg': {'type': str, 'required': False},
 }
@@ -134,6 +135,9 @@ class SiteView(FlaskView):
                         "name": "about.me",
                         "url": "http://about.me/%s",
                         "category": "social",
+                        "status_code": 200,
+                        "match_type": "text",
+                        "match_expr": "Foo Bar Baz",
                         "test_username_pos": "john",
                         "test_username_neg": "dPGMFrf72SaS"
                     },
@@ -155,6 +159,12 @@ class SiteView(FlaskView):
         :>json string sites[n].name: name of site
         :>json string sites[n].url: username search url for the site
         :>json string sites[n].category: category of the site
+        :>json int sites[n].status_code: the status code to check for
+            determining a match (nullable)
+        :>json string sites[n].match_type: type of match (see get_match_types()
+            for valid match types) (nullable)
+        :>json string sites[n].match_expr: expression to use for determining
+            a page match (nullable)
         :>json string sites[n].test_username_pos: username that exists on site
             (used for testing)
         :>json string sites[n].test_username_neg: username that does not exist
@@ -171,6 +181,12 @@ class SiteView(FlaskView):
         for site_json in request_json['sites']:
             validate_request_json(site_json, SITE_ATTRS)
 
+            if (site_json['match_type'] is None or \
+                site_json['match_expr'] is None) and \
+                site_json['status_code'] is None:
+                raise BadRequest('At least one of the following is required: '
+                    'status code or page match.')
+
         # Save sites
         for site_json in request_json['sites']:
             test_username_pos = site_json['test_username_pos'].lower().strip()
@@ -179,11 +195,9 @@ class SiteView(FlaskView):
                         category=site_json['category'].lower().strip(),
                         test_username_pos=test_username_pos)
 
-            if 'search_text' in site_json:
-                site.search_text = site_json['search_text'].lower().strip()
-
-            if 'status_code' in site_json:
-                site.status_code = int(site_json['status_code'])
+            site.status_code = site_json['status_code']
+            site.match_expr = site_json['match_expr']
+            site.match_type = site_json['match_type']
 
             if 'test_username_neg' in site_json:
                 site.test_username_neg = site_json['test_username_neg'] \
@@ -226,13 +240,16 @@ class SiteView(FlaskView):
 
         **Example Request**
 
-        ..sourcode:: json
+        ..sourcecode:: json
 
             {
                 {
                     "name": "bebo",
                     "url": "http://bebo.com/usernames/search=%s",
                     "category": "social",
+                    "status_code": 200,
+                    "match_type": "text",
+                    "match_expr": "Foo Bar Baz",
                     "test_username_pos": "bob",
                     "test_username_ne": "adfjf393rfjffkjd",
                 }
@@ -248,6 +265,8 @@ class SiteView(FlaskView):
                 "name": "bebo",
                 "search_text": "Bebo User Page.</title>",
                 "status_code": 200,
+                "match_type": "text",
+                "match_expr": "Foo Bar Baz",
                 "url": "https://bebo.com/usernames/search=%s",
                 "test_username_pos": "bob",
                 "test_username_neg": "adfjf393rfjffkjd",
@@ -270,6 +289,12 @@ class SiteView(FlaskView):
         :>json str name: name of site
         :>json str url: username search url for the site
         :>json str category: category of the site
+        :>json int status_code: the status code to check for
+            determining a match (nullable)
+        :>json string match_type: type of match (see get_match_types()
+            for valid match types) (nullable)
+        :>json string match_expr: expression to use for determining
+            a page match (nullable)
         :>json str test_status: results of username test
         :>json str tested_at: timestamp of last test
         :>json str test_username_pos: username that exists on site
@@ -305,13 +330,24 @@ class SiteView(FlaskView):
             validate_json_attr('category', SITE_ATTRS, request_json)
             site.category = request_json['category'].lower().strip()
 
-        if 'search_text' in request_json:
-            validate_json_attr('search_text', SITE_ATTRS, request_json)
-            site.search_text = request_json['search_text'].lower().strip()
+        if 'match_expr' in request_json:
+            validate_json_attr('match_expr', SITE_ATTRS, request_json)
+            site.match_expr = request_json['match_expr']
+
+        if 'match_type' in request_json:
+            validate_json_attr('match_type', SITE_ATTRS, request_json)
+            site.match_type = request_json['match_type'].strip()
 
         if 'status_code' in request_json:
             validate_json_attr('status_code', SITE_ATTRS, request_json)
-            site.status_code = int(request_json['status_code'])
+            status = request_json['status_code']
+            site.status_code = None if status is None else int(status)
+
+        if (request_json['match_type'] is None or \
+            request_json['match_expr'] is None) and \
+            request_json['status_code'] is None:
+            raise BadRequest('At least one of the following is required: '
+                'status code or page match.')
 
         if 'test_username_pos' in request_json:
             validate_json_attr('test_username_pos', SITE_ATTRS, request_json)
@@ -598,3 +634,33 @@ class SiteView(FlaskView):
         response.status_code = 200
 
         return response
+
+    @route('/match-types')
+    def get_match_types(self):
+        '''
+        Return a dict that maps match types to their human-readable
+        descriptions.
+
+        **Example Response**
+
+        .. sourcecode:: json
+
+            {
+                "match_types": {
+                    'css': 'CSS Selector',
+                    'text': 'Text On Page',
+                    'xpath': 'XPath Query',
+                }
+            }
+
+        :<header Content-Type: application/json
+        :<header X-Auth: the client's auth token
+
+        :>header Content-Type: application/json
+        :>json dict match_types: a dict of match types
+
+        :status 200: ok
+        :status 401: authentication required
+        '''
+
+        return jsonify(match_types=Site.MATCH_TYPES)

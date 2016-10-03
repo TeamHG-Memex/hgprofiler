@@ -1,8 +1,12 @@
 import base64
-import requests
 import json
 from datetime import datetime
+import re
+import sys
 from urllib.parse import urljoin
+
+import parsel
+import requests
 
 import app.database
 import app.queue
@@ -95,6 +99,9 @@ def check_username(username, site_id, group_id, total,
 
     # Make a splash request.
     site = db_session.query(Site).get(site_id)
+    err = None
+
+    # Check site.
     splash_result = _splash_request(db_session, username,
                                     site, request_timeout)
     image_file = _save_image(db_session, splash_result)
@@ -105,7 +112,8 @@ def check_username(username, site_id, group_id, total,
         site_name=splash_result['site']['name'],
         site_url=splash_result['url'],
         status=splash_result['status'],
-        image_file_id=image_file.id
+        image_file_id=image_file.id,
+        error=splash_result['error']
     )
     db_session.add(result)
     db_session.commit()
@@ -133,13 +141,31 @@ def _check_splash_response(site, splash_response, splash_data):
     Parse response and test against site criteria to determine
     whether username exists. Used with requests response object.
     """
-    if splash_response.status_code == site.status_code:
-        html = splash_data['html']
-        if(site.search_text in html or
-           site.search_text in splash_response.headers):
-            return True
-    return False
+    sel = parsel.Selector(text=splash_data['html'])
+    status_ok = True
+    match_ok = True
 
+    if site.status_code is not None:
+        upstream_status = splash_data['history'][0]['response']['status']
+        status_ok = site.status_code == upstream_status
+
+    if site.match_expr is not None:
+        if site.match_type == 'css':
+            match_ok = len(sel.css(site.match_expr)) > 0
+        elif site.match_type == 'text':
+            text_nodes = sel.css(':not(script):not(style)::text').extract()
+            text = ''
+            for text_node in text_nodes:
+                stripped = text_node.strip()
+                if stripped != '':
+                    text += stripped + ' '
+            match_ok = site.match_expr in text
+        elif site.match_type == 'xpath':
+            match_ok = len(sel.xpath(site.match_expr)) > 0
+        else:
+            raise ValueError('Unknown match_type: {}'.format(site.match_type))
+
+    return status_ok and match_ok
 
 def _save_image(db_session, scrape_result):
     """ Save the image returned by Splash to a local file. """
@@ -179,6 +205,7 @@ def _splash_request(db_session, username, site, request_timeout):
         'url': target_url,
         'html': 1,
         'jpeg': 1,
+        'history': 1,
         'timeout': request_timeout,
         'resource_timeout': 5,
     }
@@ -196,18 +223,18 @@ def _splash_request(db_session, username, site, request_timeout):
     }
 
     splash_data = splash_response.json()
-    if result['code'] == 200:
+
+    try:
+        splash_response.raise_for_status()
+
         if _check_splash_response(site, splash_response, splash_data):
             result['status'] = 'f'
         else:
             result['status'] = 'n'
 
         result['image'] = splash_data['jpeg']
-    else:
+    except Exception as e:
         result['status'] = 'e'
-        try:
-            result['error'] = splash_data['html']
-        except:
-            result['error'] = 'Unknown error.'
+        result['error'] = str(e)
 
     return result

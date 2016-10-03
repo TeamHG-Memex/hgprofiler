@@ -6265,6 +6265,9 @@ button .dropdown-toggle {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.dropdown-menu {
+  margin-left: 1em;
+}
 .dropdown-menu > li {
   white-space: nowrap;
   overflow: hidden;

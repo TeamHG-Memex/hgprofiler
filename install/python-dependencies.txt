@@ -3,6 +3,7 @@ flask==0.10.1
 Flask-Assets
 flask-classy
 Flask-Failsafe
+parsel
 progressbar2
 phonenumbers
 pillow

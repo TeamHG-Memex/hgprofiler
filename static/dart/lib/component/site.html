@@ -17,7 +17,7 @@
     <div class="panel {{dialogClass}}">
       <div class="panel-heading">
         <i class="fa fa-exchange"></i>
-        {{dialogTitle}} 
+        {{dialogTitle}}
       </div>
       <div class="panel-body">
 
@@ -37,7 +37,7 @@
                          ng-keypress='handleAddSiteKeypress($event)'
                          ng-disabled='submittingSite'
                          placeholder='Enter a site name.'>
-               </div>
+                </div>
               </div>
 
               <div class='form-group'>
@@ -54,7 +54,7 @@
               </div>
 
               <div class='form-group'>
-                <label class='col-sm-2' for="status-code">Status code*</label>
+                <label class='col-sm-2' for="status-code">Status code</label>
                 <div class="col-sm-10">
                   <input type='text'
                          class='form-control'
@@ -68,21 +68,35 @@
               </div>
 
               <div class='form-group'>
-                <label class='col-sm-2' for="search-text">Search text*</label>
-                <div class="col-sm-10">
-                  <input type='text'
-                         class='form-control'
-                         id="search-text"
-                         size='30'
-                         ng-model='newSiteSearchText'
-                         ng-keypress='handleAddSiteKeypress($event)'
-                         ng-disabled='submittingSite'
-                         placeholder='Enter search text.'>
+                <label class='col-sm-2' for="match-expr">Page match</label>
+                <div class="col-sm-4">
+                  <button type='button'
+                          class='btn btn-default dropdown-toggle'
+                          id='search-type'
+                          data-toggle='dropdown'
+                          ng-disabled='submittingSite'
+                          aria-expanded='false'
+                          style='width: 100%;'>
+                          {{matchTypes[newSiteMatchType]}} <span class='caret'></span>
+                  </button>
+                  <ul class='dropdown-menu sort-by' role='menu'>
+                    <li ng-repeat="matchType in matchTypesList"><a ng-click='setSiteMatchType(matchType[0])'>{{matchType[1]}}</a></li>
+                  </ul>
+                </div>
+                <div class='col-sm-6'>
+                    <input type='text'
+                           class='form-control'
+                           id="match-expr"
+                           size='30'
+                           ng-model='newSiteMatchExpr'
+                           ng-keypress='handleAddSiteKeypress($event)'
+                           ng-disabled='submittingSite'
+                           placeholder='Expression to match page contents.'>
                 </div>
               </div>
 
               <div class='form-group'>
-                <label class='col-sm-2' for="search-text">Test Username (pos)*</label>
+                <label class='col-sm-2' for="test-username-pos">Test Username (pos)*</label>
                 <div class="col-sm-10">
                   <input type='text'
                          class='form-control'
@@ -96,7 +110,7 @@
               </div>
 
               <div class='form-group'>
-                <label class='col-sm-2' for="search-text">Test Username (neg)*</label>
+                <label class='col-sm-2' for="test-username-neg">Test Username (neg)*</label>
                 <div class="col-sm-10">
                   <input type='text'
                          class='form-control'
@@ -131,13 +145,13 @@
               </div>
 
             </form>
-
           </div>
+
           <div class="col-sm-3">
-            <img ng-show="awaitingTestResult(editSiteId)" 
+            <img ng-show="awaitingTestResult(editSiteId)"
                  height="142"
                  width="142"
-                 id="test-loader" 
+                 id="test-loader"
                  src="/static/img/spinner-blue-lg.gif">
             <!-- Start container -->
             <div ng-show="editSiteId != null && sites[editSiteId].testedAt != null && !awaitingTestResult(editSiteId)"
@@ -185,12 +199,12 @@
             <!-- End container -->
 
           </div>
-          
+
           <div class="col-sm-3">
-            <img ng-show="awaitingTestResult(editSiteId)" 
+            <img ng-show="awaitingTestResult(editSiteId)"
                  height="142"
                  width="142"
-                 id="test-loader" 
+                 id="test-loader"
                  src="/static/img/spinner-blue-lg.gif">
             <!-- Start container -->
             <div ng-show="editSiteId != null && sites[editSiteId].testedAt != null && !awaitingTestResult(editSiteId)"
@@ -235,7 +249,6 @@
               </div>
             </div>
             <!-- End container -->
-
           </div>
         </div>
         <!-- End row -->
@@ -254,39 +267,37 @@
             </i>
           </div>
           <div class="col-sm-4 pull-right">
-               <div class="form-group">
-                  <div class="pull-right">
+            <div class="form-group">
+              <div class="pull-right">
+                <button class='btn btn-default'
+                        ng-click='hideAddDialog()'
+                        ng-disabled='submittingSite'>
+                  Cancel
+                </button>
+                <busy-button id='edit-site-test-button'
+                             type='primary'
+                             ng-show='editSiteId != null'
+                             ng-disabled='submittingSite'
+                             click='saveAndTestSite'>
+                 <i class="fa fa-wrench"></i> Save and Test
+                </busy-button>
+                <busy-button id='edit-site-button'
+                             type='primary'
+                             ng-show='editSiteId != null'
+                             ng-disabled='submittingSite'
+                             click='saveSite'>
+                 <i class="fa fa-check"></i> Save
+                </busy-button>
+                <busy-button id='add-site-button'
+                             type='success'
+                             ng-disabled='submittingSite'
+                             ng-show='editSiteId == null'
+                             click='addSite'>
+                 <i class="fa fa-check"></i> Add
+                </busy-button>
 
-                    <button class='btn btn-default'
-                            ng-click='hideAddDialog()'
-                            ng-disabled='submittingSite'>
-                      Cancel
-                    </button>
-                    <busy-button id='edit-site-test-button' 
-                                 type='primary' 
-                                 ng-show='editSiteId != null'
-                                 ng-disabled='submittingSite'
-                                 click='saveAndTestSite'>
-                     <i class="fa fa-wrench"></i> Save and Test 
-                    </busy-button>
-                    <busy-button id='edit-site-button' 
-                                 type='primary' 
-                                 ng-show='editSiteId != null'
-                                 ng-disabled='submittingSite'
-                                 click='saveSite'>
-                     <i class="fa fa-check"></i> Save 
-                    </busy-button>
-                    <busy-button id='add-site-button' 
-                                 type='success' 
-                                 ng-disabled='submittingSite'
-                                 ng-show='editSiteId == null'
-                                 click='addSite'>
-                     <i class="fa fa-check"></i> Add 
-                    </busy-button>
-
-                  </div>
               </div>
-
+            </div>
           </div>
         </div>
         <!-- End row -->
@@ -295,8 +306,6 @@
     </div>
   </div>
 </div>
-
-
 
 <div class="panel panel-default">
   <div class="panel-heading">
@@ -309,7 +318,7 @@
     <div class="row">
       <div class="col-sm-3">
         Showing {{pager.startingAt | number}}-{{pager.endingAt | number}}
-        of {{pager.totalResults | number}} sites. 
+        of {{pager.totalResults | number}} sites.
       </div>
       <div class="col-sm-1 pull-right">
         <button class='btn btn-success btn-sm pull-right btn-add'
@@ -317,7 +326,7 @@
                 id='add-site-btn'
                 ng-click='showAddDialog("add")'>
           <i class='fa fa-plus'></i>
-          Add Sites 
+          Add Sites
         </button>
       </div>
       <div class="col-sm-1 pull-right">
@@ -326,7 +335,7 @@
                 ng-click="showTestSitesDialog()"
                 id='test-sites-btn'>
           <i class='fa fa-wrench'></i>
-          Test Sites 
+          Test Sites
         </button>
       </div>
     </div>
@@ -335,8 +344,7 @@
       <div class="col-sm-12">
         <strong>Key:</strong>
         <i class="fa fa-check success"></i> pass
-        <i class="fa fa-exclamation-triangle danger"></i> fail 
-        
+        <i class="fa fa-exclamation-triangle danger"></i> fail
       </div>
     </div>
 
@@ -532,7 +540,7 @@
             <div class="progress">
               <div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="{{totalTestedPercent}}"
                 aria-valuemin="0" aria-valuemax="100" style="width:{{totalTestedPercent}}%">
-                {{totalTestedPercent}}% 
+                {{totalTestedPercent}}%
               </div>
             </div>
           </div>
@@ -559,4 +567,3 @@
     </div>
   </div>
 </div>
-
