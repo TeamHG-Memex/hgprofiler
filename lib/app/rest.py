@@ -127,7 +127,9 @@ def validate_json_attr(attr_name, attrs, request_json):
             'url': {'type': str, 'required': True},
             'category': {'type': str, 'required': True},
             'search_text': {'type': str, 'required': False},
-            'status_code': {'type': int, 'required': False, 'allow_null': True},
+            'status_code': {'type': int,
+                            'required': False,
+                            'allow_null': True},
         }
 
         request_json = request.get_json() # Flask request object
@@ -160,7 +162,8 @@ def validate_json_attr(attr_name, attrs, request_json):
     try:
         attr_type(val)
     except ValueError:
-        raise BadRequest('{} must be {}.'.format(attr_name, attr_type.__name__))
+        raise BadRequest('{} must be {}.'.format(attr_name,
+                                                 attr_type.__name__))
 
     # If attr_name is a string, confirm that it is not empty.
     if attr_type == str and val.strip() == '':

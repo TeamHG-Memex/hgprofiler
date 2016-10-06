@@ -6224,6 +6224,15 @@ button.close {
     display: none !important;
   }
 }
+.success {
+  color: #a3c86d;
+}
+.info {
+  color: #7acbee;
+}
+.danger {
+  color: #ff4f24;
+}
 a {
   cursor: pointer;
 }
@@ -6524,14 +6533,17 @@ table.table-fixedheader > tbody tr td {
 .found {
   background-color: #a3c86d;
   border-color: #a3c86d;
+  color: white;
 }
 .not-found {
   background-color: #ff4f24;
   border-color: #ff7857;
+  color: white;
 }
 .error {
   background-color: #ff4f24;
   border-color: #ff7857;
+  color: white;
 }
 home h1 {
   font-size: 3em;
@@ -6837,6 +6849,14 @@ site .thumbnail {
   border-bottom-left-radius: 0px;
   border-bottom-right-radius: 0px;
 }
+site .screenshot img {
+  width: 100%;
+  height: 100%;
+}
+site .screenshot .modal-dialog {
+  margin-left: 25%;
+  width: 50%;
+}
 site .panel.result {
   margin-top: 10px;
   margin-bottom: 10px;
@@ -6852,6 +6872,31 @@ site .panel-footer.result {
 }
 site .panel-footer.result a {
   color: white;
+}
+site .test-header {
+  background-color: #eeeeee;
+  border-radius: 3px;
+  padding: 2px;
+  color: #222222;
+  text-align: center;
+}
+site .test-header-success {
+  background-color: #a3c86d;
+  border-radius: 3px;
+  padding: 2px;
+  color: white;
+  text-align: center;
+}
+site .test-header-danger {
+  background-color: #ff4f24;
+  border-radius: 3px;
+  padding: 2px;
+  color: white;
+  text-align: center;
+}
+site .test-footer {
+  text-align: center;
+  font-size: 2em;
 }
 group-list .modal-dialog {
   overflow-y: initial !important;

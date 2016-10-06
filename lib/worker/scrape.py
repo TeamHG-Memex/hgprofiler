@@ -1,14 +1,14 @@
 import base64
-import json
-from urllib.parse import urljoin
-
 import requests
+import json
+from datetime import datetime
+from urllib.parse import urljoin
 
 import app.database
 import app.queue
+import worker
 from model import File, Result, Site
 from model.configuration import get_config
-import worker
 
 USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) '\
              'Gecko/20100101 Firefox/40.1'
@@ -21,14 +21,75 @@ class ScrapeException(Exception):
         self.message = message
 
 
+def test_site(site_id, tracker_id, request_timeout=10):
+    """
+    Perform postive and negative test of site.
+
+    Postive test: check_username() return True for existing username.
+    Negative test check_username() returns False for non-existent username.
+
+    Site is valid if:
+
+        positive result  = 'f' (found)
+        negative result = 'n' (not found)
+    """
+    worker.start_job()
+    redis = worker.get_redis()
+    db_session = worker.get_session()
+    site = db_session.query(Site).get(site_id)
+
+    # Do positive test.
+    result_pos_id = check_username(username=site.test_username_pos,
+                                   site_id=site_id,
+                                   group_id=None,
+                                   total=2,
+                                   tracker_id=tracker_id + '-1',
+                                   test=True)
+
+    result_pos = db_session.query(Result).get(result_pos_id)
+
+    # Do negative test.
+    result_neg_id = check_username(username=site.test_username_neg,
+                                   site_id=site_id,
+                                   group_id=None,
+                                   total=2,
+                                   tracker_id=tracker_id + '-2',
+                                   test=True)
+
+    result_neg = db_session.query(Result).get(result_neg_id)
+
+    # Update site with test results
+    site.test_result_pos = result_pos
+    site.test_result_neg = result_neg
+
+    # Set site validity based on results
+    # of both tests.
+    if result_pos.status == 'f' and \
+            result_neg.status == 'n':
+        site.valid = True
+    else:
+        site.valid = False
+
+    site.tested_at = datetime.utcnow()
+    db_session.commit()
+
+    # Send redis notification
+    msg = {
+        'tracker_id': tracker_id,
+        'status': 'tested',
+        'site': site.as_dict(),
+        'resource': None,
+    }
+    redis.publish('site', json.dumps(msg))
+
+
 def check_username(username, site_id, group_id, total,
-                   tracker_id, request_timeout=10, archive=True):
+                   tracker_id, request_timeout=10, test=False):
     """
     Check if `username` exists on the specified site.
     """
 
     worker.start_job()
-    job = worker.get_job()
     redis = worker.get_redis()
     db_session = worker.get_session()
 
@@ -49,20 +110,22 @@ def check_username(username, site_id, group_id, total,
     db_session.add(result)
     db_session.commit()
 
-    # Notify clients of the result.
-    current = redis.incr(tracker_id)
-    result_dict = result.as_dict()
-    result_dict['current'] = current
-    result_dict['image_file_url'] = image_file.url()
-    result_dict['image_name'] = image_file.name
-    result_dict['total'] = total
-    redis.publish('result', json.dumps(result_dict))
+    if not test:
+        # Notify clients of the result.
+        current = redis.incr(tracker_id)
+        result_dict = result.as_dict()
+        result_dict['current'] = current
+        # result_dict['image_file_url'] = image_file.url()
+        # result_dict['image_name'] = image_file.name
+        result_dict['total'] = total
+        redis.publish('result', json.dumps(result_dict))
 
-    # If this username search is complete, then queue up an archive job.
-    if current == total and archive is True:
+        # Queue archive job
         app.queue.schedule_archive(username, group_id, tracker_id)
 
     worker.finish_job()
+
+    return result.id
 
 
 def _check_splash_response(site, splash_response, splash_data):

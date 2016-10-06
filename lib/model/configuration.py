@@ -24,9 +24,9 @@ class Configuration(Base):
 def get_config(session, key, required=False):
     ''' Get a configuration value from the database. '''
 
-    result =  session.query(Configuration) \
-                     .filter(Configuration.key == key) \
-                     .one()
+    result = session.query(Configuration) \
+                    .filter(Configuration.key == key) \
+                    .one()
 
     if required and result.value == '':
         raise ValueError('(Configuration) {} cannot be blank.'.format(key))

@@ -2,9 +2,9 @@
 import click
 import datetime
 import csv
-import json
 import logging
 import math
+import os
 import requests
 import time
 import urllib
@@ -48,6 +48,8 @@ class Config(object):
 
 # Create decorator allowing configuration to be passed between commands.
 pass_config = click.make_pass_decorator(Config, ensure=True)
+
+
 @click.group()
 @click.option('--verbose', is_flag=True, help='Show debug.')
 @click.option('--app-host',
@@ -104,11 +106,11 @@ def cli(config, verbose, app_host, token, log_file, log_level):
 
     if config.log_file:
         logging.basicConfig(filename=config.log_file,
-			    level=config.log_level,
-			    format='%(asctime)s - %(levelname)s - %(message)s')
+                            level=config.log_level,
+                            format='%(asctime)s - %(levelname)s - %(message)s')
     else:
         logging.basicConfig(level=config.log_level,
-			    format='%(asctime)s - %(levelname)s - %(message)s')
+                            format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 @cli.command()
@@ -137,22 +139,22 @@ def get_token(config, username, password):
                 type=click.File(),
                 required=True)
 @click.option('--group-id',
-                type=click.INT,
-                required=False)
+              type=click.INT,
+              required=False)
 @click.option('--chunk-size',
-                type=click.INT,
-                required=False,
-                default=100)
+              type=click.INT,
+              required=False,
+              default=100)
 @click.option('--interval',
-                type=click.INT,
-                required=False,
-                default=60)
+              type=click.INT,
+              required=False,
+              default=60)
 @pass_config
 def submit_usernames(config,
-                    input_file,
-                    group_id,
-                    chunk_size,
-                    interval):
+                     input_file,
+                     group_id,
+                     chunk_size,
+                     interval):
     """
     Submit list of usernames to search for.
 
@@ -195,13 +197,14 @@ def submit_usernames(config,
     click.secho('Submitted {} usernames.'.format(len(usernames)), fg='green')
     pprint(responses)
 
+
 @cli.command()
 @click.argument('input-file',
                 type=click.File(),
                 required=True)
 @click.argument('output-file',
-              type=click.File(mode='a+'),
-              required=True)
+                type=click.File(mode='a+'),
+                required=True)
 @click.option('--interval',
               type=click.FLOAT,
               required=False,
@@ -246,7 +249,6 @@ def get_results(config,
     else:
         click.echo('[*] Extracted {} usernames.'.format(len(usernames)))
 
-    responses = []
     writer = csv.writer(output_file)
 
     with click.progressbar(usernames,
@@ -267,7 +269,7 @@ def get_results(config,
                 response.raise_for_status()
 
             # Parse results
-            archives =  response.json().get('archives', [])
+            archives = response.json().get('archives', [])
 
             for archive in archives:
                 data = []
@@ -303,7 +305,6 @@ def get_results(config,
                 required=True)
 @click.argument('output-dir',
                 type=click.Path(dir_okay=True, allow_dash=True),
-                #type=click.Path(dir_ok=True, writable=True),
                 required=True)
 @click.option('--interval',
               type=click.FLOAT,
@@ -314,10 +315,10 @@ def get_results(config,
               help='Ignore missing results.')
 @pass_config
 def get_zip_results(config,
-                input_file,
-                output_dir,
-                interval,
-                ignore_missing):
+                    input_file,
+                    output_dir,
+                    interval,
+                    ignore_missing):
     """
     \b
     Return zip results for list of usernames.
@@ -338,9 +339,6 @@ def get_zip_results(config,
     else:
         click.echo('[*] Extracted {} usernames.'.format(len(usernames)))
 
-    responses = []
-    writer = csv.writer(output_file)
-
     with click.progressbar(usernames,
                            label='Getting username results: ') as bar:
         start = datetime.datetime.now()
@@ -359,7 +357,7 @@ def get_zip_results(config,
                 response.raise_for_status()
 
             # Parse results
-            archives =  response.json().get('archives', [])
+            archives = response.json().get('archives', [])
 
             for archive in archives:
                 response = requests.get(archive_url,
@@ -384,12 +382,11 @@ def get_zip_results(config,
     click.secho(msg, fg='green')
 
 
-
 @cli.command()
 @pass_config
 @click.argument('resource',
-              type=click.STRING,
-              required=True)
+                type=click.STRING,
+                required=True)
 @click.option('--pretty',
               is_flag=True,
               help='Pretty print output.')
@@ -411,7 +408,7 @@ def get(config, resource, pretty):
             return pprint(response.json())
         else:
             return click.echo(response.json())
-    except Exception as e:
+    except Exception:
         raise
 
 
@@ -420,7 +417,6 @@ def get_job_results(app_host, headers, job_id, interval):
     Fetch all results for job_id.
     """
     result_url = '{}/api/result/job/{}'.format(app_host, job_id)
-    done = False
     page = 1
     pages = 1
     results = []
@@ -438,7 +434,7 @@ def get_job_results(app_host, headers, job_id, interval):
             data = response.json()
             total = int(data['total_count'])
             if total > 0:
-                pages = math.ceil(total/100)
+                pages = math.ceil(total / 100)
 
             results += data['results']
             page += 1
@@ -448,4 +444,4 @@ def get_job_results(app_host, headers, job_id, interval):
 
 
 if __name__ == '__main__':
-   cli()
+    cli()

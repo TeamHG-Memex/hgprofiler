@@ -1,5 +1,4 @@
-from sqlalchemy import (Boolean,
-                        Column,
+from sqlalchemy import (Column,
                         ForeignKey,
                         Integer,
                         String,
@@ -8,7 +7,6 @@ from sqlalchemy.orm import relationship
 from sqlalchemy_utils import ChoiceType
 
 from model import Base
-#from model import File
 
 
 class Result(Base):
@@ -16,7 +14,7 @@ class Result(Base):
 
     __tablename__ = 'result'
     __table_args__ = (
-        UniqueConstraint('tracker_id', 'site_url',  name='tracker_id_site_url'),
+        UniqueConstraint('tracker_id', 'site_url', name='tracker_id_site_url'),
     )
 
     STATUS_TYPES = [
@@ -30,15 +28,15 @@ class Result(Base):
     site_name = Column(String(255), nullable=False)
     site_url = Column(String(255), nullable=False)
     status = Column(ChoiceType(STATUS_TYPES), nullable=False)
-    image_file_id = Column(Integer, ForeignKey('file.id', name='fk_image_file'), nullable=True)
-
-    image_file = relationship(
-        'File',
-        backref='result',
-        uselist=False,
-        cascade='all'
-    )
-
+    image_file_id = Column(Integer,
+                           ForeignKey('file.id',
+                                      name='fk_image_file'),
+                           nullable=True)
+    image_file = relationship('File',
+                              lazy='joined',
+                              backref='result',
+                              uselist=False,
+                              cascade='all')
     error = Column(String(255), nullable=True)
 
     def __init__(self,
@@ -66,6 +64,8 @@ class Result(Base):
             'error': self.error,
             'id': self.id,
             'image_file_id': self.image_file_id,
+            'image_file_url': self.image_file.url(),
+            'image_file_name': self.image_file.name,
             'site_name': self.site_name,
             'site_url': self.site_url,
             'status': self.status.code,

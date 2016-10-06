@@ -17,7 +17,7 @@ class Archive {
 
     Archive(String trackerId, DateTime date, String username, Map group,
             int siteCount, int foundCount, int notFoundCount, int errorCount,
-            int zipFileUrl) {
+            String zipFileUrl) {
         this.trackerId = trackerId;
         this.date = date;
         this.username = username;
@@ -26,7 +26,7 @@ class Archive {
         this.foundCount = foundCount;
         this.notFoundCount = notFoundCount;
         this.errorCount = errorCount;
-        this.zipFile = zipFileUrl;
+        this.zipFileUrl = zipFileUrl;
     }
 
    Archive.fromJson(Map json) {

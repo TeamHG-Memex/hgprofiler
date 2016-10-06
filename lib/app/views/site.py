@@ -1,18 +1,17 @@
-import json
 from flask import g, jsonify, request
 from flask.ext.classy import FlaskView, route
 from werkzeug.exceptions import BadRequest, NotFound
 from sqlalchemy.exc import IntegrityError, DBAPIError
 
-import app.config
+import app.queue
 from app.authorization import login_required
 from app.notify import notify_mask_client
 from app.rest import (get_int_arg,
                       get_paging_arguments,
                       validate_request_json,
                       validate_json_attr)
+from helper.functions import random_string
 from model import Site
-import worker
 
 # Dictionary of site attributes used for validation of json POST/PUT requests
 SITE_ATTRS = {
@@ -21,6 +20,8 @@ SITE_ATTRS = {
     'category': {'type': str, 'required': True},
     'search_text': {'type': str, 'required': False},
     'status_code': {'type': int, 'required': False},
+    'test_username_pos': {'type': str, 'required': True},
+    'test_username_neg': {'type': str, 'required': False},
 }
 
 
@@ -48,10 +49,17 @@ class SiteView(FlaskView):
                         "search_text": "BlinkList Page.</title>",
                         "status_code": 200,
                         "url": "https://app.blinklist.com/users/%s",
+                        "test_username_pos": "john",
+                        "test_username_neg": "dPGMFrf72SaS",
+                        "test_status": "f",
+                        "tested_at": "2016-01-01T00:00:00.000000+00:00",
                     },
                     ...
                 ],
-                "total_count": 5
+                "total_count": 5,
+                "total_valid_count": 5,
+                "total_invalid_count": 0,
+                "total_tested_count": 5
             }
 
         :<header Content-Type: application/json
@@ -70,6 +78,12 @@ class SiteView(FlaskView):
             be returned with a successful search result
         :>json str sites[n].url: the url of this site where username search can
             be performed
+        :>json str sites[n].test_status: results of username test
+        :>json str sites[n]tested_at: timestamp of last test
+        :>json str sites[n].test_username_pos: the username that exists
+            on the site (used for testing)
+        :>json str sites[n].test_username_neg: the username that
+            does not exist on the site (used for testing)
 
         :status 200: ok
         :status 400: invalid argument[s]
@@ -81,6 +95,9 @@ class SiteView(FlaskView):
         query = g.db.query(Site)
 
         total_count = query.count()
+        total_valid_count = query.filter(Site.valid == True).count() # noqa
+        total_invalid_count = query.filter(Site.valid == False).count() # noqa
+        total_tested_count = query.filter(Site.tested_at != None).count() # noqa
 
         query = query.order_by(Site.name.asc()) \
                      .limit(results_per_page) \
@@ -94,7 +111,10 @@ class SiteView(FlaskView):
 
         return jsonify(
             sites=sites,
-            total_count=total_count
+            total_count=total_count,
+            total_valid_count=total_valid_count,
+            total_invalid_count=total_invalid_count,
+            total_tested_count=total_tested_count,
         )
 
     def get(self, id_):
@@ -111,9 +131,11 @@ class SiteView(FlaskView):
             {
                 "sites": [
                     {
-                        "name": "",
-                        "url": "",
-                        "category",
+                        "name": "about.me",
+                        "url": "http://about.me/%s",
+                        "category": "social",
+                        "test_username_pos": "john",
+                        "test_username_neg": "dPGMFrf72SaS"
                     },
                     ...
                 ]
@@ -133,6 +155,10 @@ class SiteView(FlaskView):
         :>json string sites[n].name: name of site
         :>json string sites[n].url: username search url for the site
         :>json string sites[n].category: category of the site
+        :>json string sites[n].test_username_pos: username that exists on site
+            (used for testing)
+        :>json string sites[n].test_username_neg: username that does not exist
+            on site (used for testing)
 
         :status 200: created
         :status 400: invalid request body
@@ -147,16 +173,21 @@ class SiteView(FlaskView):
 
         # Save sites
         for site_json in request_json['sites']:
+            test_username_pos = site_json['test_username_pos'].lower().strip()
             site = Site(name=site_json['name'].lower().strip(),
                         url=site_json['url'].lower().strip(),
                         category=site_json['category'].lower().strip(),
-                        )
+                        test_username_pos=test_username_pos)
 
             if 'search_text' in site_json:
                 site.search_text = site_json['search_text'].lower().strip()
 
             if 'status_code' in site_json:
                 site.status_code = int(site_json['status_code'])
+
+            if 'test_username_neg' in site_json:
+                site.test_username_neg = site_json['test_username_neg'] \
+                    .lower().strip(),
 
             g.db.add(site)
 
@@ -193,35 +224,58 @@ class SiteView(FlaskView):
         '''
         Update the site identified by `id`.
 
-            **Example Request**
+        **Example Request**
 
-            ..sourcode:: json
+        ..sourcode:: json
 
+            {
                 {
-                    {"name": "bebo"},
-                    {"url": "http://bebo.com/usernames/search=%s"},
-                    {"category": "social"},
+                    "name": "bebo",
+                    "url": "http://bebo.com/usernames/search=%s",
+                    "category": "social",
+                    "test_username_pos": "bob",
+                    "test_username_ne": "adfjf393rfjffkjd",
                 }
+            }
 
         **Example Response**
 
         ..sourcecode:: json
 
             {
-                "id": "2",
-                "name": "bebo",
-                "url": "https://bebo.com/usernames/search=%s",
                 "category": "social",
-            }
+                "id": 2,
+                "name": "bebo",
+                "search_text": "Bebo User Page.</title>",
+                "status_code": 200,
+                "url": "https://bebo.com/usernames/search=%s",
+                "test_username_pos": "bob",
+                "test_username_neg": "adfjf393rfjffkjd",
+                "test_status": "f",
+                "tested_at": "2016-01-01T00:00:00.000000+00:00",
+            },
 
         :<header Content-Type: application/json
         :<header X-Auth: the client's auth token
-        :>json str name: the value of the name attribute
+        :>json string name: name of site
+        :>json string url: username search url for the site
+        :>json string category: category of the site
+        :>json string test_username_pos: username that exists on site
+            (used for testing)
+        :>json string test_username_neg: username that does not
+            exist on site (used for testing)
 
         :>header Content-Type: application/json
-        :>json int id: unique identifier for label
-        :>json str name: the label name
-        :>json str url: URL endpoint for retriving more data about this label
+        :>json int id: unique identifier for site
+        :>json str name: name of site
+        :>json str url: username search url for the site
+        :>json str category: category of the site
+        :>json str test_status: results of username test
+        :>json str tested_at: timestamp of last test
+        :>json str test_username_pos: username that exists on site
+            (used for testing)
+        :>json str test_username_neg: username that does not
+            exist on site (used for testing)
 
         :status 202: updated
         :status 400: invalid request body
@@ -259,7 +313,15 @@ class SiteView(FlaskView):
             validate_json_attr('status_code', SITE_ATTRS, request_json)
             site.status_code = int(request_json['status_code'])
 
-        # Save the updated label
+        if 'test_username_pos' in request_json:
+            validate_json_attr('test_username_pos', SITE_ATTRS, request_json)
+            site.test_username_pos = int(request_json['test_username_pos'])
+
+        if 'test_username_neg' in request_json:
+            validate_json_attr('test_username_neg', SITE_ATTRS, request_json)
+            site.test_username_pos = int(request_json['test_username_neg'])
+
+        # Save the updated site
         try:
             g.db.commit()
         except DBAPIError as e:
@@ -270,8 +332,7 @@ class SiteView(FlaskView):
         notify_mask_client(
             channel='site',
             message={
-                'id': site.id,
-                'name': site.name,
+                'site': site.as_dict(),
                 'status': 'updated',
                 'resource': None
             }
@@ -300,7 +361,8 @@ class SiteView(FlaskView):
             g.db.commit()
         except IntegrityError:
             g.db.rollback()
-            raise BadRequest('"{}" must be removed from all groups before deleting.'
+            raise BadRequest('"{}" must be removed from all groups '
+                             'before deleting.'
                              .format(site.name))
 
         # Send redis notifications
@@ -320,13 +382,185 @@ class SiteView(FlaskView):
 
         return response
 
+    @route('/job/', methods=['POST'])
+    def post_jobs_for_sites(self):
+        """
+        Request background jobs for all sites.
+
+        **Example Request**
+
+        ..sourcode:: json
+
+            {
+                "jobs": [
+                    {
+                        "name": "test",
+                    },
+                    ...
+                ]
+            }
+
+        **Example Response**
+
+        .. sourcecode:: json
+
+            {
+                "tracker_ids": {
+                        "1": "tracker.12344565",
+                }
+
+            }
+
+        :<header Content-Type: application/json
+        :<header X-Auth: the client's auth token
+        :>json list jobs: a list of jobs to schedule
+        :>json string jobs[n].name: name of job
+
+        :>header Content-Type: application/json
+        :>json array tracker_ids: array of worker tracking ids
+
+        :status 202: scheduled
+        :status 400: invalid request body
+        :status 401: authentication required
+        """
+        request_attrs = {
+            'jobs': {'type': list, 'required': True},
+        }
+        job_attrs = {
+            'name': {'type': str, 'required': True},
+        }
+        available_jobs = ['test']
+        tracker_ids = dict()
+
+        request_json = request.get_json()
+        validate_request_json(request_json, request_attrs)
+
+        for job in request_json['jobs']:
+            validate_json_attr('name', job_attrs, job)
+
+            if job['name'] not in available_jobs:
+                raise BadRequest(
+                    '`{}` does not exist in available'
+                    ' jobs: {}'
+                    .format(job['name'],
+                            ','.join(available_jobs)))
+
+        # Get sites.
+        sites = g.db.query(Site).all()
+
+        # Schedule jobs
+        for job in request_json['jobs']:
+            for site in sites:
+                tracker_id = 'tracker.{}'.format(random_string(10))
+                tracker_ids[site.id] = tracker_id
+
+                if job['name'] == 'test':
+                    app.queue.schedule_site_test(
+                        site=site,
+                        tracker_id=tracker_id,
+                    )
+
+        response = jsonify(tracker_ids=tracker_ids)
+        response.status_code = 202
+
+        return response
+
+    @route('/<int:site_id>/job', methods=['POST'])
+    def post_jobs_for_site(self, site_id):
+        """
+        Request background jobs for site identified by `id`.
+
+        **Example Request**
+
+        ..sourcode:: json
+
+            {
+                "jobs": [
+                    {
+                        "name": "test",
+                    },
+                    ...
+                ]
+            }
+
+        **Example Response**
+
+        .. sourcecode:: json
+
+            {
+                "tracker_ids": {
+                        "1": "tracker.12344565",
+                }
+            }
+
+        :<header Content-Type: application/json
+        :<header X-Auth: the client's auth token
+        :>json list jobs: a list of jobs to schedule
+        :>json string jobs[n].name: name of job
+
+        :>header Content-Type: application/json
+        :>json array tracker_ids: array of worker tracking ids {site ID: tracker ID}
+
+        :status 202: scheduled
+        :status 400: invalid request body
+        :status 401: authentication required
+        """
+        request_attrs = {
+            'jobs': {'type': list, 'required': True},
+        }
+        job_attrs = {
+            'name': {'type': str, 'required': True},
+        }
+        available_jobs = ['test']
+        tracker_ids = dict()
+
+        # Get site.
+        site_id = get_int_arg('site_id', site_id)
+        site = g.db.query(Site).filter(Site.id == site_id).first()
+
+        # Validate
+        if site is None:
+            raise NotFound("Site '%s' does not exist." % site_id)
+
+        request_json = request.get_json()
+        validate_request_json(request_json, request_attrs)
+
+        for job in request_json['jobs']:
+            validate_json_attr('name', job_attrs, job)
+
+            if job['name'] not in available_jobs:
+                raise BadRequest(
+                    '`{}` does not exist in available'
+                    ' jobs: {}'
+                    .format(job['name'],
+                            ','.join(available_jobs)))
+
+        # Schedule jobs
+        for job in request_json['jobs']:
+            tracker_id = 'tracker.{}'.format(random_string(10))
+            tracker_ids[site.id] = tracker_id
+
+            if job['name'] == 'test':
+                app.queue.schedule_site_test(
+                    site=site,
+                    tracker_id=tracker_id,
+                )
+
+        response = jsonify(tracker_ids=tracker_ids)
+        response.status_code = 202
+
+        return response
+
     @route('/categories')
     def get_categories(self):
         """
         Return list of site categories.
 
-        For now, we simply return the categories that are already set in the existing/fixture data.
-        At some point, perhaps the available categories should be defined/configurable.
+        For now, we simply return the categories that are already
+        set in the existing/fixture data.
+
+        At some point, perhaps the available categories should
+        be defined/configurable.
 
         **Example Response**
 

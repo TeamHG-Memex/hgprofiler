@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:html';
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:angular/angular.dart';
 import 'package:bootjack/bootjack.dart';
@@ -43,10 +44,15 @@ class SiteComponent extends Object
     String newSiteCategoryDescription = 'Select a category';
     String newSiteUrl;
     String newSiteSearchText;
+    String newSiteTestUsernamePos;
+    String newSiteTestUsernameNeg;
     int newSiteStatusCode;
     Pager pager;
     Result result;
     String query;
+    Result screenshotResult;
+    String screenshotClass;
+    String screenshotUsername;
     Map<String,Function> sites;
     List<String> siteCategories;
     List<String> siteIds;
@@ -54,8 +60,17 @@ class SiteComponent extends Object
     bool submittingSite = false;
     String testError;
     int testSiteId;
-    bool testing = false;
+    String siteValidColor = '#dff0d8';
+    String siteInvalidColor = '#f2dede';
+    bool testing = true;
+    int totalValid;
+    int totalInvalid;
+    int totalSites;
+    int totalTested;
+    int totalTestedPercent;
     String trackerId;
+    List<String> trackerIds = new List<String>();
+    Map<String, int> siteTestTrackers = new Map<String, int>();
 
     InputElement _inputEl;
     Router _router;
@@ -75,17 +90,26 @@ class SiteComponent extends Object
         this._queryWatcher = new QueryWatcher(
             rh,
             ['page', 'rpp'],
-            this._fetchCurrentPage
+            this.fetchCurrentPage
         );
 
         // Add event listeners...
         UnsubOnRouteLeave(rh, [
             this._sse.onSite.listen(this._siteListener),
-	    this._sse.onResult.listen(this._resultListener),
+            this._sse.onResult.listen(this._resultListener),
         ]);
 
         this._fetchCategories();
-        this._fetchCurrentPage();
+        this.fetchCurrentPage();
+    }
+
+    /// Generate random string
+    String randAlphaNumeric(int length) {
+        math.Random rnd = new math.Random();
+    List<int> values = new List<int>.generate(32, (i) => rnd.nextInt(256));
+    //return(CryptoUtils.bytesToBase64(values).replaceAll(new RegExp('[=/+]'), ''));
+    String str = BASE64.encode(values).replaceAll(new RegExp('[=/+]'), '').substring(0, length);
+    return str;
     }
 
     /// Show the "add profile" dialog.
@@ -100,6 +124,8 @@ class SiteComponent extends Object
             this.newSiteCategory = null;
             this.newSiteStatusCode = null;
             this.newSiteSearchText = null;
+            this.newSiteTestUsernamePos = null;
+            this.newSiteTestUsernameNeg = this.randAlphaNumeric(16);
             this.newSiteCategoryDescription = 'Select a category';
             this.newSiteUrl = null;
             this.editSiteId = null;
@@ -143,9 +169,9 @@ class SiteComponent extends Object
     /// Set site for deletion and show confirmation modal
     void showTestSiteDialog(String id_) {
         this.testSiteId = id_;
-	this.testing = false;
-	this.result = null;
-	this.testError = null;
+        this.testing = false;
+        this.result = null;
+        this.testError = null;
         String selector = '#test-site-modal';
         DivElement modalDiv = this._element.querySelector(selector);
         Modal.wire(modalDiv).show();
@@ -154,7 +180,7 @@ class SiteComponent extends Object
         if (this._inputEl != null) {
             // Allow Angular to digest showTestDialog before trying to focus. (Can't
             // focus a hidden element.)
-	    // Modals take around a second to render.
+            // Modals take around a second to render.
             new Timer(new Duration(seconds:1.2), () => this._inputEl.focus());
         }
     }
@@ -164,14 +190,37 @@ class SiteComponent extends Object
         this.newSiteName = this.sites[id_].name;
         this.setSiteCategory(this.sites[id_].category);
         this.newSiteSearchText = this.sites[id_].searchText;
+        this.newSiteTestUsernamePos = this.sites[id_].testUsernamePos;
+        this.newSiteTestUsernameNeg = this.sites[id_].testUsernameNeg;
         this.newSiteStatusCode = this.sites[id_].statusCode;
         this.newSiteUrl = this.sites[id_].url;
         this.editSiteId = id_;
         this.showAddDialog('edit');
     }
 
+    void setScreenshotResult(int id, String type) {
+        if (type == 'pos') {
+            this.screenshotResult = this.sites[id].testResultPos;
+            this.screenshotUsername = this.sites[id].testUsernamePos;
+        } else if (type == 'neg') {
+            this.screenshotResult = this.sites[id].testResultNeg;
+            this.screenshotUsername = this.sites[id].testUsernameNeg;
+        }
+
+        // Formatting
+        if (this.screenshotResult.status == 'f') {
+            this.screenshotClass = 'found';
+        }
+        else if (this.screenshotResult.status == 'n') {
+            this.screenshotClass = 'not-found';
+        }
+        else if (this.screenshotResult.status == 'e') {
+            this.screenshotClass = 'error';
+        }
+    }
+
     /// Fetch a page of profiler sites.
-    void _fetchCurrentPage() {
+    void fetchCurrentPage() {
         this.loading++;
         String pageUrl = '/api/site/';
         Map urlArgs = {
@@ -194,6 +243,11 @@ class SiteComponent extends Object
                 this.pager = new Pager(response.data['total_count'],
                                        int.parse(this._queryWatcher['page'] ?? '1'),
                                        resultsPerPage:int.parse(this._queryWatcher['rpp'] ?? '10'));
+                this.totalSites = response.data['total_count'];
+                this.totalValid = response.data['total_valid_count'];
+                this.totalInvalid = response.data['total_invalid_count'];
+                this.totalTested = response.data['total_tested_count'];
+                this.totalTestedPercent = ((this.totalTested / this.totalSites) * 100).round();
 
             })
             .catchError((response) {
@@ -262,7 +316,27 @@ class SiteComponent extends Object
             result = false;
         }
 
+        if (this.newSiteTestUsernamePos == '' || this.newSiteTestUsernamePos == null) {
+            this.siteError = 'You must enter a test username (pos).';
+            result = false;
+        }
+
+        if (this.newSiteTestUsernameNeg == '' || this.newSiteTestUsernameNeg == null) {
+            this.siteError = 'You must enter a test username (neg).';
+            result = false;
+        }
+
         return result;
+    }
+
+    void _colorSiteRow(String siteId, String color) {
+        Element siteRow = this._element.querySelector('#tr-${siteId}');
+        siteRow.style.background = color;
+    }
+
+    String _getSiteRowColor(String siteId) {
+        Element siteRow = this._element.querySelector('#tr-${siteId}');
+        return siteRow.style.background;
     }
 
     /// Submit a new site.
@@ -287,6 +361,8 @@ class SiteComponent extends Object
             'category': this.newSiteCategory,
             'search_text': this.newSiteSearchText,
             'status_code': this.newSiteStatusCode,
+            'test_username_pos': this.newSiteTestUsernamePos,
+            'test_username_neg': this.newSiteTestUsernameNeg,
         };
 
         Map body = {
@@ -298,7 +374,7 @@ class SiteComponent extends Object
             .then((response) {
                 String msg = 'Added site ${this.newSiteName}';
                 this._showMessage(msg, 'success', 3, true);
-                this._fetchCurrentPage();
+                this.fetchCurrentPage();
                 this.showAdd = false;
             })
             .catchError((response) {
@@ -326,23 +402,7 @@ class SiteComponent extends Object
         }
     }
 
-    /// Listen for site updates.
-    void _siteListener(Event e) {
-        Map json = JSON.decode(e.data);
 
-        if (json['error'] == null) {
-            if (json['status'] == 'created') {
-                this._showMessage('Site "${json["name"]}" created.', 'success', 3);
-            }
-            else if (json['status'] == 'updated') {
-                this._showMessage('Site "${json["name"]}" updated.', 'info', 3);
-            }
-            else if (json['status'] == 'deleted') {
-                this._showMessage('Site "${json["name"]}" deleted.', 'danger', 3);
-            }
-            this._fetchCurrentPage();
-        }
-    }
 
    /// Convert string to camel case.
    String toCamelCase(String input, String separator) {
@@ -391,8 +451,8 @@ class SiteComponent extends Object
         this.api
             .put(pageUrl, body, needsAuth: true)
             .then((response) {
-                String name = this.sites[editSiteId].name;
-                this._fetchCurrentPage();
+                String name = this.sites[this.editSiteId].name;
+                this.sites[this.editSiteId] = new Site.fromJson(response.data);
                 this.showAdd = false;
                 this._showMessage('Updated site ${name}', 'success', 3, true);
             })
@@ -406,39 +466,90 @@ class SiteComponent extends Object
             });
     }
 
-    // Request username search for testSiteId.
-    void testSite() {
-	this.result = null;
-        if (this.query == null || this.query == '') {
-            this.testError = 'You must enter a username query';
-            return;
-        } else {
-            this.testError = null;
-        }
+    /// Save an edited site.
+    void saveAndTestSite(Event e, dynamic data, Function resetButton) {
+        String pageUrl = '/api/site/${this.editSiteId}';
+        this.loading++;
 
-        if(this.testSiteId == null) {
-            return;
-        }
+        Map body = {
+            'name': this.newSiteName,
+            'url': this.newSiteUrl,
+            'status_code': this.newSiteStatusCode,
+            'search_text': this.newSiteSearchText,
+            'category': this.newSiteCategory,
+        };
 
-	this.testing = true;
+        this.api
+            .put(pageUrl, body, needsAuth: true)
+            .then((response) {
+                String name = this.sites[editSiteId].name;
+                this.sites[this.editSiteId] = new Site.fromJson(response.data);
+                this._showMessage('Updated site ${name}', 'success', 3, true);
+                this.testSite(editSiteId);
+            })
+            .catchError((response) {
+                String msg = response.data['message'];
+                this._showMessage(msg, 'danger');
+            })
+            .whenComplete(() {
+                this.loading--;
+                resetButton();
+            });
+    }
 
-        String pageUrl = '/api/username/';
+    /// Check if site is awaiting result.
+    bool awaitingTestResult(int siteId) {
+        bool isWaiting = false;
+        this.siteTestTrackers.forEach((trackerId, testSiteId) {
+            if (siteId == testSiteId) {
+                isWaiting = true;
+            }
+        });
+        return isWaiting;
+    }
+
+    /// Request test of siteId.
+    void testSite(int siteId) {
+        this.result = null;
+        String pageUrl = '/api/site/${siteId}/job';
+        Map job = {'name': 'test'};
 
         Map urlArgs = {
-            'usernames': [this.query],
-	    'site': this.testSiteId,
-	    'archive': false
+            'jobs': [job],
         };
 
         this.api
             .post(pageUrl, urlArgs, needsAuth: true)
             .then((response) {
-                this.trackerId = response.data['tracker_ids'][this.query];
-                this.query = '';
+                String trackerId = response.data['tracker_ids']['${siteId}'];
+                this.siteTestTrackers[trackerId] = siteId;
                 new Timer(new Duration(seconds:0.1), () => this._inputEl.focus());
             })
             .catchError((response) {
                 this.testError = response.data['message'];
+            })
+            .whenComplete(() {});
+    }
+
+    /// Request test of all sites.
+    void testAllSites() {
+        this.result = null;
+        String pageUrl = '/api/site/job/';
+        Map job = {'name': 'test'};
+
+        Map urlArgs = {
+            'jobs': [job],
+        };
+
+        this.api
+            .post(pageUrl, urlArgs, needsAuth: true)
+            .then((response) {
+                response.data['tracker_ids'].forEach((siteId, trackerId) {
+                    this.siteTestTrackers[trackerId] = int.parse(siteId);
+                });
+            })
+            .catchError((response) {
+                this._showMessage(response.data['message'], 'danger', 3, true);
             })
             .whenComplete(() {});
     }
@@ -485,12 +596,57 @@ class SiteComponent extends Object
     /// Listen for job results.
     void _resultListener(Event e) {
         Map json = JSON.decode(e.data);
-	window.console.debug(json);
         Result result = new Result.fromJson(json);
-        if (result.trackerId == this.trackerId) {
-            this.result = result;
-	    // Turn off loading spinner
-	    this.testing = false;
+        this.siteTestTrackers.remove(result.trackerId);
+    }
+
+    /// Listen for site updates.
+    // Only fetch page when sites are newly created or deleted.
+    // ToDo: Create and add sites locally, rather than use fetchCurrentPage()
+    // - this requires some conditional logic to determine whether the site should be part
+    // of the current paginated view.
+    void _siteListener(Event e) {
+        Map json = JSON.decode(e.data);
+
+        if (json['error'] == null) {
+            if (json['status'] == 'created') {
+                this._showMessage('Site "${json["name"]}" created.', 'success', 3);
+                this._fetchCurrentPage();
+            }
+            else if (json['status'] == 'tested') {
+                // Remove tracker_id if it is in siteTestTrackers.
+                // This will deactivate loading spinner for that site.
+                if(json.containsKey('tracker_id')) {
+                    this.siteTestTrackers.remove(json['tracker_id']);
+                }
+                // Don't show notifications for tested sites (this would overload the UI).
+                // Temporarily color rows to show they have been updated.
+                Site site = new Site.fromJson(json['site']);
+                window.console.debug(site);
+                if (this.sites.containsKey(site.id)) {
+                    this.sites[site.id] = site;
+                    String normColor = this._getSiteRowColor(site.id);
+
+                    if (site.valid == true) {
+                        this._colorSiteRow(site.id, this.siteValidColor);
+                    } else {
+                        this._colorSiteRow(site.id, this.siteInvalidColor);
+                    }
+
+                    new Timer(new Duration(seconds:1), () => this._colorSiteRow(site.id, normColor));
+                }
+            }
+            else if (json['status'] == 'updated') {
+                Site site = new Site.fromJson(json['site']);
+                if (this.sites.containsKey(site.id)) {
+                  this.sites[site.id] = site;
+                }
+                this._showMessage('Site "${json["name"]}" updated.', 'info', 3);
+            }
+            else if (json['status'] == 'deleted') {
+                this._showMessage('Site "${json["name"]}" deleted.', 'danger', 3);
+                this._fetchCurrentPage();
+            }
         }
     }
 }

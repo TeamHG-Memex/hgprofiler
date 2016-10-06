@@ -5,7 +5,6 @@ from sqlalchemy import (DateTime,
                         Integer,
                         String,
                         UniqueConstraint)
-from sqlalchemy.orm import relationship
 
 from model import Base
 
@@ -15,7 +14,9 @@ class Archive(Base):
 
     __tablename__ = 'archive'
     __table_args__ = (
-        UniqueConstraint('tracker_id', 'zip_file_id',  name='tracker_id_zip_file_id'),
+        UniqueConstraint('tracker_id',
+                         'zip_file_id',
+                         name='tracker_id_zip_file_id'),
     )
 
     id = Column(Integer, primary_key=True)

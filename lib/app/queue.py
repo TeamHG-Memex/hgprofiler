@@ -52,13 +52,13 @@ def remove_unused_queues(redis):
 
 
 def schedule_username(username, site, group_id,
-                      total, tracker_id, archive=True):
+                      total, tracker_id, test=False):
     '''
     Queue a job to fetch results for the specified username from the specified
     site.
 
     Keyword arguments:
-    archive -- save results as zip archive (default: True)
+    test -- don't archive, update site with result (default: False)
     '''
 
     kwargs = {
@@ -67,7 +67,7 @@ def schedule_username(username, site, group_id,
         'group_id': group_id,
         'total': total,
         'tracker_id': tracker_id,
-        'archive': archive
+        'test': test
     }
 
     job = _scrape_queue.enqueue_call(
@@ -95,3 +95,25 @@ def schedule_archive(username, group_id, tracker_id):
     description = 'Archiving results for username "{}"'.format(username)
 
     worker.init_job(job=job, description=description)
+
+
+def schedule_site_test(site, tracker_id):
+    '''
+    Queue a job to test a site.
+
+    Arguments:
+    site -- the site to test.
+    tracker_id -- the unique tracker ID for the job.
+    '''
+
+    job = _scrape_queue.enqueue_call(
+        func=worker.scrape.test_site,
+        args=[site.id, tracker_id],
+        timeout=30
+    )
+
+    description = 'Testing site "{}"'.format(site.name)
+
+    worker.init_job(job=job, description=description)
+
+    return job.id

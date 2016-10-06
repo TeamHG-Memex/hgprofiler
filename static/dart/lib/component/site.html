@@ -21,113 +21,274 @@
       </div>
       <div class="panel-body">
 
-        <form class='form-horizontal add-site-form'>
+        <!-- Start row -->
+        <div class="row">
+          <div class="col-sm-6">
 
-          <div class='form-group'>
-            <label class="col-sm-1" for='site-name'>Name*</label>
-            <div class="col-sm-3">
-              <input type='text'
-                     class='form-control'
-                     id='site-name'
-                     ng-model='newSiteName'
-                     ng-keypress='handleAddSiteKeypress($event)'
-                     ng-disabled='submittingSite'
-                     placeholder='Enter a site name.'>
-           </div>
+            <form class='form-horizontal add-site-form'>
+
+              <div class='form-group'>
+                <label class="col-sm-2" for='site-name'>Name*</label>
+                <div class="col-sm-10">
+                  <input type='text'
+                         class='form-control'
+                         id='site-name'
+                         ng-model='newSiteName'
+                         ng-keypress='handleAddSiteKeypress($event)'
+                         ng-disabled='submittingSite'
+                         placeholder='Enter a site name.'>
+               </div>
+              </div>
+
+              <div class='form-group'>
+                <label for="url" class='col-sm-2'>URL*</label>
+                <div class="col-sm-10">
+                  <input type='text'
+                         class='form-control' id="url"
+                         size='50'
+                         ng-model='newSiteUrl'
+                         ng-keypress='handleAddSiteKeypress($event)'
+                         ng-disabled='submittingSite'
+                         placeholder='Enter the site search URL.'>
+                </div>
+              </div>
+
+              <div class='form-group'>
+                <label class='col-sm-2' for="status-code">Status code*</label>
+                <div class="col-sm-10">
+                  <input type='text'
+                         class='form-control'
+                         id="status-code"
+                         size='10'
+                         ng-model='newSiteStatusCode'
+                         ng-keypress='handleAddSiteKeypress($event)'
+                         ng-disabled='submittingSite'
+                         placeholder='Enter status code.'>
+                </div>
+              </div>
+
+              <div class='form-group'>
+                <label class='col-sm-2' for="search-text">Search text*</label>
+                <div class="col-sm-10">
+                  <input type='text'
+                         class='form-control'
+                         id="search-text"
+                         size='30'
+                         ng-model='newSiteSearchText'
+                         ng-keypress='handleAddSiteKeypress($event)'
+                         ng-disabled='submittingSite'
+                         placeholder='Enter search text.'>
+                </div>
+              </div>
+
+              <div class='form-group'>
+                <label class='col-sm-2' for="search-text">Test Username (pos)*</label>
+                <div class="col-sm-10">
+                  <input type='text'
+                         class='form-control'
+                         id="test-username-pos"
+                         size='30'
+                         ng-model='newSiteTestUsernamePos'
+                         ng-keypress='handleAddSiteKeypress($event)'
+                         ng-disabled='submittingSite'
+                         placeholder='Enter username that exists on site.'>
+                </div>
+              </div>
+
+              <div class='form-group'>
+                <label class='col-sm-2' for="search-text">Test Username (neg)*</label>
+                <div class="col-sm-10">
+                  <input type='text'
+                         class='form-control'
+                         id="test-username-neg"
+                         size='30'
+                         ng-model='newSiteTestUsernameNeg'
+                         ng-keypress='handleAddSiteKeypress($event)'
+                         ng-disabled='submittingSite'
+                         placeholder='Enter username that does not exist on site.'>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="category" class="col-sm-2">Category*</label>
+                <div class="col-sm-10">
+                  <button type='button'
+                          class='btn btn-default dropdown-toggle'
+                          id="category"
+                          data-toggle='dropdown'
+                          ng-disabled='submittingSite'
+                          aria-expanded='false'>
+                          {{newSiteCategoryDescription}} <span class='caret'></span>
+                  </button>
+                  <ul class='dropdown-menu sort-by' role='menu'>
+                    <li ng-repeat="category in siteCategories"><a ng-click='setSiteCategory(category)'>{{category}}</a></li>
+                  </ul>
+                </div>
+              </div>
+
+              <div ng-show='siteError != null' class='alert alert-danger' role='alert'>
+                <p>{{siteError}}</p>
+              </div>
+
+            </form>
+
           </div>
+          <div class="col-sm-3">
+            <img ng-show="awaitingTestResult(editSiteId)" 
+                 height="142"
+                 width="142"
+                 id="test-loader" 
+                 src="/static/img/spinner-blue-lg.gif">
+            <!-- Start container -->
+            <div ng-show="editSiteId != null && sites[editSiteId].testedAt != null && !awaitingTestResult(editSiteId)"
+                 class="test-container">
+              <div class="test-header-success" ng-show="sites[editSiteId].testResultPos.status =='f'">
+                "{{newSiteTestUsernamePos}}"
+              </div>
+              <div class="test-header-danger" ng-show="sites[editSiteId].testResultPos.status !='f'">
+                "{{newSiteTestUsernamePos}}"
+              </div>
+              <!-- Start panel -->
+              <div class="panel panel-default result">
+                <div class="panel-body result">
+                  <img class="thumbnail"
+                       ng-src='{{api.authorizeUrl(sites[editSiteId].testResultPos.imageFileUrl)}}'>
+                </div>
+                <div ng-show="sites[editSiteId].testResultPos.status == 'e'" class="panel-footer result error">
+                  <i class="fa fa-exclamation-triangle pull-left"></i>
+                    Error {{result.error}}
+                </div>
 
-          <div class='form-group'>
-            <label for="url" class='col-sm-1'>URL*</label>
-            <div class="col-sm-6">
-              <input type='text'
-                     class='form-control' id="url"
-                     size='50'
-                     ng-model='newSiteUrl'
-                     ng-keypress='handleAddSiteKeypress($event)'
-                     ng-disabled='submittingSite'
-                     placeholder='Enter the site search URL.'>
-            </div>
-          </div>
+                <div ng-show="sites[editSiteId].testResultPos.status == 'f'" class="panel-footer result found">
+                  <i class="fa fa-check pull-left"></i>
+                    Found
+                </div>
 
-          <div class='form-group'>
-            <label class='col-sm-1' for="status-code">Status code*</label>
-            <div class="col-sm-2">
-              <input type='text'
-                     class='form-control'
-                     id="status-code"
-                     size='10'
-                     ng-model='newSiteStatusCode'
-                     ng-keypress='handleAddSiteKeypress($event)'
-                     ng-disabled='submittingSite'
-                     placeholder='Enter status code.'>
-            </div>
-          </div>
-
-            <div class='form-group'>
-              <label class='col-sm-1' for="search-text">Search text*</label>
-              <div class="col-sm-6">
-                <input type='text'
-                       class='form-control'
-                       id="search-text"
-                       size='30'
-                       ng-model='newSiteSearchText'
-                       ng-keypress='handleAddSiteKeypress($event)'
-                       ng-disabled='submittingSite'
-                       placeholder='Enter search text.'>
+                <div ng-show="sites[editSiteId].testResultPos.status == 'n'" class="panel-footer result not-found">
+                  <i class="fa fa-times pull-left"></i>
+                  Not found
+                </div>
+              </div>
+              <!-- End panel -->
+              <div ng-show="sites[editSiteId].testResultPos.status =='f'"
+                class="test-footer success text-center">
+                <i class="fa fa-thumbs-up fa-lg"></i>
+              </div>
+              <div ng-show="sites[editSiteId].testResultPos.status !='f'"
+                class="test-footer danger text-center">
+                <i class="fa fa-thumbs-down fa-lg"></i>
               </div>
             </div>
+            <!-- End container -->
 
-            <div class="form-group">
-              <label for="category" class="col-sm-1">Category*</label>
-              <div class="col-sm-6">
-                <button type='button'
-                        class='btn btn-default dropdown-toggle'
-                        id="category"
-                        data-toggle='dropdown'
-                        ng-disabled='submittingSite'
-                        aria-expanded='false'>
-                        {{newSiteCategoryDescription}} <span class='caret'></span>
-                </button>
-                <ul class='dropdown-menu sort-by' role='menu'>
-                  <li ng-repeat="category in siteCategories"><a ng-click='setSiteCategory(category)'>{{category}}</a></li>
-                </ul>
+          </div>
+          
+          <div class="col-sm-3">
+            <img ng-show="awaitingTestResult(editSiteId)" 
+                 height="142"
+                 width="142"
+                 id="test-loader" 
+                 src="/static/img/spinner-blue-lg.gif">
+            <!-- Start container -->
+            <div ng-show="editSiteId != null && sites[editSiteId].testedAt != null && !awaitingTestResult(editSiteId)"
+                 class="test-container">
+              <div class="test-header-success" ng-show="sites[editSiteId].testResultNeg.status =='n'">
+                "{{newSiteTestUsernameNeg}}"
               </div>
-           </div>
+              <div class="test-header-danger" ng-show="sites[editSiteId].testResultNeg.status !='n'">
+                "{{newSiteTestUsernameNeg}}"
+              </div>
+              <!-- Start panel -->
+              <div class="panel panel-default result">
+                <div class="panel-body result">
+                  <img class="thumbnail"
+                       ng-src='{{api.authorizeUrl(sites[editSiteId].testResultNeg.imageFileUrl)}}'>
+                </div>
+                <div ng-show="sites[editSiteId].testResultNeg.status == 'e'" class="panel-footer result error">
+                  <i class="fa fa-exclamation-triangle pull-left"></i>
+                    Error {{result.error}}
+                </div>
 
-           <div class="form-group">
-            <div class='col-sm-12'>
-              <div class="pull-right">
+                <div ng-show="sites[editSiteId].testResultNeg.status == 'f'" class="panel-footer result found">
+                  <i class="fa fa-check pull-left"></i>
+                    Found
+                </div>
 
-                <button class='btn btn-default'
-                        ng-click='hideAddDialog()'
-                        ng-disabled='submittingSite'>
-                  Cancel
-                </button>
-                <busy-button id='edit-site-button' 
-                             type='primary' 
-                             ng-show='editSiteId != null'
-                             ng-disabled='submittingSite'
-                             click='saveSite'>
-                 <i class="fa fa-check"></i> Save 
-                </busy-button>
-                <busy-button id='add-site-button' 
-                             type='success' 
-                             ng-disabled='submittingSite'
-                             ng-show='editSiteId == null'
-                             click='addSite'>
-                 <i class="fa fa-check"></i> Add 
-                </busy-button>
-
+                <div ng-show="sites[editSiteId].testResultNeg.status == 'n'" class="panel-footer result not-found">
+                  <i class="fa fa-times pull-left"></i>
+                  Not found
+                </div>
+              </div>
+              <!-- End panel -->
+              <div ng-show="sites[editSiteId].testResultNeg.status =='n'"
+                class="test-footer success text-center">
+                <i class="fa fa-thumbs-up fa-lg"></i>
+              </div>
+              <div ng-show="sites[editSiteId].testResultNeg.status !='n'"
+                class="test-footer danger text-center">
+                <i class="fa fa-thumbs-down fa-lg"></i>
               </div>
             </div>
+            <!-- End container -->
+
           </div>
+        </div>
+        <!-- End row -->
 
-
-          <div ng-show='siteError != null' class='alert alert-danger' role='alert'>
-            <p>{{siteError}}</p>
+        <!-- Start row -->
+        <div class="row">
+          <div class="col-sm-6">
+            <div ng-show="sites[editSiteId].valid && editSiteId != null" class="test-header-success">
+              Valid
+            </div>
+            <div ng-show="!sites[editSiteId].valid && editSiteId != null" class="test-header-danger">
+              Invalid
+            </div>
           </div>
+          <div ng-show="editSiteId != null" class="col-sm-2">
+            <em>Last tested:
+              <span ng-show="sites[editSiteId].testedAt != null">{{sites[editSiteId].testedAt | date:'yyyy-MM-dd h:mm a'}}</span>
+              <span ng-show="sites[editSiteId].testedAt == null">Never</span>
+            </em>
+          </div>
+          <div class="col-sm-4 pull-right">
+               <div class="form-group">
+                  <div class="pull-right">
 
-        </form>
+                    <button class='btn btn-default'
+                            ng-click='hideAddDialog()'
+                            ng-disabled='submittingSite'>
+                      Cancel
+                    </button>
+                    <busy-button id='edit-site-test-button' 
+                                 type='primary' 
+                                 ng-show='editSiteId != null'
+                                 ng-disabled='submittingSite'
+                                 click='saveAndTestSite'>
+                     <i class="fa fa-wrench"></i> Save and Test 
+                    </busy-button>
+                    <busy-button id='edit-site-button' 
+                                 type='primary' 
+                                 ng-show='editSiteId != null'
+                                 ng-disabled='submittingSite'
+                                 click='saveSite'>
+                     <i class="fa fa-check"></i> Save 
+                    </busy-button>
+                    <busy-button id='add-site-button' 
+                                 type='success' 
+                                 ng-disabled='submittingSite'
+                                 ng-show='editSiteId == null'
+                                 click='addSite'>
+                     <i class="fa fa-check"></i> Add 
+                    </busy-button>
+
+                  </div>
+              </div>
+
+          </div>
+        </div>
+        <!-- End row -->
+
       </div>
     </div>
   </div>
@@ -144,16 +305,38 @@
   <div class="panel-body">
 
     <div class="row">
-      <div class="col-sm-12">
+      <div class="col-sm-2">
         Showing {{pager.startingAt | number}}-{{pager.endingAt | number}}
-        of {{pager.totalResults | number}} sites.
+        of {{pager.totalResults | number}} sites. 
+      </div>
+      <div class="col-sm-1 pull-right">
         <button class='btn btn-success btn-sm pull-right btn-add'
-           ng-disabled='showAdd'
-           id='add-site-btn'
-           ng-click='showAddDialog("add")'>
+                ng-disabled='showAdd'
+                id='add-site-btn'
+                ng-click='showAddDialog("add")'>
           <i class='fa fa-plus'></i>
           Add Sites 
         </button>
+      </div>
+      <div class="col-sm-1 pull-right">
+        <button class='btn btn-info btn-sm pull-right btn-add pull-right'
+                ng-disabled='showAdd'
+                ng-click="fetchCurrentPage()"
+                id='test-sites-btn'
+                data-toggle="modal"
+                data-target="#test-sites-modal">
+          <i class='fa fa-wrench'></i>
+          Test Sites 
+        </button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-sm-12">
+        <strong>Key:</strong>
+        <i class="fa fa-thumbs-up success"></i> pass
+        <i class="fa fa-thumbs-down danger"></i> fail 
+        
       </div>
     </div>
 
@@ -165,50 +348,84 @@
               <tr>
                 <th>Name</th>
                 <th>URL</th>
-                <th>Search Text</th>
-                <th class="text-center">Status Code</th>
-                <th class="text-center">Category</th>
+                <th>Category</th>
+                <th class="text-center">Valid</th>
+                <th class="text-center">Positive Test</th>
+                <th class="text-center">Negative Test</th>
+                <th class="text-center">Tested</th>
                 <th class="text-center">Test</th>
                 <th class="text-center">Edit</th>
                 <th class="text-center">Delete</th>
               </tr>
             </thead>
             <tbody>
-              <tr ng-repeat='id in siteIds'>
+              <tr id="tr-{{id}}" ng-repeat='id in siteIds'>
                 <td class="col-sm-1">
                   {{sites[id].name}}
                 </td>
-                <td class="col-sm-3">
+                <td class="col-sm-2">
                   {{sites[id].url}}
                 </td>
-                <td class="col-sm-3">
-                  {{sites[id].searchText}}
-                </td>
-                <td class="col-sm-1 text-center">
-                  {{sites[id].statusCode.toString()}}
-                </td>
-                <td class="col-sm-2 text-center">
+                <td class="col-s-1">
                   {{sites[id].category}}
                 </td>
                 <td class="col-sm-1 text-center">
+                  <span ng-if="!awaitingTestResult(id)">
+                    <i ng-show="sites[id].valid && sites[id].valid != null" class="fa fa-2x fa-thumbs-up success"></i>
+                    <i ng-show="!sites[id].valid && sites[id].valid != null" class="fa fa-2x fa-thumbs-down danger"></i>
+                    <span ng-show="sites[id].valid == null"><em>N/A</em></span>
+                  </span>
+                  <img ng-if='awaitingTestResult(id)' src='/static/img/spinner-black-snake.gif'>
+                </td>
+                <td class="col-sm-1 text-center">
+                  <span ng-if="sites[id].testResultPos != null">
+                    <i ng-show="sites[id].testResultPos.status == 'f'" class="fa fa-thumbs-up success"></i>
+                    <i ng-show="sites[id].testResultPos.status != 'f'" class="fa fa-thumbs-down danger"></i>
+                    <button class="btn btn-sm btn-info btn-link"
+                            data-toggle="modal"
+                            data-target="#screenshot-modal"
+                            ng-click="setScreenshotResult(id, 'pos')">
+                            view
+                    </button>
+                  </span>
+                  <span ng-if="sites[id].testResultPos == null"><em>N/A</span>
+                </td>
+                <td class="col-sm-1 text-center">
+                  <span ng-if="sites[id].testResultNeg != null">
+                    <i ng-show="sites[id].testResultNeg.status == 'n'" class="fa fa-thumbs-up success"></i>
+                    <i ng-show="sites[id].testResultNeg.status != 'n'" class="fa fa-thumbs-down danger"></i>
+                    <button class="btn btn-sm btn-info btn-link"
+                            data-toggle="modal"
+                            data-target="#screenshot-modal"
+                            ng-click="setScreenshotResult(id, 'neg')">
+                            view
+                    </button>
+                  </span>
+                  <span ng-if="sites[id].testResultNeg == null"><em>N/A</em></span>
+                </td>
+                <td class="col-sm-2 text-center">
+                  <span ng-show="sites[id].testedAt != null">{{sites[id].testedAt | date:'yyyy-MM-dd h:mm a'}}</span>
+                  <span ng-show="sites[id].testedAt == null"><em>Never</em></span>
+                </td>
+                <td class="col-sm-1 text-center">
                   <button type='button'
-                          ng-click='showTestSiteDialog(id)'
-                          ng-disabled='showAdd'
+                          ng-click='testSite(id)'
+                          ng-disabled='showAdd || awaitingTestResult(id)'
                           class='btn btn-sm btn-primary'>
-                          <i class="fa fa-check-square"></i>
+                          <i class="fa fa-wrench"></i>
                   </button>
                 </td>
                 <td class="col-sm-1 text-center">
                   <button type='button'
                           ng-click='editSite(id)'
-                          ng-disabled='showAdd'
+                          ng-disabled='showAdd || awaitingTestResult(id)'
                           class='btn btn-sm btn-primary'>
                           <i class="fa fa-pencil"></i>
                   </button>
                 </td>
                  <td class="col-sm-1 text-center">
                   <button type='button'
-                     ng-disabled='showAdd'
+                     ng-disabled='showAdd || awaitingTestResult(id)'
                      ng-click='setDeleteId(id)'
                      class='btn btn-sm btn-danger'>
                     <i class='fa fa-trash'></i>
@@ -256,85 +473,95 @@
   </div>
 </div>
 
-<div class='modal fade' id='test-site-modal' role='dialog'>
+<div class='modal fade screenshot' id='screenshot-modal' role='dialog'>
   <div class='modal-dialog'>
     <div class='modal-content'>
-      <div class='modal-header info'>
-              <h4 class='modal-title'>Test {{sites[testSiteId].name}}</h4>
+      <div class='modal-header'>
+        <h4 class='modal-title'>{{screenshotResult.siteName}} - "{{screenshotUsername}}"</h4>
       </div>
-      <div class="modal-body">
-        
-        <div class="alert alert-danger" role="alert" ng-show="testError != null">
-          <button ng-click="testError = null" class="close" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-          {{testError}}
-        </div>
-        <div class='clear'></div>
-
-        <div class="row">
-            <div class='form-group'>
-              <label class="col-sm-3" for='site-name'>Username*</label>
-              <div class="col-sm-6">
-                <input type='text'
-                       class='form-control'
-                       id='username-query'
-                       ng-model='query'
-                       ng-keypress='handleTestSiteKeypress($event)'
-                       ng-disabled='testing'
-                       placeholder='Enter a username.'>
-             </div>
-            </div>
-          </div>
-
-          <div class="row" ng-show="testing">
-	    <div class="col-sm-12">
-	      <img height="142"
-		 width="142"
-		 id="test-loader" 
-		 src="/static/img/spinner-blue-lg.gif">
-             </div>
-          </div>
-
-          <div class="row" ng-show="result != null">
-            <div class="col-sm-8 col-sm-offset-2">
-  	      <div class="panel panel-default result">
-                <div class="panel-body result">
-                  <img class="thumbnail"
-		       ng-src='{{api.authorizeUrl(result.imageFileUrl)}}'>
-		</div>
-		<div ng-show="result.status == 'e'" class="panel-footer result error">
-                  <i class="fa fa-exclamation-triangle pull-left"></i>
-                  Error {{result.error}}
-		</div>
-
-		<div ng-show="result.status == 'f'" class="panel-footer result found">
-                  <i class="fa fa-check pull-left"></i>
-		  Found
-		</div>
-
-		<div ng-show="result.status == 'n'" class="panel-footer result not-found">
-                  <i class="fa fa-times pull-left"></i>
-		  Not found
-		</div>
-
-               </div>
-            </div>
-          </div>
-
+      <div class='modal-body'>
+        <img ng-src='{{api.authorizeUrl(screenshotResult.imageFileUrl)}}' class="screenshot" />
       </div>
-      <div class="modal-footer">
-        <button type="button"
-                class="btn btn-default"
-                data-dismiss="modal">
-          Cancel
-        </button>
-        <button type="button"
-                class="btn btn-primary"
-                ng-click="testSite()">
-         <i class="fa fa-check-square"></i> Test 
+      <div class='modal-footer {{screenshotClass}}'>
+        <span class="pull-left" ng-show="screenshotResult.status == 'e'">
+          {{screenshotResult.error}}
+        </span>
+        <span class="pull-left" ng-show="screenshotResult.status == 'f'">
+          <i class="fa fa-check pull-left"></i>
+          Found
+        </span>
+        <span class="pull-left" ng-show="screenshotResult.status == 'n'">
+          <i class="fa fa-times pull-left"></i>
+          Not found
+        </span>
+        <button type='button' class='btn btn-default pull-right' data-dismiss='modal'>
+          Close
         </button>
       </div>
     </div>
   </div>
 </div>
+
+<div class='modal fade' id='test-sites-modal' role='dialog'>
+  <div class='modal-dialog'>
+    <div class='modal-content'>
+      <div class='modal-header info'>
+        <h4 class='modal-title'>Test all sites?</h4>
+      </div>
+      <div class='modal-body'>
+        <div class="row">
+          <div class="col-sm-12">
+
+            <table class="table">
+                <tr>
+                  <td><span class="success">Valid</span></td>
+                  <td class="text-right"><strong>{{totalValid}} </strong>({{(totalValid / totalSites * 100) | number:0}}%)</td>
+                </tr>
+                <tr>
+                  <td><span class="danger">Invalid</span></td>
+                  <td class="text-right"><strong>{{totalInvalid}} </strong>({{(totalInvalid / totalSites * 100) | number:0}}%)</td>
+                </tr>
+                <tr>
+                  <td><strong>Total</strong></td>
+                  <td class="text-right"><strong>{{totalSites}} </strong>({{(totalSites / totalSites * 100) | number:0}}%)</td>
+                </tr>
+            </table>
+
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm-2">
+            <strong>Tested:</strong>
+          </div>
+          <div class="col-sm-10">
+            <div class="progress">
+              <div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="{{totalTestedPercent}}"
+                aria-valuemin="0" aria-valuemax="100" style="width:{{totalTestedPercent}}%">
+                {{totalTestedPercent}}% 
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class='modal-footer'>
+        <div class="row">
+          <div class="col-sm-4 pull-right">
+            <div class="form-group">
+              <button type='button' class='btn btn-default' data-dismiss='modal'>
+                Close
+              </button>
+              <button type='button'
+                class='btn btn-info'
+                data-dismiss='modal'
+                ng-click="testAllSites()">
+                <i class="fa fa-wrench"></i> Test
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

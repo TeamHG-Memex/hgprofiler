@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import shutil
@@ -113,30 +112,158 @@ class DatabaseCli(cli.BaseCli):
         session.add(admin)
         session.commit()
 
-
     def _create_fixture_sites(self, config):
         ''' Create site fixtures. '''
 
         session = app.database.get_session(self._db)
-        sample_dir = os.path.join(os.path.dirname(__file__), 'sample-data')
-        json_file_path = os.path.join(sample_dir, 'profiler_sites.json')
 
-        with open(json_file_path) as json_file:
-            json_data = json.load(json_file)
-            json_sites = json_data['sites']
+        # about.me
+        about_me = Site(
+            name='About.me',
+            url='http://about.me/%s',
+            category='social',
+            status_code=200,
+            search_text='g.PAGE_USER_NAME =',
+            test_username_pos='bob'
+        )
+        session.add(about_me)
 
-            for json_site in json_sites:
-                site = Site(
-                    name=json_site['r'],
-                    url=json_site['u'],
-                    category=json_site['c'],
-                    status_code=json_site['gRC'],
-                    search_text=json_site['gRT']
-                )
+        # anobii
+        anobii = Site(
+            name='Anobii',
+            url='http://www.anobii.com/%s/books',
+            category='books',
+            status_code=200,
+            search_text='- aNobii</title>"',
+            test_username_pos='bob'
+        )
+        session.add(anobii)
 
-                session.add(site)
+        # ask.fm
+        ask_fm = Site(
+            name='Ask FM',
+            url='http://ask.fm/%s',
+            category='social',
+            status_code=200,
+            search_text='| ask.fm/',
+            test_username_pos='tipsofschool'
+        )
+        session.add(ask_fm)
+
+        # audioboom
+        audioboom = Site(
+            name='Audioboom',
+            url='http://audioboom.com/%s',
+            category='music',
+            status_code=200,
+            search_text='<title>audioBoom / ',
+            test_username_pos='bob'
+        )
+        session.add(audioboom)
+
+        # audioboom
+        authorstream = Site(
+            name='Authorstream',
+            url='http://www.authorstream.com/%s/',
+            category='social',
+            status_code=200,
+            search_text='Presentations on authorSTREAM',
+            test_username_pos='tiikmconferences'
+        )
+        session.add(authorstream)
+
+        # badoo
+        badoo = Site(
+            name='Badoo',
+            url='http://badoo.com/%s/',
+            category='dating',
+            status_code=200,
+            search_text='| Badoo</title>',
+            test_username_pos='dave'
+        )
+        session.add(badoo)
+
+        # behance
+        behance = Site(
+            name='Behance',
+            url='https://www.behance.net/%s',
+            category='social',
+            status_code=200,
+            search_text=' on Behance\" />',
+            test_username_pos='juste'
+        )
+        session.add(behance)
+
+        # bitbucket
+        bitbucket = Site(
+            name='Bitbucket',
+            url='https://bitbucket.org/%s',
+            category='coding',
+            status_code=200,
+            search_text='\"username\": ',
+            test_username_pos='jespern'
+        )
+        session.add(bitbucket)
+
+        # blinklist
+        blip_fm = Site(
+            name='Blip FM',
+            url='http://blip.fm/%s',
+            category='music',
+            status_code=200,
+            search_text='<title>Free Music | Listen to Music Online |',
+            test_username_pos='mark_till'
+        )
+        session.add(blip_fm)
 
         session.commit()
+
+    # def _create_fixture_sites(self, config):
+    #     ''' Create site fixtures. '''
+
+    #     session = app.database.get_session(self._db)
+    #     sample_dir = os.path.join(os.path.dirname(__file__), 'sample-data')
+    #     json_file_path = os.path.join(sample_dir, 'profiler_sites.json')
+
+    #     with open(json_file_path) as json_file:
+    #         json_data = json.load(json_file)
+    #         json_sites = json_data['sites']
+
+    #         for json_site in json_sites:
+    #             site = Site(
+    #                 name=json_site['r'],
+    #                 url=json_site['u'],
+    #                 category=json_site['c'],
+    #                 status_code=json_site['gRC'],
+    #                 search_text=json_site['gRT']
+    #             )
+
+    #             session.add(site)
+
+    #     session.commit()
+    # def _create_fixture_sites(self, config):
+    #     ''' Create site fixtures. '''
+
+    #     session = app.database.get_session(self._db)
+    #     sample_dir = os.path.join(os.path.dirname(__file__), 'sample-data')
+    #     json_file_path = os.path.join(sample_dir, 'profiler_sites.json')
+
+    #     with open(json_file_path) as json_file:
+    #         json_data = json.load(json_file)
+    #         json_sites = json_data['sites']
+
+    #         for json_site in json_sites:
+    #             site = Site(
+    #                 name=json_site['r'],
+    #                 url=json_site['u'],
+    #                 category=json_site['c'],
+    #                 status_code=json_site['gRC'],
+    #                 search_text=json_site['gRT']
+    #             )
+
+    #             session.add(site)
+
+    #     session.commit()
 
     def _delete_data(self):
         ''' Delete files stored in the data directory. '''
@@ -156,7 +283,8 @@ class DatabaseCli(cli.BaseCli):
         punk out if the Python schema doesn't match the actual database schema
         (a common scenario while developing).
 
-        See: https://bitbucket.org/zzzeek/sqlalchemy/wiki/UsageRecipes/DropEverything
+        See:
+        https://bitbucket.org/zzzeek/sqlalchemy/wiki/UsageRecipes/DropEverything
         '''
 
         tables = list()

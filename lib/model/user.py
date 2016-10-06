@@ -22,11 +22,12 @@ class User(Base):
     name = Column(String(255))
     agency = Column(String(255))
     location = Column(String(255))
-    phone = Column(String(255)) # E.164 format
+    phone = Column(String(255))  # E.164 format
     thumb = Column(BYTEA)
     is_admin = Column(Boolean, default=False, nullable=False)
     created = Column(DateTime, default=datetime.now, nullable=False)
-    modified = Column(DateTime, default=datetime.now, onupdate=datetime.now, nullable=False)
+    modified = Column(DateTime, default=datetime.now,
+                      onupdate=datetime.now, nullable=False)
 
     DEFAULT_THUMB = None
 
@@ -81,9 +82,9 @@ def check_password(password, stored_hash):
             password.encode('utf8'),
             stored_hash.encode('utf8')
         ).decode('utf8')
-        return  new_hash == stored_hash
+        return new_hash == stored_hash
     else:
-        err = "Hash algorithm is unsupported: {}".format(algorithm)
+        err = "Hash algorithm is unsupported: {}".format(crypt_type)
         raise NotImplementedError(err)
 
 
@@ -107,6 +108,6 @@ def valid_password(password):
     ''' Verify the password meets complexity requirements. '''
 
     return len(password) >= 8 and \
-           re.search(_LOWER_ALPHA, password) and \
-           re.search(_UPPER_ALPHA, password) and \
-           re.search(_NUMERIC, password)
+        re.search(_LOWER_ALPHA, password) and \
+        re.search(_UPPER_ALPHA, password) and \
+        re.search(_NUMERIC, password)

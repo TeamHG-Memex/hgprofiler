@@ -14,7 +14,7 @@ USERNAME_ATTRS = {
     'usernames': {'type': list, 'required': True},
     'group': {'type': int, 'required': False},
     'site': {'type': int, 'required': False},
-    'archive': {'type': bool, 'required': False},
+    'test': {'type': bool, 'required': False},
 }
 
 
@@ -40,7 +40,7 @@ class UsernameView(FlaskView):
                     ...
                 ],
                 "group": 3,
-                "archive": False,
+                "test": False,
             }
 
         **Example Response**
@@ -48,12 +48,10 @@ class UsernameView(FlaskView):
         .. sourcecode:: json
 
             {
-                "jobs": [
-                    {
-                        "id": "1",
-                        "username": "johndoe",
-                    },
-                ]
+                "tracker_ids": {
+                        "johndoe": "tracker.12344565",
+                }
+                
             }
 
         :<header Content-Type: application/json
@@ -61,7 +59,7 @@ class UsernameView(FlaskView):
         :>json list usernames: a list of usernames to search for
         :>json int group: ID of site group to use (optional)
         :>json int site: ID of site to search (optional)
-        :>json bool archive: archive the results (optional, default: true)
+        :>json bool test: test results (optional, default: false)
 
         :>header Content-Type: application/json
         :>json list jobs: list of worker jobs
@@ -72,7 +70,7 @@ class UsernameView(FlaskView):
         :status 400: invalid request body
         :status 401: authentication required
         '''
-        archive = True
+        test = False
         group = None
         group_id = None
         jobs = []
@@ -108,8 +106,8 @@ class UsernameView(FlaskView):
             if site is None:
                 raise NotFound("Site '%s' does not exist." % site_id)
 
-        if 'archive' in request_json:
-            archive = request_json['archive']
+        if 'test' in request_json:
+            test = request_json['test']
 
         if group:
             sites = group.sites
@@ -117,6 +115,9 @@ class UsernameView(FlaskView):
             sites = g.db.query(Site).filter(Site.id == site.id).all()
         else:
             sites = g.db.query(Site).all()
+
+        # Only query valid sites. 
+        sites = sites.filter(valid==True)
 
         for username in request_json['usernames']:
             # Create an object in redis to track the number of sites completed
@@ -135,7 +136,7 @@ class UsernameView(FlaskView):
                     group_id=group_id,
                     total=total,
                     tracker_id=tracker_id,
-                    archive=archive
+                    test=test
                 )
                 jobs.append({
                     'id': job_id,
