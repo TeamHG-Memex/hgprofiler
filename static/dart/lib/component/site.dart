@@ -166,6 +166,14 @@ class SiteComponent extends Object
         Modal.wire(modalDiv).show();
     }
 
+    /// Show test sites dialog.
+    void showTestSitesDialog() {
+        String selector = '#test-sites-modal';
+        DivElement modalDiv = this._element.querySelector(selector);
+        this.fetchCurrentPage();
+        Modal.wire(modalDiv).show();
+    } 
+
     /// Set site for deletion and show confirmation modal
     void showTestSiteDialog(String id_) {
         this.testSiteId = id_;

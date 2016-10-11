@@ -142,11 +142,8 @@
             <!-- Start container -->
             <div ng-show="editSiteId != null && sites[editSiteId].testedAt != null && !awaitingTestResult(editSiteId)"
                  class="test-container">
-              <div class="test-header-success" ng-show="sites[editSiteId].testResultPos.status =='f'">
-                "{{newSiteTestUsernamePos}}"
-              </div>
-              <div class="test-header-danger" ng-show="sites[editSiteId].testResultPos.status !='f'">
-                "{{newSiteTestUsernamePos}}"
+              <div class="test-header">
+                <strong>"{{newSiteTestUsernamePos}}"</strong>
               </div>
               <!-- Start panel -->
               <div class="panel panel-default result">
@@ -170,13 +167,19 @@
                 </div>
               </div>
               <!-- End panel -->
-              <div ng-show="sites[editSiteId].testResultPos.status =='f'"
-                class="test-footer success text-center">
-                <i class="fa fa-thumbs-up fa-lg"></i>
+              <div ng-show="sites[editSiteId].testResultPos.status == 'f'" class='alert alert-success' role='alert'>
+                <i class='fa fa-check-circle fa-2x pull-left'></i>
+                Username found.
               </div>
-              <div ng-show="sites[editSiteId].testResultPos.status !='f'"
-                class="test-footer danger text-center">
-                <i class="fa fa-thumbs-down fa-lg"></i>
+              <div ng-show="sites[editSiteId].testResultNeg.status =='n'"
+                class="alert alert-danger" role="alert">
+                <i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
+                Username not found.
+              </div>
+              <div ng-show="sites[editSiteId].testResultNeg.status =='e'"
+                class="alert alert-danger" role="alert">
+                <i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
+                Error when checking site.
               </div>
             </div>
             <!-- End container -->
@@ -192,11 +195,8 @@
             <!-- Start container -->
             <div ng-show="editSiteId != null && sites[editSiteId].testedAt != null && !awaitingTestResult(editSiteId)"
                  class="test-container">
-              <div class="test-header-success" ng-show="sites[editSiteId].testResultNeg.status =='n'">
-                "{{newSiteTestUsernameNeg}}"
-              </div>
-              <div class="test-header-danger" ng-show="sites[editSiteId].testResultNeg.status !='n'">
-                "{{newSiteTestUsernameNeg}}"
+              <div class="test-header">
+                <strong>"{{newSiteTestUsernameNeg}}"</strong>
               </div>
               <!-- Start panel -->
               <div class="panel panel-default result">
@@ -219,14 +219,19 @@
                   Not found
                 </div>
               </div>
-              <!-- End panel -->
-              <div ng-show="sites[editSiteId].testResultNeg.status =='n'"
-                class="test-footer success text-center">
-                <i class="fa fa-thumbs-up fa-lg"></i>
+              <div ng-show="sites[editSiteId].testResultNeg.status == 'n'" class='alert alert-success' role='alert'>
+                <i class='fa fa-check-circle fa-2x pull-left'></i>
+                Username not found.
               </div>
-              <div ng-show="sites[editSiteId].testResultNeg.status !='n'"
-                class="test-footer danger text-center">
-                <i class="fa fa-thumbs-down fa-lg"></i>
+              <div ng-show="sites[editSiteId].testResultNeg.status =='f'"
+                class="alert alert-danger" role="alert">
+                <i class="fa fa-exclamation-triangle fa-2x"></i>
+                Username found.
+              </div>
+              <div ng-show="sites[editSiteId].testResultNeg.status =='e'"
+                class="alert alert-danger" role="alert">
+                <i class="fa fa-exclamation-triangle fa-2x"></i>
+                Error when checking site.
               </div>
             </div>
             <!-- End container -->
@@ -238,18 +243,15 @@
         <!-- Start row -->
         <div class="row">
           <div class="col-sm-6">
-            <div ng-show="sites[editSiteId].valid && editSiteId != null" class="test-header-success">
-              Valid
-            </div>
-            <div ng-show="!sites[editSiteId].valid && editSiteId != null" class="test-header-danger">
-              Invalid
-            </div>
           </div>
           <div ng-show="editSiteId != null" class="col-sm-2">
             <em>Last tested:
               <span ng-show="sites[editSiteId].testedAt != null">{{sites[editSiteId].testedAt | date:'yyyy-MM-dd h:mm a'}}</span>
               <span ng-show="sites[editSiteId].testedAt == null">Never</span>
             </em>
+            <i ng-show="!sites[editSiteId].valid || editSiteId == null"
+               class='fa fa-exclamation-triangle alert-danger-text'>
+            </i>
           </div>
           <div class="col-sm-4 pull-right">
                <div class="form-group">
@@ -305,7 +307,7 @@
   <div class="panel-body">
 
     <div class="row">
-      <div class="col-sm-2">
+      <div class="col-sm-3">
         Showing {{pager.startingAt | number}}-{{pager.endingAt | number}}
         of {{pager.totalResults | number}} sites. 
       </div>
@@ -321,10 +323,8 @@
       <div class="col-sm-1 pull-right">
         <button class='btn btn-info btn-sm pull-right btn-add pull-right'
                 ng-disabled='showAdd'
-                ng-click="fetchCurrentPage()"
-                id='test-sites-btn'
-                data-toggle="modal"
-                data-target="#test-sites-modal">
+                ng-click="showTestSitesDialog()"
+                id='test-sites-btn'>
           <i class='fa fa-wrench'></i>
           Test Sites 
         </button>
@@ -334,8 +334,8 @@
     <div class="row">
       <div class="col-sm-12">
         <strong>Key:</strong>
-        <i class="fa fa-thumbs-up success"></i> pass
-        <i class="fa fa-thumbs-down danger"></i> fail 
+        <i class="fa fa-check success"></i> pass
+        <i class="fa fa-exclamation-triangle danger"></i> fail 
         
       </div>
     </div>
@@ -349,7 +349,7 @@
                 <th>Name</th>
                 <th>URL</th>
                 <th>Category</th>
-                <th class="text-center">Valid</th>
+                <th class="text-center"></th>
                 <th class="text-center">Positive Test</th>
                 <th class="text-center">Negative Test</th>
                 <th class="text-center">Tested</th>
@@ -370,17 +370,12 @@
                   {{sites[id].category}}
                 </td>
                 <td class="col-sm-1 text-center">
-                  <span ng-if="!awaitingTestResult(id)">
-                    <i ng-show="sites[id].valid && sites[id].valid != null" class="fa fa-2x fa-thumbs-up success"></i>
-                    <i ng-show="!sites[id].valid && sites[id].valid != null" class="fa fa-2x fa-thumbs-down danger"></i>
-                    <span ng-show="sites[id].valid == null"><em>N/A</em></span>
-                  </span>
                   <img ng-if='awaitingTestResult(id)' src='/static/img/spinner-black-snake.gif'>
                 </td>
                 <td class="col-sm-1 text-center">
                   <span ng-if="sites[id].testResultPos != null">
-                    <i ng-show="sites[id].testResultPos.status == 'f'" class="fa fa-thumbs-up success"></i>
-                    <i ng-show="sites[id].testResultPos.status != 'f'" class="fa fa-thumbs-down danger"></i>
+                    <i ng-show="sites[id].testResultPos.status == 'f'" class="fa fa-check success"></i>
+                    <i ng-show="sites[id].testResultPos.status != 'f'" class="fa fa-exclamation-triangle danger"></i>
                     <button class="btn btn-sm btn-info btn-link"
                             data-toggle="modal"
                             data-target="#screenshot-modal"
@@ -392,8 +387,8 @@
                 </td>
                 <td class="col-sm-1 text-center">
                   <span ng-if="sites[id].testResultNeg != null">
-                    <i ng-show="sites[id].testResultNeg.status == 'n'" class="fa fa-thumbs-up success"></i>
-                    <i ng-show="sites[id].testResultNeg.status != 'n'" class="fa fa-thumbs-down danger"></i>
+                    <i ng-show="sites[id].testResultNeg.status == 'n'" class="fa fa-check success"></i>
+                    <i ng-show="sites[id].testResultNeg.status != 'n'" class="fa fa-exclamation-triangle danger"></i>
                     <button class="btn btn-sm btn-info btn-link"
                             data-toggle="modal"
                             data-target="#screenshot-modal"
@@ -514,11 +509,11 @@
 
             <table class="table">
                 <tr>
-                  <td><span class="success">Valid</span></td>
+                  <td><span class="success">OK</span></td>
                   <td class="text-right"><strong>{{totalValid}} </strong>({{(totalValid / totalSites * 100) | number:0}}%)</td>
                 </tr>
                 <tr>
-                  <td><span class="danger">Invalid</span></td>
+                  <td><span class="danger">Error</span></td>
                   <td class="text-right"><strong>{{totalInvalid}} </strong>({{(totalInvalid / totalSites * 100) | number:0}}%)</td>
                 </tr>
                 <tr>

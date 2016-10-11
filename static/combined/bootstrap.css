@@ -6233,6 +6233,9 @@ button.close {
 .danger {
   color: #ff4f24;
 }
+.alert-danger-text {
+  color: #a94442;
+}
 a {
   cursor: pointer;
 }

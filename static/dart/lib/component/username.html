@@ -67,7 +67,7 @@
       <progress-bar progress='(results.length/totalResults) * 100'
                     type='progress-bar-success progress-bar-striped'>
       </progress-bar>
-      <div ng-show="results.length == 0">
+      <div ng-show="results.length == 0 && error == null">
        <i class="fa fa-cog fa-spin"></i> Queued
       </div>
 

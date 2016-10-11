@@ -51,7 +51,6 @@ class UsernameView(FlaskView):
                 "tracker_ids": {
                         "johndoe": "tracker.12344565",
                 }
-                
             }
 
         :<header Content-Type: application/json
@@ -112,12 +111,15 @@ class UsernameView(FlaskView):
         if group:
             sites = group.sites
         elif site:
-            sites = g.db.query(Site).filter(Site.id == site.id).all()
+            sites = g.db.query(Site).filter(Site.id == site.id)
         else:
-            sites = g.db.query(Site).all()
+            sites = g.db.query(Site)
 
-        # Only query valid sites. 
-        sites = sites.filter(valid==True)
+        # Only check valid sites.
+        sites = sites.filter(Site.valid == True).all() # noqa
+
+        if len(sites) == 0:
+            raise NotFound('No valid sites to check')
 
         for username in request_json['usernames']:
             # Create an object in redis to track the number of sites completed
