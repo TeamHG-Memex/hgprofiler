@@ -67,7 +67,11 @@ pass_config = click.make_pass_decorator(Config, ensure=True)
               default='',
               help='Log file.')
 @click.option('--log-level',
-              type=click.Choice(['debug', 'info', 'warning', 'error', 'critical']),
+              type=click.Choice(['debug',
+                                 'info',
+                                 'warning',
+                                 'error',
+                                 'critical']),
               default='warning',
               help='Log level.')
 @pass_config
@@ -256,7 +260,8 @@ def get_results(config,
         start = datetime.datetime.now()
         for username in bar:
             # Get results for username
-            archive_url = config.app_host + '/api/archive/?username={}'.format(username)
+            archive_url = '{}/api/archive/?username={}' \
+                          .format(config.app_host, username)
             response = requests.get(archive_url,
                                     headers=config.headers,
                                     verify=False)
@@ -292,10 +297,9 @@ def get_results(config,
     elapsed = end - start
     hours, remainder = divmod(elapsed.total_seconds(), 3600)
     minutes, seconds = divmod(remainder, 60)
-    msg = '{} username results completed in {} hours, {} minutes, and {} seconds.'.format(len(usernames),
-                                                                                          hours,
-                                                                                          minutes,
-                                                                                          seconds)
+    msg = '{} username results completed in {} hours, {} minutes, ' \
+          'and {} seconds.' \
+          .format(len(usernames), hours, minutes, seconds)
     click.secho(msg, fg='green')
 
 
@@ -344,7 +348,8 @@ def get_zip_results(config,
         start = datetime.datetime.now()
         for username in bar:
             # Get results for username
-            archive_url = config.app_host + '/api/archive/?username={}'.format(username)
+            archive_url = '{}/api/archive/?username={}' \
+                          .format(config.app_host, username)
             response = requests.get(archive_url,
                                     headers=config.headers,
                                     verify=False)
@@ -360,13 +365,16 @@ def get_zip_results(config,
             archives = response.json().get('archives', [])
 
             for archive in archives:
-                response = requests.get(archive_url,
+                filename = '{}-{}.zip' \
+                           .format(username,
+                                   archive['date'])
+                response = requests.get(archive['zip_url'],
                                         headers=config.headers,
                                         verify=False)
 
                 response.raise_for_status()
 
-                with open(os.join(output_dir, a), 'wb') as f:
+                with open(os.join(output_dir, filename), 'wb') as f:
                     f.write(response.content)
 
                 time.sleep(interval)
@@ -375,10 +383,9 @@ def get_zip_results(config,
     elapsed = end - start
     hours, remainder = divmod(elapsed.total_seconds(), 3600)
     minutes, seconds = divmod(remainder, 60)
-    msg = '{} username results completed in {} hours, {} minutes, and {} seconds.'.format(len(usernames),
-                                                                                          hours,
-                                                                                          minutes,
-                                                                                          seconds)
+    msg = '{} username results completed in {} hours, ' \
+          '{} minutes, and {} seconds.' \
+          .format(len(usernames), hours, minutes, seconds)
     click.secho(msg, fg='green')
 
 
