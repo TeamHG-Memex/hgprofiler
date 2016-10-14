@@ -315,11 +315,15 @@ class SiteView(FlaskView):
 
         if 'test_username_pos' in request_json:
             validate_json_attr('test_username_pos', SITE_ATTRS, request_json)
-            site.test_username_pos = int(request_json['test_username_pos'])
+            site.test_username_pos = (request_json['test_username_pos']
+                                      .lower()
+                                      .strip())
 
         if 'test_username_neg' in request_json:
             validate_json_attr('test_username_neg', SITE_ATTRS, request_json)
-            site.test_username_pos = int(request_json['test_username_neg'])
+            site.test_username_neg = (request_json['test_username_neg']
+                                      .lower()
+                                      .strip())
 
         # Save the updated site
         try:
@@ -499,7 +503,8 @@ class SiteView(FlaskView):
         :>json string jobs[n].name: name of job
 
         :>header Content-Type: application/json
-        :>json array tracker_ids: array of worker tracking ids {site ID: tracker ID}
+        :>json array tracker_ids: array of worker tracking ids
+            {site ID: tracker ID}
 
         :status 202: scheduled
         :status 400: invalid request body
