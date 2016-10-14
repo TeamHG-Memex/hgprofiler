@@ -454,6 +454,8 @@ class SiteComponent extends Object
             'status_code': this.newSiteStatusCode,
             'search_text': this.newSiteSearchText,
             'category': this.newSiteCategory,
+            'test_username_pos': this.newSiteTestUsernamePos,
+            'test_username_neg': this.newSiteTestUsernameNeg,
         };
 
         this.api
@@ -485,6 +487,8 @@ class SiteComponent extends Object
             'status_code': this.newSiteStatusCode,
             'search_text': this.newSiteSearchText,
             'category': this.newSiteCategory,
+            'test_username_pos': this.newSiteTestUsernamePos,
+            'test_username_neg': this.newSiteTestUsernameNeg,
         };
 
         this.api
