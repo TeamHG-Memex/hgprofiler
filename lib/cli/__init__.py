@@ -1,5 +1,4 @@
 import argparse
-from datetime import datetime
 import logging
 import sys
 
@@ -30,7 +29,9 @@ class BaseCli:
     def get_args(self):
         ''' Parse command line arguments. '''
 
-        arg_parser = argparse.ArgumentParser(description=self.__class__.__doc__)
+        arg_parser = argparse.ArgumentParser(
+            description=self.__class__.__doc__
+        )
 
         arg_parser.add_argument(
             '-v',
@@ -51,7 +52,7 @@ class BaseCli:
 
         try:
             self._run(self.get_args(), app.config.get_config())
-        except  CliError as e:
+        except CliError as e:
             self._logger.critical(str(e))
             sys.exit(1)
 
@@ -89,4 +90,3 @@ class BaseCli:
         ''' Subclasses should override _run() to do their work. '''
 
         raise NotImplementedError()
-
