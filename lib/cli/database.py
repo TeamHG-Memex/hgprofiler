@@ -123,7 +123,7 @@ class DatabaseCli(cli.BaseCli):
             url='http://about.me/%s',
             category='social',
             status_code=200,
-            search_text='g.PAGE_USER_NAME =',
+            search_text=' on about.me',
             test_username_pos='bob'
         )
         session.add(about_me)
