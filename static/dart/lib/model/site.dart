@@ -10,8 +10,8 @@ class Site {
     String matchExpr;
     String name;
     String url;
-    String testUsernamePos;
-    String testUsernameNeg;
+    String testUsernamePos, testUsernamePosUrl;
+    String testUsernameNeg, testUsernameNegUrl;
     Result testResultPos;
     Result testResultNeg;
     DateTime testedAt;
@@ -42,7 +42,9 @@ class Site {
         this.name = json['name'];
         this.url = json['url'];
         this.testUsernamePos = json['test_username_pos'];
+        this.testUsernamePosUrl = json['test_username_pos_url'];
         this.testUsernameNeg = json['test_username_neg'];
+        this.testUsernameNegUrl = json['test_username_neg_url'];
 
         if (json['test_result_pos'] != null) {
            this.testResultPos = new Result.fromJson(json['test_result_pos']);

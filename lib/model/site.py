@@ -71,8 +71,10 @@ class Site(Base):
         self.match_expr = match_expr
         self.test_username_pos = test_username_pos
 
-        if not test_username_neg:
+        if test_username_neg is None:
             self.test_username_neg = random_string(16)
+        else:
+            self.test_username_neg = test_username_neg
 
     def as_dict(self):
         ''' Return dictionary representation of this site. '''
@@ -103,9 +105,15 @@ class Site(Base):
             'match_type_description': self.MATCH_TYPES[self.match_type],
             'match_expr': self.match_expr,
             'test_username_pos': self.test_username_pos,
+            'test_username_pos_url': self.get_url(self.test_username_pos),
             'test_username_neg': self.test_username_neg,
+            'test_username_neg_url': self.get_url(self.test_username_neg),
             'test_result_pos': test_result_pos,
             'test_result_neg': test_result_neg,
             'tested_at': tested_at,
             'valid': self.valid,
         }
+
+    def get_url(self, username):
+        ''' Interpolate a username into this site's URL. '''
+        return self.url % username

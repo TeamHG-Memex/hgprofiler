@@ -130,8 +130,8 @@ class DatabaseCli(cli.BaseCli):
             name='Anobii',
             url='http://www.anobii.com/%s/books',
             category='books',
-            status_code=200,
-            # search_text='- aNobii</title>"',
+            match_type='css',
+            match_expr='h1.person_heading',
             test_username_pos='bob'
         )
         session.add(anobii)
@@ -203,8 +203,8 @@ class DatabaseCli(cli.BaseCli):
             name='Blogmarks',
             url='http://blogmarks.net/user/%s',
             category='social',
-            status_code=200,
-            search_text='<title>Blogmarks : Public marks from',
+            match_type='css',
+            match_expr='div#infos-user',
             test_username_pos='Krome'
         )
         session.add(blogmarks)
@@ -222,8 +222,8 @@ class DatabaseCli(cli.BaseCli):
             name='Bodybuilding',
             url='http://bodyspace.bodybuilding.com/%s/',
             category='health',
-            status_code=200,
-            # search_text='s BodySpace - Bodybuilding.com</title>',
+            match_type='css',
+            match_expr='div.BodyBanner',
             test_username_pos='Scarfdaddy'
         )
         session.add(bodybuilding)
@@ -232,8 +232,8 @@ class DatabaseCli(cli.BaseCli):
             name='Break',
             url='http://www.break.com/user/%s',
             category='video',
-            status_code=200,
-            # search_text=' | Break.com</title>',
+            match_type='css',
+            match_expr='section.profile-head',
             test_username_pos='jenny'
         )
         session.add(break_com)
@@ -242,8 +242,8 @@ class DatabaseCli(cli.BaseCli):
             name='Cafemom',
             url='http://www.cafemom.com/home/%s',
             category='social',
-            status_code=200,
-            # search_text='h3 id="profile-user',
+            match_type='css',
+            match_expr='div#member-info',
             test_username_pos='jane'
         )
         session.add(cafemom)
@@ -261,8 +261,8 @@ class DatabaseCli(cli.BaseCli):
             name='Codeplex',
             url='http://www.codeplex.com/site/users/view/%s',
             category='coding',
-            status_code=200,
-            # search_text='property="profile:username" />',
+            match_type='css',
+            match_expr='h1.user_name',
             test_username_pos='dan'
         )
         session.add(codeplex)
@@ -271,8 +271,8 @@ class DatabaseCli(cli.BaseCli):
             name='Colour Lovers',
             url='http://www.colourlovers.com/lover/%s',
             category='art and design',
-            status_code=200,
-            # search_text='var repos = [{"',
+            match_type='css',
+            match_expr='div.column-container',
             test_username_pos='bob'
         )
         session.add(colour_lovers)
@@ -281,8 +281,8 @@ class DatabaseCli(cli.BaseCli):
             name='Conferize',
             url='https://www.conferize.com/u/%s/',
             category='business',
-            status_code=200,
-            # search_text='| Conferize - Never miss a Conference</title>',
+            match_type='css',
+            match_expr='div.hero--user',
             test_username_pos='dan'
         )
         session.add(conferize)
@@ -300,8 +300,8 @@ class DatabaseCli(cli.BaseCli):
             name='Cruisemates',
             url='http://www.cruisemates.com/forum/members/%s.html',
             category='travel',
-            status_code=200,
-            # search_text='- View Profile: ',
+            match_type='css',
+            match_expr='div#main_userinfo',
             test_username_pos='trip'
         )
         session.add(cruisemates)
@@ -337,8 +337,8 @@ class DatabaseCli(cli.BaseCli):
             name='Diigo',
             url='https://www.diigo.com/profile/%s',
             category='bookmarking',
-            status_code=200,
-            # search_text=' Public Profile in the Diigo Community</title>',
+            match_type='css',
+            match_expr='div#avatarSection',
             test_username_pos='hunter53'
         )
         session.add(diigo)
@@ -374,8 +374,8 @@ class DatabaseCli(cli.BaseCli):
             name='Ebay',
             url='http://www.ebay.com/usr/%s',
             category='shopping',
-            status_code=200,
-            # search_text='on eBay</title>',
+            match_type='css',
+            match_expr='div#user_image',
             test_username_pos='max'
         )
         session.add(ebay)
@@ -393,9 +393,9 @@ class DatabaseCli(cli.BaseCli):
             name='Families',
             url='http://www.families.com/author/%s',
             category='lifestyle',
-            status_code=200,
-            # search_text='  </title>',
-            test_username_pos='alan'
+            match_type='css',
+            match_expr='div#author-description',
+            test_username_pos='JenThorpe'
         )
         session.add(families)
 
@@ -403,8 +403,8 @@ class DatabaseCli(cli.BaseCli):
             name='Fanpop',
             url='http://www.fanpop.com/fans/%s',
             category='entertainment',
-            status_code=200,
-            # search_text=' Profile Page</title>',
+            match_type='css',
+            match_expr='div.user-header',
             test_username_pos='dan'
         )
         session.add(fanpop)
@@ -441,8 +441,10 @@ class DatabaseCli(cli.BaseCli):
             url='http://www.foodspotting.com/%s',
             category='lifestyle',
             status_code=200,
-            # search_text=' - Foodspotting</title>',
-            test_username_pos='dylan'
+            test_username_pos='dylan',
+            # This site handles names with leading numerics strangely, so we
+            # need to force an alphabetic negative case.
+            test_username_neg='asdfqwerasdfqwer'
         )
         session.add(foodspotting)
 
@@ -477,8 +479,8 @@ class DatabaseCli(cli.BaseCli):
             name='FriendFinder-X',
             url='http://www.friendfinder-x.com/profile/%s',
             category='dating',
-            status_code=200,
-            # search_text='Member Profile - FriendFinder-x</title>',
+            match_type='css',
+            match_expr='div#tmpl_member_profile_header',
             test_username_pos='daniel'
         )
         session.add(friend_finder_x)
@@ -492,42 +494,12 @@ class DatabaseCli(cli.BaseCli):
         )
         session.add(funny_or_die)
 
-        garmin_connect = Site(
-            name='Garmin Connect',
-            url='http://connect.garmin.com/modern/profile/%s',
-            category='health',
-            status_code=200,
-            # search_text='VIEWER_USERPREFERENCES =',
-            test_username_pos='sally'
-        )
-        session.add(garmin_connect)
-
-        geekgrade = Site(
-            name='Geek Grade',
-            url='http://www.geekgrade.com/geeksheet/%s/blogs',
-            category='coding',
-            status_code=200,
-            # search_text='- Geek Grade</title>',
-            test_username_pos='d0k'
-        )
-        session.add(geekgrade)
-
-        geocaching = Site(
-            name='Geocaching',
-            url='https://www.geocaching.com/seek/nearest.aspx?u=%s',
-            category='hobby',
-            status_code=200,
-            # search_text='By Username (Hidden) - User:',
-            test_username_pos='john'
-        )
-        session.add(geocaching)
-
         get_it_on = Site(
             name='GETitOn',
             url='http://getiton.com/profile/%s',
             category='dating',
-            status_code=200,
-            # search_text='s Profile</title>',
+            match_type='css',
+            match_expr='div#profile_page_wrapper',
             test_username_pos='chris'
         )
         session.add(get_it_on)
@@ -563,8 +535,7 @@ class DatabaseCli(cli.BaseCli):
             name='Goodreads',
             url='http://www.goodreads.com/%s',
             category='entertainment',
-            status_code=302,
-            # search_text='www.goodreads.com/user/show/',
+            status_code=200,
             test_username_pos='seal'
         )
         session.add(goodreads)
@@ -609,8 +580,8 @@ class DatabaseCli(cli.BaseCli):
             name='ImageShack',
             url='https://imageshack.com/user/%s',
             category='image',
-            status_code=200,
-            # search_text='s Images</title>',
+            match_type='css',
+            match_expr='header.user-profile',
             test_username_pos='Nicholas230'
         )
         session.add(image_shack)
@@ -646,8 +617,8 @@ class DatabaseCli(cli.BaseCli):
             name='InterPals',
             url='https://www.interpals.net/%s',
             category='social',
-            status_code=200,
-            # search_text='s Profile</title>',
+            match_type='css',
+            match_expr='div.profile',
             test_username_pos='Seven89'
         )
         session.add(interpals)
@@ -692,8 +663,8 @@ class DatabaseCli(cli.BaseCli):
             name='Law of Attraction',
             url='http://www.lawofattractionsingles.com/%s',
             category='dating',
-            status_code=200,
-            # search_text='s profile on Law Of Attraction Singles</title>',
+            match_type='css',
+            match_expr='div.prof_top_block',
             test_username_pos='Jenniferlynnmaui'
         )
         session.add(law_of_attraction)
@@ -702,8 +673,8 @@ class DatabaseCli(cli.BaseCli):
             name='LibraryThing',
             url='https://www.librarything.com/profile/%s',
             category='learning',
-            status_code=200,
-            # search_text='| LibraryThing</title>',
+            match_type='css',
+            match_expr='div.profile',
             test_username_pos='Medievalgirl'
         )
         session.add(library_thing)
@@ -722,7 +693,6 @@ class DatabaseCli(cli.BaseCli):
             url='https://www.linkedin.com/in/%s',
             category='social',
             status_code=200,
-            # search_text='summary="Overview for ',
             test_username_pos='markhaase'
         )
         session.add(linked_in)
@@ -758,8 +728,8 @@ class DatabaseCli(cli.BaseCli):
             name='Meetzur',
             url='http://www.meetzur.com/%s',
             category='social',
-            status_code=200,
-            # search_text='MEETZUR_PROFILE_300x250',
+            match_type='css',
+            match_expr='div.profile-left',
             test_username_pos='sachin99'
         )
         session.add(meetzur)
@@ -773,12 +743,13 @@ class DatabaseCli(cli.BaseCli):
         )
         session.add(mixcloud)
 
+        # This site was out of service at the time I tried testing it, so I
+        # could not test this criteria.
         mixcrate = Site(
             name='mixcrate',
             url='http://www.mixcrate.com/%s',
             category='music',
             status_code=200,
-            # search_text='- Mixcrate</title>',
             test_username_pos='kennyrock'
         )
         session.add(mixcrate)
@@ -846,22 +817,12 @@ class DatabaseCli(cli.BaseCli):
         )
         session.add(netvibes)
 
-        okcupid = Site(
-            name='okcupid',
-            url='https://www.okcupid.com/profile/%s',
-            category='dating',
-            status_code=200,
-            # search_text='<title>OkCupid |',
-            test_username_pos='the_ferett'
-        )
-        session.add(okcupid)
-
         pandora = Site(
             name='Pandora',
             url='https://www.pandora.com/profile/%s',
             category='music',
-            status_code=200,
-            # search_text='div class="profile_container_static"',
+            match_type='css',
+            match_expr='div#user_info_container',
             test_username_pos='mehaase'
         )
         session.add(pandora)
@@ -888,8 +849,8 @@ class DatabaseCli(cli.BaseCli):
             name='PictureTrail',
             url='http://www.picturetrail.com/%s',
             category='image',
-            status_code=200,
-            # search_text='<title>PictureTrail</title>',
+            match_type='css',
+            match_expr='td.IntroTitle-text-wt',
             test_username_pos='victoria15'
         )
         session.add(picture_trail)
@@ -925,8 +886,8 @@ class DatabaseCli(cli.BaseCli):
             name='Plurk',
             url='http://www.plurk.com/%s',
             category='social',
-            status_code=200,
-            # search_text='] on Plurk - Plurk</title>',
+            match_type='css',
+            match_expr='span.nick_name',
             test_username_pos='xxSaltandPepperxx'
         )
         session.add(plurk)
@@ -940,12 +901,12 @@ class DatabaseCli(cli.BaseCli):
         )
         session.add(rapid7_community)
 
+        # This site has banned our Splash IP so I cannot test it.
         rate_your_music = Site(
             name='Rate Your Music',
             url='http://rateyourmusic.com/~%s',
             category='music',
             status_code=200,
-            # search_text='Rate Your Music</title>',
             test_username_pos='silvioporto'
         )
         session.add(rate_your_music)
@@ -964,7 +925,6 @@ class DatabaseCli(cli.BaseCli):
             url='https://www.reddit.com/user/%s',
             category='social',
             status_code=200,
-            # search_text='<title>overview for ',
             test_username_pos='mehaase'
         )
         session.add(reddit)
@@ -996,12 +956,14 @@ class DatabaseCli(cli.BaseCli):
         )
         session.add(shopcade)
 
+        # This site occasionally throws errors when testing. Maybe it doesn't
+        # like having two requests so fast?
         single_muslim = Site(
             name='SingleMuslim',
             url='https://www.singlemuslim.com/searchuser/%s/abc',
             category='dating',
-            status_code=200,
-            # search_text='- Single Muslim Rest of the World</title>',
+            match_type='css',
+            match_expr='div.userProfileView',
             test_username_pos='YoghurtTub'
         )
         session.add(single_muslim)
@@ -1010,8 +972,8 @@ class DatabaseCli(cli.BaseCli):
             name='Slashdot',
             url='https://slashdot.org/~%s',
             category='technology',
-            status_code=200,
-            # search_text='- Slashdot User</title>',
+            match_type='css',
+            match_expr='article#user_bio',
             test_username_pos='Locke2005'
         )
         session.add(slashdot)
@@ -1029,8 +991,8 @@ class DatabaseCli(cli.BaseCli):
             name='SmiteGuru',
             url='http://smite.guru/stats/xb/%s/summary',
             category='gaming',
-            status_code=200,
-            # search_text='<title>SmiteGuru - ',
+            match_type='css',
+            match_expr='div.header.panel',
             test_username_pos='WatsonV3'
         )
         session.add(smite_guru)
@@ -1049,8 +1011,7 @@ class DatabaseCli(cli.BaseCli):
             url='http://www.smule.com/%s',
             category='music',
             status_code=200,
-            # search_text='s Profile on Smule</title>',
-            test_username_pos='_PFR_Anashi716'
+            test_username_pos='AbsurdJoker'
         )
         session.add(smule)
 
@@ -1058,8 +1019,8 @@ class DatabaseCli(cli.BaseCli):
             name='Snooth',
             url='http://www.snooth.com/profiles/%s/',
             category='music',
-            status_code=200,
-            # search_text='Location: http://www.snooth.com/profiles/John/',
+            match_type='css',
+            match_expr='div.profile-header',
             test_username_pos='dvogler'
         )
         session.add(snooth)
@@ -1068,8 +1029,8 @@ class DatabaseCli(cli.BaseCli):
             name='SoldierX',
             url='https://www.soldierx.com/hdb/%s',
             category='technology',
-            status_code=200,
-            # search_text='div id="node-',
+            match_type='css',
+            match_expr='div.field-field-hdb-photo',
             test_username_pos='achillean'
         )
         session.add(soldier_x)
@@ -1087,8 +1048,8 @@ class DatabaseCli(cli.BaseCli):
             name='Soup',
             url='http://%s.soup.io/',
             category='social',
-            status_code=200,
-            # search_text='"s soup</title>',
+            match_type='css',
+            match_expr='div#userinfo',
             test_username_pos='nattaly'
         )
         session.add(soup)
@@ -1115,8 +1076,8 @@ class DatabaseCli(cli.BaseCli):
             name='Sporcle',
             url='http://www.sporcle.com/user/%s',
             category='entertainment',
-            status_code=200,
-            # search_text="id='UserBox'>",
+            match_type='css',
+            match_expr='div#UserBox',
             test_username_pos='lolshortee'
         )
         session.add(sporcle)
@@ -1125,21 +1086,11 @@ class DatabaseCli(cli.BaseCli):
             name='Steam',
             url='http://steamcommunity.com/id/%s',
             category='gaming',
-            status_code=200,
-            # search_text='g_rgProfileData =',
+            match_type='css',
+            match_expr='div.profile_page',
             test_username_pos='tryh4rdz'
         )
         session.add(steam)
-
-        stumble_upon = Site(
-            name='StumbleUpon',
-            url='http://www.stumbleupon.com/stumbler/%s',
-            category='social',
-            status_code=200,
-            # search_text='s Likes | StumbleUpon.com</title>',
-            test_username_pos='starspirit'
-        )
-        session.add(stumble_upon)
 
         stupid_cancer = Site(
             name='Stupidcancer',
@@ -1150,22 +1101,13 @@ class DatabaseCli(cli.BaseCli):
         )
         session.add(stupid_cancer)
 
-        tf2_backpack_examiner = Site(
-            name='TF2 Backpack Examiner',
-            url='http://www.tf2items.com/id/%s',
-            category='gaming',
-            status_code=200,
-            # search_text='<title>TF2 Backpack -',
-            test_username_pos='robinwalker'
-        )
-        session.add(tf2_backpack_examiner)
-
+        # Tribe.net was down when I was testing. I could not verify that these
+        # settings work.
         tribe = Site(
             name='Tribe',
             url='http://people.tribe.net/%s',
             category='social',
             status_code=200,
-            # search_text='Profile - tribe.net</title>',
             test_username_pos='violetta'
         )
         session.add(tribe)
@@ -1228,8 +1170,8 @@ class DatabaseCli(cli.BaseCli):
             name='Voices.com',
             url='https://www.voices.com/people/%s',
             category='business',
-            status_code=200,
-            # search_text='/assets/images/branding/default_profile_avatar',
+            match_type='css',
+            match_expr='div.voices-profile-title',
             test_username_pos='johncavanagh'
         )
         session.add(voices_com)
@@ -1256,8 +1198,8 @@ class DatabaseCli(cli.BaseCli):
             name='Wishlistr',
             url='http://www.wishlistr.com/profile/%s/',
             category='social',
-            status_code=200,
-            # search_text='s profile</title>',
+            match_type='css',
+            match_expr='div#people',
             test_username_pos='seventy7'
         )
         session.add(wishlistr)
@@ -1266,8 +1208,8 @@ class DatabaseCli(cli.BaseCli):
             name='WordPress',
             url='https://profiles.wordpress.org/%s/',
             category='business',
-            status_code=200,
-            # search_text='alt="Profile picture of',
+            match_type='css',
+            match_expr='ul#user-meta',
             test_username_pos='sivel'
         )
         session.add(wordpress)

@@ -46,8 +46,8 @@ class SiteComponent extends Object
     String newSiteMatchExpr;
     Map<String,String> matchTypes;
     List<List<String>> matchTypesList;
-    String newSiteTestUsernamePos;
-    String newSiteTestUsernameNeg;
+    String newSiteTestUsernamePos, newSiteTestUsernamePosUrl;
+    String newSiteTestUsernameNeg, newSiteTestUsernameNegUrl;
     String newSiteStatusCode;
     Pager pager;
     Result result;
@@ -208,7 +208,9 @@ class SiteComponent extends Object
         this.newSiteMatchExpr = this.sites[id_].matchExpr;
         this.newSiteStatusCode = this.sites[id_].statusCode?.toString() ?? '';
         this.newSiteTestUsernamePos = this.sites[id_].testUsernamePos;
+        this.newSiteTestUsernamePosUrl = this.sites[id_].testUsernamePosUrl;
         this.newSiteTestUsernameNeg = this.sites[id_].testUsernameNeg;
+        this.newSiteTestUsernameNegUrl = this.sites[id_].testUsernameNegUrl;
         this.newSiteUrl = this.sites[id_].url;
         this.editSiteId = id_;
         this.showAddDialog('edit');
@@ -330,16 +332,6 @@ class SiteComponent extends Object
 
         if (this.newSiteCategory == '' || this.newSiteCategory == null) {
             this.siteError = 'You must select a site category.';
-            result = false;
-        }
-
-        try {
-            int code = int.parse(this.newSiteStatusCode);
-        } on FormatException {
-            this.siteError = 'Status code must be a number.';
-            result = false;
-        } on ArgumentError {
-            this.siteError = 'Status code must be a number.';
             result = false;
         }
 
@@ -515,9 +507,9 @@ class SiteComponent extends Object
         Map body = {
             'name': this.newSiteName,
             'url': this.newSiteUrl,
-            'status_code': this.newSiteStatusCode,
-            'match_type': this.newSiteMatchType,
-            'match_expr': this.newSiteMatchExpr,
+            'status_code': int.parse(this.newSiteStatusCode, onError: (_) => null),
+            'match_expr': this._nullString(this.newSiteMatchExpr),
+            'match_type': this._nullString(this.newSiteMatchType),
             'category': this.newSiteCategory,
             'test_username_pos': this.newSiteTestUsernamePos,
             'test_username_neg': this.newSiteTestUsernameNeg,

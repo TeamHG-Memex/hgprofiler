@@ -157,7 +157,10 @@
             <div ng-show="editSiteId != null && sites[editSiteId].testedAt != null && !awaitingTestResult(editSiteId)"
                  class="test-container">
               <div class="test-header">
-                <strong>"{{newSiteTestUsernamePos}}"</strong>
+                <a ng-href="{{newSiteTestUsernamePosUrl}}" target="_blank" title="Open in new tab">
+                  <strong>"{{newSiteTestUsernamePos}}"</strong>
+                  <i class='fa fa-external-link-square'></i>
+                </a>
               </div>
               <!-- Start panel -->
               <div class="panel panel-default result">
@@ -210,7 +213,10 @@
             <div ng-show="editSiteId != null && sites[editSiteId].testedAt != null && !awaitingTestResult(editSiteId)"
                  class="test-container">
               <div class="test-header">
-                <strong>"{{newSiteTestUsernameNeg}}"</strong>
+                <a ng-href="{{newSiteTestUsernameNegUrl}}" target="_blank" title="Open in new tab">
+                  <strong>"{{newSiteTestUsernameNeg}}"</strong>
+                  <i class='fa fa-external-link-square'></i>
+                </a>
               </div>
               <!-- Start panel -->
               <div class="panel panel-default result">

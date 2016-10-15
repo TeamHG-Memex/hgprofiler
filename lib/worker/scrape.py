@@ -196,7 +196,7 @@ def _save_image(db_session, scrape_result):
 
 def _splash_request(db_session, username, site, request_timeout):
     ''' Ask splash to render a page for us. '''
-    target_url = site.url.replace('%s', username)
+    target_url = site.get_url(username)
     splash_url = get_config(db_session, 'splash_url', required=True).value
     splash_headers = {
         'User-Agent': USER_AGENT,
