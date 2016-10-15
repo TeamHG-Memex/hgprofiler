@@ -6279,6 +6279,9 @@ button img.spinner {
 button.btn-add {
   margin-bottom: 5px;
 }
+.btn.pull-right {
+  margin-right: 1em;
+}
 code {
   font-size: 100%;
   border: 1px solid #D8A8B4;
@@ -6290,14 +6293,20 @@ form div.alert {
 sparkline {
   cursor: none;
 }
-th.number,
-td.number {
+table th.number,
+table td.number {
   text-align: right;
   padding-right: 0 !important;
 }
-th.sparkline,
-td.sparkline {
+table th.sparkline,
+table td.sparkline {
   padding-left: 0.2em !important;
+}
+table td.button-col {
+  width: 4em;
+}
+table td.url-col {
+  overflow: hidden;
 }
 textarea {
   border: 1px solid #eeeeee;
@@ -6830,10 +6839,6 @@ nav a.dropdown-toggle.user {
 nav a.dropdown-toggle.user img {
   margin-right: 0.5em;
 }
-site .table.wrap td {
-  word-wrap: break-word;
-  word-break: break-word;
-}
 site .btn-add {
   margin-bottom: 10px;
 }
@@ -6867,38 +6872,15 @@ site .panel.result {
   margin-top: 10px;
   margin-bottom: 10px;
 }
+site .panel-heading,
+site .panel-footer {
+  text-align: center;
+}
 site .panel-body.result {
   padding: 0px;
-  border-bottom-left-radius: 0px;
-  border-bottom-right-radius: 0px;
 }
-site .panel-footer.result {
-  color: white;
-  text-align: right;
-}
-site .panel-footer.result a {
-  color: white;
-}
-site .test-header {
-  background-color: #eeeeee;
-  border-radius: 3px;
-  padding: 2px;
-  color: #222222;
-  text-align: center;
-}
-site .test-header-success {
-  background-color: #a3c86d;
-  border-radius: 3px;
-  padding: 2px;
-  color: white;
-  text-align: center;
-}
-site .test-header-danger {
-  background-color: #ff4f24;
-  border-radius: 3px;
-  padding: 2px;
-  color: white;
-  text-align: center;
+site .panel-body.result img {
+  border-radius: 0;
 }
 site .test-footer {
   text-align: center;

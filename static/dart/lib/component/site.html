@@ -156,29 +156,29 @@
             <!-- Start container -->
             <div ng-show="editSiteId != null && sites[editSiteId].testedAt != null && !awaitingTestResult(editSiteId)"
                  class="test-container">
-              <div class="test-header">
-                <a ng-href="{{newSiteTestUsernamePosUrl}}" target="_blank" title="Open in new tab">
-                  <strong>"{{newSiteTestUsernamePos}}"</strong>
-                  <i class='fa fa-external-link-square'></i>
-                </a>
-              </div>
               <!-- Start panel -->
               <div class="panel panel-default result">
+                <div class="panel-heading">
+                  <a ng-href="{{newSiteTestUsernamePosUrl}}" target="_blank" title="Open in new tab">
+                    <strong>"{{newSiteTestUsernamePos}}"</strong>
+                    <i class='fa fa-external-link-square'></i>
+                  </a>
+                </div>
                 <div class="panel-body result">
                   <img class="thumbnail"
                        ng-src='{{api.authorizeUrl(sites[editSiteId].testResultPos.imageFileUrl)}}'>
                 </div>
-                <div ng-show="sites[editSiteId].testResultPos.status == 'e'" class="panel-footer result error">
+                <div ng-show="sites[editSiteId].testResultPos.status == 'e'" class="panel-footer">
                   <i class="fa fa-exclamation-triangle pull-left"></i>
                     Error {{result.error}}
                 </div>
 
-                <div ng-show="sites[editSiteId].testResultPos.status == 'f'" class="panel-footer result found">
+                <div ng-show="sites[editSiteId].testResultPos.status == 'f'" class="panel-footer">
                   <i class="fa fa-check pull-left"></i>
                     Found
                 </div>
 
-                <div ng-show="sites[editSiteId].testResultPos.status == 'n'" class="panel-footer result not-found">
+                <div ng-show="sites[editSiteId].testResultPos.status == 'n'" class="panel-footer">
                   <i class="fa fa-times pull-left"></i>
                   Not found
                 </div>
@@ -212,29 +212,29 @@
             <!-- Start container -->
             <div ng-show="editSiteId != null && sites[editSiteId].testedAt != null && !awaitingTestResult(editSiteId)"
                  class="test-container">
-              <div class="test-header">
-                <a ng-href="{{newSiteTestUsernameNegUrl}}" target="_blank" title="Open in new tab">
-                  <strong>"{{newSiteTestUsernameNeg}}"</strong>
-                  <i class='fa fa-external-link-square'></i>
-                </a>
-              </div>
               <!-- Start panel -->
               <div class="panel panel-default result">
+                <div class="panel-heading">
+                  <a ng-href="{{newSiteTestUsernameNegUrl}}" target="_blank" title="Open in new tab">
+                    <strong>"{{newSiteTestUsernameNeg}}"</strong>
+                    <i class='fa fa-external-link-square'></i>
+                  </a>
+                </div>
                 <div class="panel-body result">
                   <img class="thumbnail"
                        ng-src='{{api.authorizeUrl(sites[editSiteId].testResultNeg.imageFileUrl)}}'>
                 </div>
-                <div ng-show="sites[editSiteId].testResultNeg.status == 'e'" class="panel-footer result error">
+                <div ng-show="sites[editSiteId].testResultNeg.status == 'e'" class="panel-footer">
                   <i class="fa fa-exclamation-triangle pull-left"></i>
                     Error {{result.error}}
                 </div>
 
-                <div ng-show="sites[editSiteId].testResultNeg.status == 'f'" class="panel-footer result found">
+                <div ng-show="sites[editSiteId].testResultNeg.status == 'f'" class="panel-footer">
                   <i class="fa fa-check pull-left"></i>
                     Found
                 </div>
 
-                <div ng-show="sites[editSiteId].testResultNeg.status == 'n'" class="panel-footer result not-found">
+                <div ng-show="sites[editSiteId].testResultNeg.status == 'n'" class="panel-footer">
                   <i class="fa fa-times pull-left"></i>
                   Not found
                 </div>
@@ -261,18 +261,7 @@
 
         <!-- Start row -->
         <div class="row">
-          <div class="col-sm-6">
-          </div>
-          <div ng-show="editSiteId != null" class="col-sm-2">
-            <em>Last tested:
-              <span ng-show="sites[editSiteId].testedAt != null">{{sites[editSiteId].testedAt | date:'yyyy-MM-dd h:mm a'}}</span>
-              <span ng-show="sites[editSiteId].testedAt == null">Never</span>
-            </em>
-            <i ng-show="!sites[editSiteId].valid || editSiteId == null"
-               class='fa fa-exclamation-triangle alert-danger-text'>
-            </i>
-          </div>
-          <div class="col-sm-4 pull-right">
+          <div class="col-sm-offset-6 col-sm-6">
             <div class="form-group">
               <div class="pull-right">
                 <button class='btn btn-default'
@@ -301,13 +290,20 @@
                              click='addSite'>
                  <i class="fa fa-check"></i> Add
                 </busy-button>
-
               </div>
+              <p class='pull-right'>
+                <em>Last tested:
+                  <span ng-show="sites[editSiteId].testedAt != null">{{sites[editSiteId].testedAt | date:'yyyy-MM-dd h:mm a'}}</span>
+                  <span ng-show="sites[editSiteId].testedAt == null">Never</span>
+                </em>
+                <i ng-show="!sites[editSiteId].valid || editSiteId == null"
+                class='fa fa-exclamation-triangle alert-danger-text'>
+              </i>
+            </p>
             </div>
           </div>
         </div>
         <!-- End row -->
-
       </div>
     </div>
   </div>
@@ -326,24 +322,20 @@
         Showing {{pager.startingAt | number}}-{{pager.endingAt | number}}
         of {{pager.totalResults | number}} sites.
       </div>
-      <div class="col-sm-1 pull-right">
-        <button class='btn btn-success btn-sm pull-right btn-add'
-                ng-disabled='showAdd'
-                id='add-site-btn'
-                ng-click='showAddDialog("add")'>
-          <i class='fa fa-plus'></i>
-          Add Sites
-        </button>
-      </div>
-      <div class="col-sm-1 pull-right">
-        <button class='btn btn-info btn-sm pull-right btn-add pull-right'
-                ng-disabled='showAdd'
-                ng-click="showTestSitesDialog()"
-                id='test-sites-btn'>
-          <i class='fa fa-wrench'></i>
-          Test Sites
-        </button>
-      </div>
+      <button class='btn btn-success btn-sm pull-right'
+              ng-disabled='showAdd'
+              id='add-site-btn'
+              ng-click='showAddDialog("add")'>
+        <i class='fa fa-plus'></i>
+        Add Sites
+      </button>
+      <button class='btn btn-info btn-sm pull-right btn-space'
+              ng-disabled='showAdd'
+              ng-click="showTestSitesDialog()"
+              id='test-sites-btn'>
+        <i class='fa fa-wrench'></i>
+        Test Sites
+      </button>
     </div>
 
     <div class="row">
@@ -363,31 +355,27 @@
                 <th>Name</th>
                 <th>URL</th>
                 <th>Category</th>
-                <th class="text-center"></th>
                 <th class="text-center">Positive Test</th>
                 <th class="text-center">Negative Test</th>
-                <th class="text-center">Tested</th>
-                <th class="text-center">Test</th>
-                <th class="text-center">Edit</th>
-                <th class="text-center">Delete</th>
+                <th class="text-center hidden-sm">Tested</th>
+                <th class="text-center" style="width: 4em;">Test</th>
+                <th class="text-center" style="width: 4em;">Edit</th>
+                <th class="text-center" style="width: 4em;">Delete</th>
               </tr>
             </thead>
             <tbody>
               <tr id="tr-{{id}}" ng-repeat='id in siteIds'>
-                <td class="col-sm-1">
+                <td>
                   {{sites[id].name}}
                 </td>
-                <td class="col-sm-2">
+                <td class='url-col'>
                   {{sites[id].url}}
                 </td>
-                <td class="col-s-1">
+                <td>
                   {{sites[id].category}}
                 </td>
-                <td class="col-sm-1 text-center">
-                  <img ng-if='awaitingTestResult(id)' src='/static/img/spinner-black-snake.gif'>
-                </td>
-                <td class="col-sm-1 text-center">
-                  <span ng-if="sites[id].testResultPos != null">
+                <td class="text-center">
+                  <span ng-if="sites[id].testResultPos != null && !awaitingTestResult(id)">
                     <i ng-show="sites[id].testResultPos.status == 'f'" class="fa fa-check success"></i>
                     <i ng-show="sites[id].testResultPos.status != 'f'" class="fa fa-exclamation-triangle danger"></i>
                     <button class="btn btn-sm btn-info btn-link"
@@ -397,10 +385,11 @@
                             view
                     </button>
                   </span>
-                  <span ng-if="sites[id].testResultPos == null"><em>N/A</span>
+                  <span ng-if="sites[id].testResultPos == null && !awaitingTestResult(id)"><em>N/A</span>
+                  <img ng-if='awaitingTestResult(id)' src='/static/img/spinner-black-snake.gif'>
                 </td>
-                <td class="col-sm-1 text-center">
-                  <span ng-if="sites[id].testResultNeg != null">
+                <td class="text-center">
+                  <span ng-if="sites[id].testResultNeg != null && !awaitingTestResult(id)">
                     <i ng-show="sites[id].testResultNeg.status == 'n'" class="fa fa-check success"></i>
                     <i ng-show="sites[id].testResultNeg.status != 'n'" class="fa fa-exclamation-triangle danger"></i>
                     <button class="btn btn-sm btn-info btn-link"
@@ -410,13 +399,14 @@
                             view
                     </button>
                   </span>
-                  <span ng-if="sites[id].testResultNeg == null"><em>N/A</em></span>
+                  <span ng-if="sites[id].testResultNeg == null && !awaitingTestResult(id)"><em>N/A</em></span>
+                  <img ng-if='awaitingTestResult(id)' src='/static/img/spinner-black-snake.gif'>
                 </td>
-                <td class="col-sm-2 text-center">
+                <td class="text-center hidden-sm">
                   <span ng-show="sites[id].testedAt != null">{{sites[id].testedAt | date:'yyyy-MM-dd h:mm a'}}</span>
                   <span ng-show="sites[id].testedAt == null"><em>Never</em></span>
                 </td>
-                <td class="col-sm-1 text-center">
+                <td class="text-center button-col">
                   <button type='button'
                           ng-click='testSite(id)'
                           ng-disabled='showAdd || awaitingTestResult(id)'
@@ -424,7 +414,7 @@
                           <i class="fa fa-wrench"></i>
                   </button>
                 </td>
-                <td class="col-sm-1 text-center">
+                <td class="text-center button-col">
                   <button type='button'
                           ng-click='editSite(id)'
                           ng-disabled='showAdd || awaitingTestResult(id)'
@@ -432,7 +422,7 @@
                           <i class="fa fa-pencil"></i>
                   </button>
                 </td>
-                 <td class="col-sm-1 text-center">
+                 <td class="text-center button-col">
                   <button type='button'
                      ng-disabled='showAdd || awaitingTestResult(id)'
                      ng-click='setDeleteId(id)'
