@@ -8,3 +8,4 @@ nohup.out
 **.webassets-cache/
 pubspec.lock
 TODO*
+static/combined/bootstrap.css
